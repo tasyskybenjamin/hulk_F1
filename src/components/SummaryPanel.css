@@ -1,0 +1,146 @@
+.summary-panel {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.summary-content {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.time-range {
+  background: #f0f2f5;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #595959;
+}
+
+.summary-section {
+  background: #fafafa;
+  padding: 12px;
+  border-radius: 4px;
+  height: 100%;
+}
+
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #262626;
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 8px;
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.summary-item.indent {
+  padding-left: 16px;
+  position: relative;
+}
+
+.summary-item.indent::before {
+  content: "└";
+  position: absolute;
+  left: 4px;
+  color: #bfbfbf;
+}
+
+.item-label {
+  flex: 1;
+  color: #595959;
+  margin-right: 8px;
+}
+
+.item-value {
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.item-value.delivered {
+  color: #52c41a;
+}
+
+.item-value.unfulfilled {
+  color: #ff4d4f;
+}
+
+.item-value.unfulfilled-clear {
+  color: #fa8c16;
+}
+
+.item-value.unfulfilled-unclear {
+  color: #faad14;
+}
+
+.item-value.stock-quota {
+  color: #22c55e;
+}
+
+.item-value.stock-machine {
+  color: #3b82f6;
+}
+
+.item-value.private-cloud {
+  color: #a855f7;
+}
+
+.item-value.public-cloud {
+  color: #f59e0b;
+}
+
+.item-value.other-supply {
+  color: #9ca3af;
+}
+
+.ratio {
+  font-size: 11px;
+  color: #8c8c8c;
+  font-weight: normal;
+  margin-left: 4px;
+}
+
+.resource-gap-section {
+  margin-top: 8px;
+}
+
+.resource-gap-section .section-title {
+  margin-bottom: 8px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .summary-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .item-value {
+    text-align: left;
+  }
+
+  .summary-section {
+    padding: 8px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+}
