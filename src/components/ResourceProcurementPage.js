@@ -23,7 +23,7 @@ const ResourceProcurementPage = () => {
   const mockData = [
     {
       id: 1,
-      procurementMethod: '私有云扩容',
+      procurementMethod: '私有云-采购',
       supplyTime: '2024-01-15 10:00:00',
       supplyAmount: 5000,
       deliveryMethod: '自动交付',
@@ -34,7 +34,7 @@ const ResourceProcurementPage = () => {
     },
     {
       id: 2,
-      procurementMethod: '公有云采购',
+      procurementMethod: '公有云-采购',
       supplyTime: '2024-01-20 09:00:00',
       supplyAmount: 8000,
       deliveryMethod: '手动分配',
@@ -45,7 +45,7 @@ const ResourceProcurementPage = () => {
     },
     {
       id: 3,
-      procurementMethod: '存量机器转化',
+      procurementMethod: '私有云-提拉',
       supplyTime: '2024-01-12 08:30:00',
       supplyAmount: 3200,
       deliveryMethod: '批量交付',
@@ -56,7 +56,7 @@ const ResourceProcurementPage = () => {
     },
     {
       id: 4,
-      procurementMethod: '紧急调配',
+      procurementMethod: '私有云-借调',
       supplyTime: '2024-01-25 15:00:00',
       supplyAmount: 1500,
       deliveryMethod: '即时交付',
@@ -67,13 +67,68 @@ const ResourceProcurementPage = () => {
     },
     {
       id: 5,
-      procurementMethod: '合作伙伴供给',
+      procurementMethod: '公有云-释放',
       supplyTime: '2024-02-01 12:00:00',
       supplyAmount: 6500,
       deliveryMethod: '分批交付',
       releaseTime: '2024-05-01 12:00:00',
       operator: '孙七',
       createTime: '2024-01-28 09:15:00',
+      status: 'pending'
+    },
+    {
+      id: 6,
+      procurementMethod: '私有云-搬迁',
+      supplyTime: '2024-01-30 14:00:00',
+      supplyAmount: 2800,
+      deliveryMethod: '自动交付',
+      releaseTime: '2024-04-30 14:00:00',
+      operator: '陈八',
+      createTime: '2024-01-29 10:30:00',
+      status: 'pending'
+    },
+    {
+      id: 7,
+      procurementMethod: '公有云-腾退',
+      supplyTime: '2024-02-05 16:00:00',
+      supplyAmount: 4200,
+      deliveryMethod: '手动分配',
+      releaseTime: '2024-03-05 16:00:00',
+      operator: '刘九',
+      createTime: '2024-02-03 11:45:00',
+      status: 'active'
+    },
+    {
+      id: 8,
+      procurementMethod: '私有云-归还',
+      supplyTime: '2024-02-08 10:30:00',
+      supplyAmount: 3500,
+      deliveryMethod: '批量交付',
+      releaseTime: '2024-03-08 10:30:00',
+      operator: '周十',
+      createTime: '2024-02-06 14:15:00',
+      status: 'completed'
+    },
+    {
+      id: 9,
+      procurementMethod: '私有云-报废',
+      supplyTime: '2024-02-10 09:00:00',
+      supplyAmount: 800,
+      deliveryMethod: '即时交付',
+      releaseTime: '2024-02-10 18:00:00',
+      operator: '吴十一',
+      createTime: '2024-02-09 16:20:00',
+      status: 'completed'
+    },
+    {
+      id: 10,
+      procurementMethod: '私有云-改配',
+      supplyTime: '2024-02-12 14:00:00',
+      supplyAmount: 2200,
+      deliveryMethod: '自动交付',
+      releaseTime: '2024-04-12 14:00:00',
+      operator: '郑十二',
+      createTime: '2024-02-10 11:30:00',
       status: 'pending'
     }
   ];
@@ -312,19 +367,28 @@ const ResourceProcurementPage = () => {
           <Space wrap>
             <div>
               <span style={{ marginRight: '8px' }}>筹措方式：</span>
-              <Select
-                placeholder="请选择筹措方式"
-                style={{ width: 150 }}
-                value={filters.procurementMethod}
-                onChange={(value) => setFilters({...filters, procurementMethod: value})}
-                allowClear
-              >
-                <Option value="私有云扩容">私有云扩容</Option>
-                <Option value="公有云采购">公有云采购</Option>
-                <Option value="存量机器转化">存量机器转化</Option>
-                <Option value="紧急调配">紧急调配</Option>
-                <Option value="合作伙伴供给">合作伙伴供给</Option>
-              </Select>
+               <Select
+                 placeholder="请选择筹措方式"
+                 style={{ width: 180 }}
+                 value={filters.procurementMethod}
+                 onChange={(value) => setFilters({...filters, procurementMethod: value})}
+                 allowClear
+               >
+                 <Select.OptGroup label="私有云">
+                   <Option value="私有云-采购">采购</Option>
+                   <Option value="私有云-提拉">提拉</Option>
+                   <Option value="私有云-借调">借调</Option>
+                   <Option value="私有云-归还">归还</Option>
+                   <Option value="私有云-报废">报废</Option>
+                   <Option value="私有云-搬迁">搬迁</Option>
+                   <Option value="私有云-改配">改配</Option>
+                 </Select.OptGroup>
+                 <Select.OptGroup label="公有云">
+                   <Option value="公有云-采购">采购</Option>
+                   <Option value="公有云-释放">释放</Option>
+                   <Option value="公有云-腾退">腾退</Option>
+                 </Select.OptGroup>
+               </Select>
             </div>
 
             <div>
@@ -407,19 +471,28 @@ const ResourceProcurementPage = () => {
              operator: '当前用户'
            }}
          >
-           <Form.Item
-             label="筹措方式"
-             name="procurementMethod"
-             rules={[{ required: true, message: '请选择筹措方式' }]}
-           >
-             <Select placeholder="请选择筹措方式">
-               <Option value="私有云扩容">私有云扩容</Option>
-               <Option value="公有云采购">公有云采购</Option>
-               <Option value="存量机器转化">存量机器转化</Option>
-               <Option value="紧急调配">紧急调配</Option>
-               <Option value="合作伙伴供给">合作伙伴供给</Option>
-             </Select>
-           </Form.Item>
+            <Form.Item
+              label="筹措方式"
+              name="procurementMethod"
+              rules={[{ required: true, message: '请选择筹措方式' }]}
+            >
+              <Select placeholder="请选择筹措方式">
+                <Select.OptGroup label="私有云">
+                  <Option value="私有云-采购">采购</Option>
+                  <Option value="私有云-提拉">提拉</Option>
+                  <Option value="私有云-借调">借调</Option>
+                  <Option value="私有云-归还">归还</Option>
+                  <Option value="私有云-报废">报废</Option>
+                  <Option value="私有云-搬迁">搬迁</Option>
+                  <Option value="私有云-改配">改配</Option>
+                </Select.OptGroup>
+                <Select.OptGroup label="公有云">
+                  <Option value="公有云-采购">采购</Option>
+                  <Option value="公有云-释放">释放</Option>
+                  <Option value="公有云-腾退">腾退</Option>
+                </Select.OptGroup>
+              </Select>
+            </Form.Item>
 
            <Form.Item
              label="供给量级（核）"
