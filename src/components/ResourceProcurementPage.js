@@ -26,7 +26,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-采购',
       supplyTime: '2024-01-15 10:00:00',
       supplyAmount: 5000,
-      deliveryMethod: '自动交付',
+      deliveryMethod: '系统对接',
       releaseTime: '2024-03-15 10:00:00',
       operator: '张三',
       createTime: '2024-01-10 14:30:00',
@@ -37,7 +37,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '公有云-采购',
       supplyTime: '2024-01-20 09:00:00',
       supplyAmount: 8000,
-      deliveryMethod: '手动分配',
+      deliveryMethod: '手动录入',
       releaseTime: '2024-04-20 09:00:00',
       operator: '李四',
       createTime: '2024-01-18 16:45:00',
@@ -48,7 +48,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-提拉',
       supplyTime: '2024-01-12 08:30:00',
       supplyAmount: 3200,
-      deliveryMethod: '批量交付',
+      deliveryMethod: '系统对接',
       releaseTime: '2024-02-28 08:30:00',
       operator: '王五',
       createTime: '2024-01-08 11:20:00',
@@ -59,7 +59,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-借调',
       supplyTime: '2024-01-25 15:00:00',
       supplyAmount: 1500,
-      deliveryMethod: '即时交付',
+      deliveryMethod: '手动录入',
       releaseTime: '2024-02-10 15:00:00',
       operator: '赵六',
       createTime: '2024-01-25 14:00:00',
@@ -70,7 +70,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '公有云-释放',
       supplyTime: '2024-02-01 12:00:00',
       supplyAmount: 6500,
-      deliveryMethod: '分批交付',
+      deliveryMethod: '系统对接',
       releaseTime: '2024-05-01 12:00:00',
       operator: '孙七',
       createTime: '2024-01-28 09:15:00',
@@ -81,7 +81,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-搬迁',
       supplyTime: '2024-01-30 14:00:00',
       supplyAmount: 2800,
-      deliveryMethod: '自动交付',
+      deliveryMethod: '手动录入',
       releaseTime: '2024-04-30 14:00:00',
       operator: '陈八',
       createTime: '2024-01-29 10:30:00',
@@ -92,7 +92,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '公有云-腾退',
       supplyTime: '2024-02-05 16:00:00',
       supplyAmount: 4200,
-      deliveryMethod: '手动分配',
+      deliveryMethod: '系统对接',
       releaseTime: '2024-03-05 16:00:00',
       operator: '刘九',
       createTime: '2024-02-03 11:45:00',
@@ -103,7 +103,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-归还',
       supplyTime: '2024-02-08 10:30:00',
       supplyAmount: 3500,
-      deliveryMethod: '批量交付',
+      deliveryMethod: '手动录入',
       releaseTime: '2024-03-08 10:30:00',
       operator: '周十',
       createTime: '2024-02-06 14:15:00',
@@ -114,7 +114,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-报废',
       supplyTime: '2024-02-10 09:00:00',
       supplyAmount: 800,
-      deliveryMethod: '即时交付',
+      deliveryMethod: '系统对接',
       releaseTime: '2024-02-10 18:00:00',
       operator: '吴十一',
       createTime: '2024-02-09 16:20:00',
@@ -125,7 +125,7 @@ const ResourceProcurementPage = () => {
       procurementMethod: '私有云-改配',
       supplyTime: '2024-02-12 14:00:00',
       supplyAmount: 2200,
-      deliveryMethod: '自动交付',
+      deliveryMethod: '手动录入',
       releaseTime: '2024-04-12 14:00:00',
       operator: '郑十二',
       createTime: '2024-02-10 11:30:00',
@@ -187,22 +187,19 @@ const ResourceProcurementPage = () => {
       ),
       sorter: (a, b) => a.supplyAmount - b.supplyAmount
     },
-    {
-      title: '交付方式',
-      dataIndex: 'deliveryMethod',
-      key: 'deliveryMethod',
-      width: 100,
-      render: (method) => {
-        const colorMap = {
-          '自动交付': 'blue',
-          '手动分配': 'orange',
-          '批量交付': 'green',
-          '即时交付': 'red',
-          '分批交付': 'purple'
-        };
-        return <Tag color={colorMap[method] || 'default'}>{method}</Tag>;
-      }
-    },
+     {
+       title: '交付方式',
+       dataIndex: 'deliveryMethod',
+       key: 'deliveryMethod',
+       width: 100,
+       render: (method) => {
+         const colorMap = {
+           '系统对接': 'blue',
+           '手动录入': 'orange'
+         };
+         return <Tag color={colorMap[method] || 'default'}>{method}</Tag>;
+       }
+     },
     {
       title: '释放时间',
       dataIndex: 'releaseTime',
@@ -391,22 +388,19 @@ const ResourceProcurementPage = () => {
                </Select>
             </div>
 
-            <div>
-              <span style={{ marginRight: '8px' }}>交付方式：</span>
-              <Select
-                placeholder="请选择交付方式"
-                style={{ width: 120 }}
-                value={filters.deliveryMethod}
-                onChange={(value) => setFilters({...filters, deliveryMethod: value})}
-                allowClear
-              >
-                <Option value="自动交付">自动交付</Option>
-                <Option value="手动分配">手动分配</Option>
-                <Option value="批量交付">批量交付</Option>
-                <Option value="即时交付">即时交付</Option>
-                <Option value="分批交付">分批交付</Option>
-              </Select>
-            </div>
+             <div>
+               <span style={{ marginRight: '8px' }}>交付方式：</span>
+               <Select
+                 placeholder="请选择交付方式"
+                 style={{ width: 120 }}
+                 value={filters.deliveryMethod}
+                 onChange={(value) => setFilters({...filters, deliveryMethod: value})}
+                 allowClear
+               >
+                 <Option value="系统对接">系统对接</Option>
+                 <Option value="手动录入">手动录入</Option>
+               </Select>
+             </div>
 
             <div>
               <span style={{ marginRight: '8px' }}>操作人：</span>
@@ -537,19 +531,16 @@ const ResourceProcurementPage = () => {
              />
            </Form.Item>
 
-           <Form.Item
-             label="交付方式"
-             name="deliveryMethod"
-             rules={[{ required: true, message: '请选择交付方式' }]}
-           >
-             <Select placeholder="请选择交付方式">
-               <Option value="自动交付">自动交付</Option>
-               <Option value="手动分配">手动分配</Option>
-               <Option value="批量交付">批量交付</Option>
-               <Option value="即时交付">即时交付</Option>
-               <Option value="分批交付">分批交付</Option>
-             </Select>
-           </Form.Item>
+            <Form.Item
+              label="交付方式"
+              name="deliveryMethod"
+              rules={[{ required: true, message: '请选择交付方式' }]}
+            >
+              <Select placeholder="请选择交付方式">
+                <Option value="系统对接">系统对接</Option>
+                <Option value="手动录入">手动录入</Option>
+              </Select>
+            </Form.Item>
 
            <Form.Item
              label="操作人"
