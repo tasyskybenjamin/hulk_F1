@@ -61,11 +61,11 @@ const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement }) => 
                   <span className="item-label">其中</span>
                 </div>
                 <div className="summary-item indent">
-                  <span className="item-label">未满足明确需求（开始时间-当前时间+14天内）：</span>
+                  <span className="item-label">明确交付需求：</span>
                   <span className="item-value unfulfilled-clear">{formatNumber(summary.unfulfilledClearDemand)} 核</span>
                 </div>
                 <div className="summary-item indent">
-                  <span className="item-label">未满足不明确需求（当前时间+14天内-截止时间）：</span>
+                  <span className="item-label">未明确交付需求：</span>
                   <span className="item-value unfulfilled-unclear">{formatNumber(summary.unfulfilledUnclearDemand)} 核</span>
                 </div>
               </div>
