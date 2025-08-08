@@ -2,9 +2,10 @@ import React from 'react';
 import { Card, Row, Col, Divider, Alert, Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import DemandTrendChart from './DemandTrendChart';
+import InventoryTrendChart from './InventoryTrendChart';
 import './SummaryPanel.css';
 
-const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement, demandTrendData }) => {
+const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement, demandTrendData, inventoryTrendData }) => {
   if (!summary) {
     return null;
   }
@@ -131,16 +132,39 @@ const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement, deman
                     <span className="ratio">（占比 {summary.stockBreakdown.publicCloud.ratio}%）</span>
                   </span>
                 </div>
-                <div className="summary-item indent">
-                  <span className="item-label">其他方式转化配额可用库存：</span>
-                  <span className="item-value other-supply">
-                    {formatNumber(summary.stockBreakdown.otherSupply.total)} 核
-                    <span className="ratio">（占比 {summary.stockBreakdown.otherSupply.ratio}%）</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Col>
+                 <div className="summary-item indent">
+                   <span className="item-label">其他方式转化配额可用库存：</span>
+                   <span className="item-value other-supply">
+                     {formatNumber(summary.stockBreakdown.otherSupply.total)} 核
+                     <span className="ratio">（占比 {summary.stockBreakdown.otherSupply.ratio}%）</span>
+                   </span>
+                 </div>
+               </div>
+
+               {/* 库存趋势图 */}
+               {inventoryTrendData && (
+                 <div style={{
+                   marginTop: '16px',
+                   padding: '12px',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: '6px',
+                   backgroundColor: '#fafafa'
+                 }}>
+                   <div style={{
+                     fontSize: '14px',
+                     fontWeight: 'bold',
+                     marginBottom: '12px',
+                     color: '#666'
+                   }}>
+                     📊 库存趋势变化
+                   </div>
+                   <div style={{ height: '200px' }}>
+                     <InventoryTrendChart data={inventoryTrendData} />
+                   </div>
+                 </div>
+               )}
+             </div>
+           </Col>
         </Row>
 
         <Divider style={{ margin: '16px 0' }} />

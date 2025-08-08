@@ -348,11 +348,23 @@ const generateMockData = (filters) => {
     })
   };
 
+  // 生成库存趋势数据
+  const inventoryTrendData = {
+    labels,
+    stockQuota: stockQuotaRemaining, // 存量可用配额可用库存
+    stockMachine: stockMachineConversion, // 存量物理机转化配额可用库存
+    privateCloud: privateCloudSupply, // 私有云供给转化配额可用库存
+    publicCloud: publicCloudSupply, // 公有云供给转化配额可用库存
+    otherSupply: otherSupply, // 其他方式转化配额可用库存
+    totalInventory: totalAvailableInventory // 总可用库存
+  };
+
   return {
     inventoryDemand: inventoryDemandData,
     fulfilled: fulfilledData,
     resourceGapTrend: resourceGapTrendData,
     demandTrend: demandTrendData,
+    inventoryTrend: inventoryTrendData,
     summary: calculateSummary()
   };
 };

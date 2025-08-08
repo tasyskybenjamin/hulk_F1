@@ -271,6 +271,7 @@ function App() {
               summary={chartData.summary}
               filters={filters}
               demandTrendData={chartData.demandTrend}
+              inventoryTrendData={chartData.inventoryTrend}
               onNavigateToResourceProcurement={() => {
                 setSelectedKey('resource-procurement');
                 console.log('跳转到资源筹措页面');
