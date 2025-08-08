@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card, Row, Col, Divider, Alert, Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
+import DemandTrendChart from './DemandTrendChart';
 import './SummaryPanel.css';
 
-const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement }) => {
+const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement, demandTrendData }) => {
   if (!summary) {
     return null;
   }
@@ -64,13 +65,36 @@ const SummaryPanel = ({ summary, filters, onNavigateToResourceProcurement }) => 
                   <span className="item-label">明确交付需求：</span>
                   <span className="item-value unfulfilled-clear">{formatNumber(summary.unfulfilledClearDemand)} 核</span>
                 </div>
-                <div className="summary-item indent">
-                  <span className="item-label">未明确交付需求：</span>
-                  <span className="item-value unfulfilled-unclear">{formatNumber(summary.unfulfilledUnclearDemand)} 核</span>
-                </div>
-              </div>
-            </div>
-          </Col>
+                 <div className="summary-item indent">
+                   <span className="item-label">未明确交付需求：</span>
+                   <span className="item-value unfulfilled-unclear">{formatNumber(summary.unfulfilledUnclearDemand)} 核</span>
+                 </div>
+               </div>
+
+               {/* 需求趋势图 */}
+               {demandTrendData && (
+                 <div style={{
+                   marginTop: '16px',
+                   padding: '12px',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: '6px',
+                   backgroundColor: '#fafafa'
+                 }}>
+                   <div style={{
+                     fontSize: '14px',
+                     fontWeight: 'bold',
+                     marginBottom: '12px',
+                     color: '#666'
+                   }}>
+                     📈 需求趋势变化
+                   </div>
+                   <div style={{ height: '200px' }}>
+                     <DemandTrendChart data={demandTrendData} />
+                   </div>
+                 </div>
+               )}
+             </div>
+           </Col>
 
           <Col xs={24} md={12}>
             <div className="summary-section">

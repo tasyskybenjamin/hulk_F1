@@ -336,10 +336,23 @@ const generateMockData = (filters) => {
     };
   };
 
+  // 生成需求趋势数据
+  const demandTrendData = {
+    labels,
+    clearDemand: generateRandomData(baseDemand * 0.6, 400, 20), // 明确交付需求
+    unclearDemand: generateRandomData(baseDemand * 0.4, 300, 15), // 未明确交付需求
+    totalDemand: labels.map((_, index) => {
+      const clear = generateRandomData(baseDemand * 0.6, 400, 20)[index];
+      const unclear = generateRandomData(baseDemand * 0.4, 300, 15)[index];
+      return clear + unclear;
+    })
+  };
+
   return {
     inventoryDemand: inventoryDemandData,
     fulfilled: fulfilledData,
     resourceGapTrend: resourceGapTrendData,
+    demandTrend: demandTrendData,
     summary: calculateSummary()
   };
 };

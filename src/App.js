@@ -270,6 +270,7 @@ function App() {
             <SummaryPanel
               summary={chartData.summary}
               filters={filters}
+              demandTrendData={chartData.demandTrend}
               onNavigateToResourceProcurement={() => {
                 setSelectedKey('resource-procurement');
                 console.log('跳转到资源筹措页面');
