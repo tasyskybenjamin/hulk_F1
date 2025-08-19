@@ -1,152 +1,248 @@
 import React from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+import ReactECharts from 'echarts-for-react';
 
 const DemandTrendChart = ({ data }) => {
-  if (!data) {
-    return <div>暂无数据</div>;
+  if (!data || !data.labels || !data.datasets) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%',
+        color: '#999'
+      }}>
+        暂无数据
+      </div>
+    );
   }
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: {
-            size: 12
-          }
+  // 找到当前时间点的索引
+  const today = new Date().toISOString().split('T')[0];
+  const todayIndex = data.labels.findIndex(label => label === today);
+
+  // 生成异常点数据（模拟需求量级突增的点）
+  const generateAnomalyPoints = () => {
+    const anomalies = [];
+    data.datasets[0]?.data?.forEach((point, index) => {
+      // 模拟：如果某个点的值比前一个点增长超过50%，则认为是异常点
+      if (index > 0 && point.value > data.datasets[0].data[index - 1].value * 1.5) {
+        anomalies.push({
+          coord: [data.labels[index], point.value],
+          demandId: `demand_${index}`,
+          demandName: `突增需求-${index}`
+        });
+      }
+    });
+    return anomalies;
+  };
+
+  const anomalyPoints = generateAnomalyPoints();
+
+  const getChartOption = () => {
+    return {
+      title: {
+        text: '需求变化趋势',
+        left: 'center',
+        textStyle: {
+          fontSize: 16,
+          fontWeight: 'normal'
         }
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function(context) {
-            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} 核`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        display: true,
-        title: {
-          display: true,
-          text: '时间',
-          font: {
-            size: 12
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985'
           }
         },
-        grid: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.1)'
+        formatter: function(params) {
+          let result = `${params[0].axisValue}<br/>`;
+          params.forEach(param => {
+            const isPast = todayIndex === -1 || param.dataIndex <= todayIndex;
+            const dataType = isPast ? '历史数据' : '预测数据';
+            result += `${param.marker}${param.seriesName}: ${param.value} (${dataType})<br/>`;
+          });
+          return result;
         }
       },
-      y: {
-        display: true,
-        title: {
-          display: true,
-          text: '需求量（核）',
-          font: {
-            size: 12
-          }
-        },
-        grid: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.1)'
-        },
-        ticks: {
-          callback: function(value) {
-            return value.toLocaleString();
+      legend: {
+        data: data.datasets.map(dataset => dataset.label),
+        top: 30,
+        left: 'center'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        top: '15%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: data.labels,
+        axisLabel: {
+          formatter: function(value) {
+            return value.split('-').slice(1).join('/'); // 显示MM/DD格式
           }
         }
-      }
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    },
-    elements: {
-      point: {
-        radius: 4,
-        hoverRadius: 6
       },
-      line: {
-        tension: 0.3
-      }
+      yAxis: {
+        type: 'value',
+        name: '需求量',
+        axisLabel: {
+          formatter: '{value}'
+        }
+      },
+      series: [
+        // 为每个数据集创建两个系列：历史数据（实线）和预测数据（虚线）
+        ...data.datasets.flatMap((dataset, datasetIndex) => {
+          const historicalData = [];
+          const forecastData = [];
+
+          dataset.data.forEach((point, index) => {
+            const isPast = todayIndex === -1 || index <= todayIndex;
+            if (isPast) {
+              historicalData.push(point.value);
+              // 在NOW点也添加数据到预测系列，确保连贯
+              if (index === todayIndex) {
+                forecastData.push(point.value);
+              } else {
+                forecastData.push(null);
+              }
+            } else {
+              // 在NOW点的下一个点也添加到历史数据，确保连贯
+              if (index === todayIndex + 1) {
+                historicalData.push(point.value);
+              } else {
+                historicalData.push(null);
+              }
+              forecastData.push(point.value);
+            }
+          });
+
+          return [
+            // 历史数据系列（实线）
+            {
+              name: dataset.label,
+              type: 'line',
+              data: historicalData,
+              lineStyle: {
+                color: dataset.color,
+                width: 2,
+                type: 'solid'
+              },
+              itemStyle: {
+                color: dataset.color
+              },
+              symbol: 'circle',
+              symbolSize: 4,
+              smooth: true,
+              connectNulls: false,
+              // 只在第一个数据集中添加NOW线
+              ...(datasetIndex === 0 && todayIndex !== -1 ? {
+                markLine: {
+                  silent: true,
+                  lineStyle: {
+                    color: '#ff4d4f',
+                    width: 2,
+                    type: 'dashed'
+                  },
+                  label: {
+                    show: true,
+                    position: 'insideEndTop',
+                    formatter: 'NOW',
+                    color: '#ff4d4f',
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    padding: [2, 4],
+                    borderRadius: 3
+                  },
+                  data: [
+                    {
+                      xAxis: data.labels[todayIndex]
+                    }
+                  ]
+                }
+              } : {})
+            },
+            // 预测数据系列（虚线）
+            {
+              name: `${dataset.label}(预测)`,
+              type: 'line',
+              data: forecastData,
+              lineStyle: {
+                color: dataset.color,
+                width: 2,
+                type: 'dashed'
+              },
+              itemStyle: {
+                color: dataset.color,
+                opacity: 0.7
+              },
+              symbol: 'circle',
+              symbolSize: 4,
+              smooth: true,
+              connectNulls: false,
+              showInLegend: false // 不在图例中显示预测系列
+            }
+          ];
+        }),
+        // 异常点系列
+        {
+          name: '异常点',
+          type: 'scatter',
+          data: anomalyPoints.map(point => ({
+            value: point.coord,
+            demandId: point.demandId,
+            demandName: point.demandName
+          })),
+          symbolSize: 15,
+          itemStyle: {
+            color: '#ff4d4f',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowBlur: 5,
+            shadowColor: 'rgba(255, 77, 79, 0.5)'
+          },
+          label: {
+            show: true,
+            formatter: '⚠️',
+            position: 'top',
+            fontSize: 12
+          },
+          tooltip: {
+            formatter: function(params) {
+              return `异常点<br/>时间: ${params.value[0]}<br/>需求量: ${params.value[1]}<br/>点击查看详情`;
+            }
+          }
+        }
+      ]
+    };
+  };
+
+  const onChartClick = (params) => {
+    if (params.seriesName === '异常点' && params.data.demandId) {
+      console.log('点击异常点:', params.data.demandName, 'ID:', params.data.demandId);
+      // 这里可以添加跳转到需求详情页面的逻辑
+      // 例如：window.open(`/demand-detail/${params.data.demandId}`, '_blank');
     }
   };
 
-  const chartData = {
-    labels: data.labels,
-    datasets: [
-      {
-        label: '明确交付需求',
-        data: data.clearDemand,
-        borderColor: '#ff7875',
-        backgroundColor: 'rgba(255, 120, 117, 0.1)',
-        fill: true,
-        tension: 0.3,
-        pointBackgroundColor: '#ff7875',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2
-      },
-      {
-        label: '未明确交付需求',
-        data: data.unclearDemand,
-        borderColor: '#ffa940',
-        backgroundColor: 'rgba(255, 169, 64, 0.1)',
-        fill: true,
-        tension: 0.3,
-        pointBackgroundColor: '#ffa940',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2
-      },
-      {
-        label: '总需求',
-        data: data.totalDemand,
-        borderColor: '#1890ff',
-        backgroundColor: 'rgba(24, 144, 255, 0.1)',
-        fill: false,
-        tension: 0.3,
-        pointBackgroundColor: '#1890ff',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        borderWidth: 3
-      }
-    ]
-  };
-
   return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <Line data={chartData} options={options} />
-    </div>
+    <ReactECharts
+      option={getChartOption()}
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: '400px'
+      }}
+      onEvents={{
+        click: onChartClick
+      }}
+    />
   );
 };
 

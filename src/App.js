@@ -19,6 +19,8 @@ import InventoryDemandChart from './components/InventoryDemandChart';
 import FulfilledChart from './components/FulfilledChart';
 import ResourceGapChart from './components/ResourceGapChart';
 import ResourceProcurementPage from './components/ResourceProcurementPage';
+import DemandManagementPage from './components/DemandManagementPage';
+import InventoryManagementPage from './components/InventoryManagementPage';
 import { getResourceData } from './services/dataService';
 import './App.css';
 
@@ -42,7 +44,7 @@ function App() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedKey, setSelectedKey] = useState('supply-demand-match');
+  const [selectedKey, setSelectedKey] = useState('inventory-management');
 
   // 左侧导航菜单项
   const menuItems = [
@@ -215,6 +217,10 @@ function App() {
           {/* 根据选中的菜单项显示不同内容 */}
           {selectedKey === 'resource-procurement' ? (
             <ResourceProcurementPage />
+          ) : selectedKey === 'demand-management' ? (
+            <DemandManagementPage />
+          ) : selectedKey === 'inventory-management' ? (
+            <InventoryManagementPage />
           ) : (
             <>
               {/* 筛选面板 */}
@@ -248,22 +254,6 @@ function App() {
             </div>
           )}
 
-          {/* 调试信息 */}
-          {!loading && !error && (
-            <Card size="small" style={{ marginBottom: '16px', background: '#f0f0f0' }}>
-              <p style={{ margin: 0, fontSize: '12px' }}>
-                🔍 调试信息:
-                图表1数据: {chartData.inventoryDemand ? '✅' : '❌'} |
-                图表2数据: {chartData.fulfilled ? '✅' : '❌'} |
-                图表3数据: {chartData.resourceGapTrend ? '✅' : '❌'} |
-                汇总数据: {chartData.summary ? '✅' : '❌'} |
-                {chartData.inventoryDemand && ` 时间点: ${chartData.inventoryDemand.labels?.length || 0}`} |
-                时间范围: {filters.dateRange ? `${filters.dateRange[0].format('YYYY-MM-DD')} 至 ${filters.dateRange[1].format('YYYY-MM-DD')}` : '未选择'} |
-                时间格式: {chartData.inventoryDemand?.labels?.[0]?.includes(':') ? '小时' : '日期'} |
-                {chartData.summary && `缺口数量: ${chartData.summary.resourceGaps?.length || 0}`}
-              </p>
-            </Card>
-          )}
 
           {/* 汇总面板 */}
           {!loading && !error && chartData.summary && (

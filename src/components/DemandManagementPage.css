@@ -1,0 +1,140 @@
+.demand-management-page {
+  padding: 0;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.demand-management-page .filter-card {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.demand-management-page .filter-item {
+  margin-bottom: 8px;
+}
+
+.demand-management-page .filter-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.demand-management-page .distribution-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.demand-management-page .distribution-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 24px;
+}
+
+.demand-management-page .distribution-card .ant-card-body {
+  padding: 16px 24px;
+}
+
+.demand-management-page .trend-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.demand-management-page .trend-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 24px;
+}
+
+.demand-management-page .trend-card .ant-card-body {
+  padding: 16px 24px;
+}
+
+/* 统计卡片样式 */
+.demand-management-page .ant-statistic {
+  text-align: center;
+}
+
+.demand-management-page .ant-statistic-title {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.demand-management-page .ant-statistic-content {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* 筛选条件标签样式 */
+.demand-management-page .ant-tag {
+  margin: 2px 4px 2px 0;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* 按钮组样式 */
+.demand-management-page .ant-btn-group .ant-btn {
+  border-radius: 0;
+}
+
+.demand-management-page .ant-btn-group .ant-btn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.demand-management-page .ant-btn-group .ant-btn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* 表格样式 */
+.demand-management-page .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #262626;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.demand-management-page .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.demand-management-page .ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* 开关样式 */
+.demand-management-page .ant-switch {
+  background: #f0f0f0;
+}
+
+.demand-management-page .ant-switch-checked {
+  background: #1890ff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .demand-management-page .filter-item {
+    margin-bottom: 12px;
+  }
+
+  .demand-management-page .ant-statistic-content {
+    font-size: 20px;
+  }
+
+  .demand-management-page .distribution-card .ant-card-body,
+  .demand-management-page .trend-card .ant-card-body {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .demand-management-page .ant-statistic-content {
+    font-size: 18px;
+  }
+
+  .demand-management-page .filter-label {
+    font-size: 11px;
+  }
+}
