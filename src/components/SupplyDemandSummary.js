@@ -116,6 +116,14 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
     return dayjs(dateStr).format('YYYY年MM月DD日');
   };
 
+  const formatPeakTime = (dateStr) => {
+    // 为峰值时刻生成随机的小时和分钟
+    const date = dayjs(dateStr);
+    const randomHour = Math.floor(Math.random() * 24);
+    const randomMinute = Math.floor(Math.random() * 60);
+    return date.hour(randomHour).minute(randomMinute).format('YYYY年MM月DD日HH点mm分');
+  };
+
   const getInventoryStatusText = (status) => {
     switch (status) {
       case 'sufficient': return '大于需求峰值';
@@ -155,33 +163,22 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
           <div style={{ background: '#fff7e6', padding: '16px', borderRadius: '8px', border: '1px solid #ffd591' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <WarningOutlined style={{ color: '#fa8c16' }} />
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>需求：共 {summary.totalDemandSum.toLocaleString()} 核</span>
-            </div>
-
-            <div style={{ marginBottom: '8px' }}>
-              峰值时刻需求 <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.peakDemand.toLocaleString()} 核</span>，
-              时间：{formatDate(summary.peakDemandDate)}
+               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                 需求：共 {summary.totalDemandSum.toLocaleString()} 核，峰值时刻为：{formatPeakTime(summary.peakDemandDate)}，需求为 {summary.peakDemand.toLocaleString()} 核
+               </span>
             </div>
 
             <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>状态分布：</div>
-              <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
-                待评估 <span style={{ color: '#faad14' }}>{summary.statusDistribution.pending.toLocaleString()} 核</span>、
-                确认待交付 <span style={{ color: '#f5222d' }}>{summary.statusDistribution.confirmed.toLocaleString()} 核</span>、
-                已交付 <span style={{ color: '#52c41a' }}>{summary.statusDistribution.delivered.toLocaleString()} 核</span>、
-                已回收 <span style={{ color: '#1890ff' }}>{summary.statusDistribution.recycled.toLocaleString()} 核</span>、
-                驳回 <span style={{ color: '#d9d9d9' }}>{summary.statusDistribution.rejected.toLocaleString()} 核</span>（不算入需求总量）
+              <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>状态分布：</div>
+              <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
+                <div>待评估 <span style={{ color: '#faad14', fontWeight: 'bold' }}>{summary.statusDistribution.pending.toLocaleString()} 核</span>、 确认待交付 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.statusDistribution.confirmed.toLocaleString()} 核</span>、 已交付 <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.statusDistribution.delivered.toLocaleString()} 核</span>、 已回收 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.statusDistribution.recycled.toLocaleString()} 核</span>、 驳回 <span style={{ color: '#d9d9d9', fontWeight: 'bold' }}>{summary.statusDistribution.rejected.toLocaleString()} 核</span>（不算入需求总量）</div>
               </div>
             </div>
 
             <div>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>渠道分布：</div>
-              <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
-                日常 <span style={{ color: '#1890ff' }}>{summary.channelDistribution.daily.toLocaleString()} 核</span>、
-                活动 <span style={{ color: '#fa541c' }}>{summary.channelDistribution.activity.toLocaleString()} 核</span>、
-                应急 <span style={{ color: '#f5222d' }}>{summary.channelDistribution.emergency.toLocaleString()} 核</span>、
-                专项 <span style={{ color: '#722ed1' }}>{summary.channelDistribution.special.toLocaleString()} 核</span>、
-                资源池 <span style={{ color: '#13c2c2' }}>{summary.channelDistribution.pool.toLocaleString()} 核</span>
+              <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>渠道分布：</div>
+              <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
+                <div>日常 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.channelDistribution.daily.toLocaleString()} 核</span>、 活动 <span style={{ color: '#fa541c', fontWeight: 'bold' }}>{summary.channelDistribution.activity.toLocaleString()} 核</span>、 应急 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.channelDistribution.emergency.toLocaleString()} 核</span>、 专项 <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.channelDistribution.special.toLocaleString()} 核</span>、 资源池 <span style={{ color: '#13c2c2', fontWeight: 'bold' }}>{summary.channelDistribution.pool.toLocaleString()} 核</span></div>
               </div>
             </div>
           </div>
