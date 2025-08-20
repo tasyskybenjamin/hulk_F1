@@ -111,14 +111,77 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
     }
   ];
 
-  // 集群类型选项
-  const clusterTypeOptions = [
-    { value: 'elastic-cluster', label: '弹性集群' },
-    { value: 'cargo-cluster', label: 'Cargo集群' },
-    { value: 'finance-cluster', label: '金融专区集群' },
-    { value: 'settlement-cluster', label: '结算单元集群' },
-    { value: 'compute-cluster', label: '计算集群' },
-    { value: 'storage-cluster', label: '存储集群' }
+  // 集群组选项
+  const clusterGroupOptions = [
+    { value: 'hulk-general', label: 'hulk-general' },
+    { value: 'hulk-arm', label: 'hulk-arm' },
+    { value: 'txserverless', label: 'txserverless' }
+  ];
+
+  // 专区选项（根据集群组动态变化）
+  const getSpecialZoneOptions = (clusterGroups) => {
+    const specialZoneMap = {
+      'hulk-general': [
+        { value: 'default', label: 'default', type: 'zone' },
+        { value: 'hulk_pool_buffer', label: 'hulk_pool_buffer', type: 'zone' },
+        { value: 'hulk_holiday', label: 'hulk_holiday', type: 'zone' },
+        { value: 'jinrong_hulk', label: '金融', type: 'zone' },
+        { value: 'huidu_hulk', label: '灰度专区', type: 'zone' },
+        { value: 'hrs_non_zone_general', label: 'HRS视野内非专区部分', type: 'non-zone' }
+      ],
+      'hulk-arm': [
+        { value: 'default', label: 'default', type: 'zone' },
+        { value: 'hrs_non_zone_arm', label: 'HRS视野内非专区部分', type: 'non-zone' }
+      ],
+      'txserverless': [
+        { value: 'default', label: 'default', type: 'zone' },
+        { value: 'hrs_non_zone_serverless', label: 'HRS视野内非专区部分', type: 'non-zone' }
+      ]
+    };
+
+    if (!clusterGroups || clusterGroups.length === 0) {
+      return [];
+    }
+
+    // 如果选择了多个集群组，合并所有选项
+    const allOptions = [];
+    clusterGroups.forEach(group => {
+      if (specialZoneMap[group]) {
+        allOptions.push(...specialZoneMap[group]);
+      }
+    });
+
+    // 去重
+    const uniqueOptions = allOptions.filter((option, index, self) =>
+      index === self.findIndex(o => o.value === option.value)
+    );
+
+    return uniqueOptions;
+  };
+
+  // 调用方选项
+  const callerOptions = [
+    { value: 'avatar', label: 'avatar' },
+    { value: 'unit_4', label: 'unit_4' },
+    { value: 'avatar_reserved', label: 'avatar_reserved' },
+    { value: 'holiday', label: 'holiday' },
+    { value: 'policy', label: 'policy' },
+    { value: 'n_plus_one', label: 'n_plus_one' },
+    { value: 'hdr', label: 'hdr' },
+    { value: 'maoyan', label: 'maoyan' },
+    { value: 'hulk_holiday_admin', label: 'hulk_holiday_admin' },
+    { value: 'migrate_hulk_holiday', label: 'migrate_hulk_holiday' },
+    { value: 'hulk_holiday', label: 'hulk_holiday' },
+    { value: 'jinrong', label: 'jinrong' },
+    { value: 'avatarjinrong', label: 'avatarjinrong' },
+    { value: 'migrationjinrong', label: 'migrationjinrong' },
+    { value: 'policy_jinrong_hulk', label: 'policy+jinrong_hulk' },
+    { value: 'hulk_arm_admin', label: 'hulk_arm_admin' },
+    { value: 'hulk_arm', label: 'hulk_arm' },
+    { value: 'migrate_hulk_arm', label: 'migrate_hulk_arm' },
+    { value: 'policy_campaign_tx', label: 'policy_campaign_tx' },
+    { value: 'policy_txserverless', label: 'policy+txserverless' },
+    { value: 'txserverless_migration', label: 'txserverless_migration' }
   ];
 
   // 产品类型选项
@@ -181,6 +244,11 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
       newFilters.customerName = [];
     }
 
+    // 联动逻辑：当集群组变化时，清空专区选择
+    if (key === 'clusterGroup') {
+      newFilters.specialZone = [];
+    }
+
     onChange(newFilters);
   };
 
@@ -193,7 +261,9 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
        customerName: [], // 客户根据场景联动
        demandStatus: demandStatusOptions.map(s => s.value), // 默认全选所有状态
        region: [], // 地域多选，默认全选
-       clusterType: [], // 集群类型多选，默认全选
+       clusterGroup: [], // 集群组多选，默认全选
+       specialZone: [], // 专区根据集群组联动
+       caller: [], // 调用方多选，默认全选
        productType: productTypeOptions.map(p => p.value), // 默认全选所有产品类型
        demandTags: demandTagOptions.map(t => t.value) // 默认全选所有标签
      };
@@ -315,7 +385,7 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
           </div>
         </Col>
 
-        {/* 第二行：需求状态、地域/机房、资源池、产品类型 */}
+        {/* 第二行：需求状态、地域/机房、集群组、专区 */}
         <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
             <label className="filter-label">需求状态：</label>
@@ -357,26 +427,77 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
           </div>
         </Col>
 
-         <Col xs={24} sm={12} md={6}>
-           <div className="filter-item">
-             <label className="filter-label">集群组/专区：</label>
-             <Select
-               mode="multiple"
-               value={filters.clusterType}
-               onChange={(value) => handleFilterChange('clusterType', value)}
-               placeholder="请选择集群组/专区（默认全选）"
-               style={{ width: '100%' }}
-               allowClear
-               maxTagCount="responsive"
-             >
-               {clusterTypeOptions.map(cluster => (
-                 <Option key={cluster.value} value={cluster.value}>
-                   {cluster.label}
-                 </Option>
-               ))}
-             </Select>
-           </div>
-         </Col>
+        <Col xs={24} sm={12} md={6}>
+          <div className="filter-item">
+            <label className="filter-label">集群组：</label>
+            <Select
+              mode="multiple"
+              value={filters.clusterGroup}
+              onChange={(value) => handleFilterChange('clusterGroup', value)}
+              placeholder="请选择集群组"
+              style={{ width: '100%' }}
+              allowClear
+              maxTagCount="responsive"
+            >
+              {clusterGroupOptions.map(cluster => (
+                <Option key={cluster.value} value={cluster.value}>
+                  {cluster.label}
+                </Option>
+              ))}
+            </Select>
+          </div>
+        </Col>
+
+        <Col xs={24} sm={12} md={6}>
+          <div className="filter-item">
+            <label className="filter-label">专区：</label>
+            <Select
+              mode="multiple"
+              value={filters.specialZone}
+              onChange={(value) => handleFilterChange('specialZone', value)}
+              placeholder="请选择专区"
+              style={{ width: '100%' }}
+              allowClear
+              maxTagCount="responsive"
+              disabled={!filters.clusterGroup || filters.clusterGroup.length === 0}
+            >
+              {getSpecialZoneOptions(filters.clusterGroup).map(option => (
+                <Option key={option.value} value={option.value}>
+                  <span style={{ color: option.type === 'non-zone' ? '#666' : 'inherit' }}>
+                    {option.label}
+                    {option.type === 'non-zone' && <span style={{ fontSize: '12px', marginLeft: 4 }}>(非专区)</span>}
+                  </span>
+                </Option>
+              ))}
+            </Select>
+          </div>
+        </Col>
+
+        {/* 第三行：调用方、产品类型、需求标签 */}
+        <Col xs={24} sm={12} md={6}>
+          <div className="filter-item">
+            <label className="filter-label">调用方：</label>
+            <Select
+              mode="multiple"
+              value={filters.caller}
+              onChange={(value) => handleFilterChange('caller', value)}
+              placeholder="请选择调用方"
+              style={{ width: '100%' }}
+              allowClear
+              showSearch
+              maxTagCount="responsive"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+            >
+              {callerOptions.map(caller => (
+                <Option key={caller.value} value={caller.value}>
+                  {caller.label}
+                </Option>
+              ))}
+            </Select>
+          </div>
+        </Col>
 
         <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
@@ -399,8 +520,7 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
           </div>
         </Col>
 
-        {/* 第三行：需求标签 */}
-        <Col xs={24} sm={12} md={12}>
+        <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
             <label className="filter-label">需求标签：</label>
             <Select
@@ -410,6 +530,7 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
               placeholder="请选择需求标签"
               style={{ width: '100%' }}
               allowClear
+              maxTagCount="responsive"
             >
               {demandTagOptions.map(tag => (
                 <Option key={tag.value} value={tag.value}>
@@ -421,7 +542,7 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
         </Col>
 
         {/* 操作按钮 */}
-        <Col xs={24} sm={12} md={12}>
+        <Col xs={24} sm={12} md={6}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
             <Button
               icon={<ReloadOutlined />}
@@ -443,7 +564,9 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
       </Row>
 
       {/* 当前筛选条件展示 */}
-      {(filters.demandChannel?.length > 0 || filters.demandScenario?.length > 0 || filters.customerName?.length > 0 || filters.demandStatus?.length > 0 || filters.demandTags?.length > 0) && (
+      {(filters.demandChannel?.length > 0 || filters.demandScenario?.length > 0 || filters.customerName?.length > 0 ||
+        filters.demandStatus?.length > 0 || filters.clusterGroup?.length > 0 || filters.specialZone?.length > 0 ||
+        filters.caller?.length > 0 || filters.demandTags?.length > 0) && (
         <Row style={{ marginTop: 16 }}>
           <Col span={24}>
             <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '4px' }}>
@@ -471,6 +594,21 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
                   onClose={() => handleFilterChange('demandStatus', filters.demandStatus.filter(s => s !== status))}
                 >
                   状态: {demandStatusOptions.find(s => s.value === status)?.label}
+                </Tag>
+              ))}
+              {filters.clusterGroup?.map(cluster => (
+                <Tag key={cluster} closable onClose={() => handleFilterChange('clusterGroup', filters.clusterGroup.filter(c => c !== cluster))}>
+                  集群组: {clusterGroupOptions.find(c => c.value === cluster)?.label}
+                </Tag>
+              ))}
+              {filters.specialZone?.map(zone => (
+                <Tag key={zone} closable onClose={() => handleFilterChange('specialZone', filters.specialZone.filter(z => z !== zone))}>
+                  专区: {getSpecialZoneOptions(filters.clusterGroup).find(z => z.value === zone)?.label || zone}
+                </Tag>
+              ))}
+              {filters.caller?.map(caller => (
+                <Tag key={caller} closable onClose={() => handleFilterChange('caller', filters.caller.filter(c => c !== caller))}>
+                  调用方: {caller}
                 </Tag>
               ))}
               {filters.demandTags?.map(tag => (

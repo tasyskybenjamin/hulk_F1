@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
 
-const DemandTrendChart = ({ data }) => {
+const DemandTrendChart = ({ data, disableAnomalyClick = false }) => {
   if (!data || !data.labels || !data.datasets) {
     return (
       <div style={{
@@ -190,8 +190,8 @@ const DemandTrendChart = ({ data }) => {
             }
           ];
         }),
-        // 异常点系列
-        {
+        // 异常点系列（仅在不禁用时显示）
+        ...(disableAnomalyClick ? [] : [{
           name: '异常点',
           type: 'scatter',
           data: anomalyPoints.map(point => ({
@@ -215,16 +215,16 @@ const DemandTrendChart = ({ data }) => {
           },
           tooltip: {
             formatter: function(params) {
-              return `异常点<br/>时间: ${params.value[0]}<br/>需求量: ${params.value[1]}<br/>点击查看详情`;
+              return `异常点<br/>时间: ${params.value[0]}<br/>需求量: ${params.value[1]}`;
             }
           }
-        }
+        }])
       ]
     };
   };
 
   const onChartClick = (params) => {
-    if (params.seriesName === '异常点' && params.data.demandId) {
+    if (!disableAnomalyClick && params.seriesName === '异常点' && params.data.demandId) {
       console.log('点击异常点:', params.data.demandName, 'ID:', params.data.demandId);
       // 这里可以添加跳转到需求详情页面的逻辑
       // 例如：window.open(`/demand-detail/${params.data.demandId}`, '_blank');
@@ -239,7 +239,7 @@ const DemandTrendChart = ({ data }) => {
         height: '100%',
         minHeight: '400px'
       }}
-      onEvents={{
+      onEvents={disableAnomalyClick ? {} : {
         click: onChartClick
       }}
     />

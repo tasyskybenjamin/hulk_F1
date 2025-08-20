@@ -152,6 +152,12 @@ const DemandManagementPage = () => {
       const confirmedPending = [];
       const delivered = [];
 
+      // 基础值和趋势参数
+      let totalBase = 120;
+      let pendingBase = 15;
+      let confirmedBase = 35;
+      let deliveredBase = 70;
+
       for (let i = 30; i >= -30; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -159,22 +165,43 @@ const DemandManagementPage = () => {
 
         // 模拟数据，过去是实线，未来是虚线
         const isPast = i >= 0;
+
+        // 添加季节性波动和长期趋势
+        const seasonalFactor = 1 + 0.2 * Math.sin((i + 30) * Math.PI / 30); // 季节性波动
+        const trendFactor = isPast ? 1 : 1 + (30 - i) * 0.01; // 未来增长趋势
+        const randomFactor = 0.9 + Math.random() * 0.2; // 随机波动±10%
+
+        // 总需求：平滑变化，有轻微上升趋势
+        const totalValue = Math.round(totalBase * seasonalFactor * trendFactor * randomFactor);
         totalDemand.push({
-          value: Math.floor(Math.random() * 100) + 50,
+          value: totalValue,
           isPast
         });
+        totalBase = totalBase * 0.95 + totalValue * 0.05; // 平滑基础值
+
+        // 待评估需求：相对稳定，偶有波动
+        const pendingValue = Math.round(pendingBase * (0.8 + Math.random() * 0.4) * (isPast ? 1 : 1.1));
         pendingEvaluation.push({
-          value: Math.floor(Math.random() * 20) + 5,
+          value: pendingValue,
           isPast
         });
+        pendingBase = pendingBase * 0.9 + pendingValue * 0.1;
+
+        // 确认待交付需求：有明显的周期性变化
+        const confirmedValue = Math.round(confirmedBase * seasonalFactor * (0.7 + Math.random() * 0.6) * trendFactor);
         confirmedPending.push({
-          value: Math.floor(Math.random() * 30) + 10,
+          value: confirmedValue,
           isPast
         });
+        confirmedBase = confirmedBase * 0.9 + confirmedValue * 0.1;
+
+        // 已交付需求：相对平稳，有轻微增长
+        const deliveredValue = Math.round(deliveredBase * (0.85 + Math.random() * 0.3) * trendFactor);
         delivered.push({
-          value: Math.floor(Math.random() * 40) + 20,
+          value: deliveredValue,
           isPast
         });
+        deliveredBase = deliveredBase * 0.95 + deliveredValue * 0.05;
       }
 
       setTrendData({
@@ -486,21 +513,75 @@ const DemandManagementPage = () => {
                 <span>需求变化趋势</span>
                 <Tag color="blue">实线：历史数据</Tag>
                 <Tag color="purple">虚线：预测数据</Tag>
-                <Tooltip title="图表上的气泡表示需求量级突增，点击可查看详情">
-                  <InfoCircleOutlined style={{ color: '#999' }} />
-                </Tooltip>
               </div>
             }
             className="trend-card"
-            extra={
-              <div style={{ fontSize: '12px', color: '#666' }}>
-                支持点击异常点查看需求详情
-              </div>
-            }
           >
-            <div style={{ height: '400px' }}>
-              <DemandTrendChart data={trendData} />
-            </div>
+            <Tabs
+              defaultActiveKey="total"
+              items={[
+                {
+                  key: 'total',
+                  label: '总需求',
+                  children: (
+                    <div style={{ height: '400px' }}>
+                      <DemandTrendChart
+                        data={{
+                          labels: trendData.labels,
+                          datasets: trendData.datasets ? [trendData.datasets[0]] : []
+                        }}
+                        disableAnomalyClick={true}
+                      />
+                    </div>
+                  )
+                },
+                {
+                  key: 'pending',
+                  label: '待评估需求',
+                  children: (
+                    <div style={{ height: '400px' }}>
+                      <DemandTrendChart
+                        data={{
+                          labels: trendData.labels,
+                          datasets: trendData.datasets ? [trendData.datasets[1]] : []
+                        }}
+                        disableAnomalyClick={true}
+                      />
+                    </div>
+                  )
+                },
+                {
+                  key: 'confirmed',
+                  label: '确认待交付需求',
+                  children: (
+                    <div style={{ height: '400px' }}>
+                      <DemandTrendChart
+                        data={{
+                          labels: trendData.labels,
+                          datasets: trendData.datasets ? [trendData.datasets[2]] : []
+                        }}
+                        disableAnomalyClick={true}
+                      />
+                    </div>
+                  )
+                },
+                {
+                  key: 'delivered',
+                  label: '已交付需求',
+                  children: (
+                    <div style={{ height: '400px' }}>
+                      <DemandTrendChart
+                        data={{
+                          labels: trendData.labels,
+                          datasets: trendData.datasets ? [trendData.datasets[3]] : []
+                        }}
+                        disableAnomalyClick={true}
+                      />
+                    </div>
+                  )
+                }
+              ]}
+            />
           </Card>
         </Col>
       </Row>

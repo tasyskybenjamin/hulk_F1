@@ -21,6 +21,7 @@ import ResourceGapChart from './components/ResourceGapChart';
 import ResourceProcurementPage from './components/ResourceProcurementPage';
 import DemandManagementPage from './components/DemandManagementPage';
 import InventoryManagementPage from './components/InventoryManagementPage';
+import SupplyDemandMatchingPage from './components/SupplyDemandMatchingPage';
 import { getResourceData } from './services/dataService';
 import './App.css';
 
@@ -215,7 +216,9 @@ function App() {
         <Content className="app-content">
           <div className="content-wrapper">
           {/* 根据选中的菜单项显示不同内容 */}
-          {selectedKey === 'resource-procurement' ? (
+          {selectedKey === 'supply-demand-match' ? (
+            <SupplyDemandMatchingPage />
+          ) : selectedKey === 'resource-procurement' ? (
             <ResourceProcurementPage />
           ) : selectedKey === 'demand-management' ? (
             <DemandManagementPage />
