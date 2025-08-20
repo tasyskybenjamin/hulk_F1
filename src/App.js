@@ -228,7 +228,16 @@ function App() {
           ) : selectedKey === 'demand-management' ? (
             <DemandManagementPage />
           ) : selectedKey === 'inventory-management' ? (
-            <InventoryManagementPage />
+            <InventoryManagementPage
+              onNavigateToResourceProcurement={(params) => {
+                setSelectedKey('resource-procurement');
+                console.log('从库存管理跳转到资源筹措页面，参数:', params);
+                // 可以将参数存储到sessionStorage供资源筹措页面使用
+                if (params) {
+                  sessionStorage.setItem('procurementParams', JSON.stringify(params));
+                }
+              }}
+            />
           ) : (
             <>
               {/* 筛选面板 */}

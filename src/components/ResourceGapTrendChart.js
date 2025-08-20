@@ -2,7 +2,7 @@ import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 
-const ResourceGapTrendChart = ({ data, activeTab = 'all' }) => {
+const ResourceGapTrendChart = ({ data, activeTab = 'all', filters }) => {
   if (!data || !data.labels || !data.datasets) {
     return (
       <div style={{

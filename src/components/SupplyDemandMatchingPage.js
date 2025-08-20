@@ -231,31 +231,106 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
   };
 
   // 生成模拟趋势数据
-  const generateTrendData = () => {
+  const generateTrendData = (filterParams = {}) => {
     const dates = [];
     const inventoryData = [];
     const totalDemandData = [];
     const pendingDemandData = [];
     const confirmedDemandData = [];
 
-    // 基础值和趋势参数
-    let availableInventoryBase = 8500;
-    let deliveredInventoryBase = 2000;
-    let pendingBase = 150;
-    let confirmedBase = 320;
-    let deliveredDemandBase = 1800;
+    // 根据筛选条件调整基础值
+    let inventoryMultiplier = 1;
+    let demandMultiplier = 1;
 
-    for (let i = 30; i >= -30; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
+    // 集群组影响
+    if (filterParams.clusterGroup && filterParams.clusterGroup.length > 0) {
+      const clusterFactor = filterParams.clusterGroup.length / clusterGroupOptions.length;
+      inventoryMultiplier *= clusterFactor;
+      demandMultiplier *= clusterFactor;
+    }
 
-      const isPast = i >= 0;
+    // 地域影响
+    if (filterParams.region && filterParams.region.length > 0) {
+      const regionFactor = filterParams.region.length / 4; // 假设有4个主要地域
+      inventoryMultiplier *= Math.max(0.3, regionFactor);
+      demandMultiplier *= Math.max(0.3, regionFactor);
+    }
+
+    // 产品类型影响
+    if (filterParams.productType && filterParams.productType.length > 0) {
+      const productFactor = filterParams.productType.length / productTypeOptions.length;
+      inventoryMultiplier *= Math.max(0.4, productFactor);
+      demandMultiplier *= Math.max(0.4, productFactor);
+    }
+
+    // 基础值和趋势参数（应用筛选条件影响）
+    let availableInventoryBase = Math.round(6800 * inventoryMultiplier); // 降低基础库存，更容易出现缺口
+    let deliveredInventoryBase = Math.round(1500 * inventoryMultiplier);
+    let pendingBase = Math.round(200 * demandMultiplier); // 增加基础需求
+    let confirmedBase = Math.round(450 * demandMultiplier); // 增加基础需求
+    let deliveredDemandBase = Math.round(1200 * demandMultiplier);
+
+    // 根据用户选择的时间范围生成数据
+    const startDate = filterParams.dateRange ? filterParams.dateRange[0] : dayjs().subtract(1, 'month');
+    const endDate = filterParams.dateRange ? filterParams.dateRange[1] : dayjs().add(1, 'month');
+    const today = dayjs();
+
+    // 生成日期数组
+    let currentDate = startDate.clone();
+    while (currentDate.valueOf() <= endDate.valueOf()) {
+      dates.push(currentDate.format('YYYY-MM-DD'));
+      currentDate = currentDate.add(1, 'day');
+    }
+
+    // 为每个日期生成数据
+    dates.forEach((dateStr, index) => {
+      const date = dayjs(dateStr);
+      const isPast = date.valueOf() <= today.valueOf();
+
+      // 计算相对于今天的天数差
+      const daysDiff = date.diff(today, 'day');
 
       // 添加季节性波动和长期趋势
-      const seasonalFactor = 1 + 0.15 * Math.sin((i + 30) * Math.PI / 30);
-      const trendFactor = isPast ? 1 : 1 + (30 - i) * 0.008;
+      const seasonalFactor = 1 + 0.15 * Math.sin((index + 30) * Math.PI / 30);
+      const trendFactor = isPast ? 1 : 1 + Math.abs(daysDiff) * 0.008;
       const randomFactor = 0.9 + Math.random() * 0.2;
+
+      // 创建需求波动（包括高峰期和低谷期）
+      let demandSpikeFactor = 1;
+      const totalDays = dates.length;
+
+      // 需求高峰期（模拟活动期间、节假日等）
+      const peakStart = Math.floor(totalDays * 0.6); // 在60%的位置开始高峰
+      const peakEnd = Math.floor(totalDays * 0.8); // 在80%的位置结束高峰
+
+      // 需求低谷期（模拟业务淡季、维护期等）
+      const lowStart = Math.floor(totalDays * 0.2); // 在20%的位置开始低谷
+      const lowEnd = Math.floor(totalDays * 0.4); // 在40%的位置结束低谷
+
+      if (index >= peakStart && index <= peakEnd) {
+        // 高峰期需求增加1.5-2.5倍
+        demandSpikeFactor = 1.5 + Math.sin((index - peakStart) / (peakEnd - peakStart) * Math.PI) * 1.0;
+      } else if (index >= lowStart && index <= lowEnd) {
+        // 低谷期需求减少到0.3-0.7倍
+        demandSpikeFactor = 0.5 - Math.sin((index - lowStart) / (lowEnd - lowStart) * Math.PI) * 0.2;
+      }
+
+      // 创建库存波动（模拟供应链问题、维护等）
+      let inventoryReductionFactor = 1;
+      const inventoryIssueStart = Math.floor(totalDays * 0.4);
+      const inventoryIssueEnd = Math.floor(totalDays * 0.7);
+
+      // 库存充足期（模拟新设备到货、扩容等）
+      const inventoryBoostStart = Math.floor(totalDays * 0.1);
+      const inventoryBoostEnd = Math.floor(totalDays * 0.3);
+
+      if (index >= inventoryIssueStart && index <= inventoryIssueEnd) {
+        // 库存问题期间库存减少20-40%
+        inventoryReductionFactor = 0.6 + Math.random() * 0.2;
+      } else if (index >= inventoryBoostStart && index <= inventoryBoostEnd) {
+        // 库存充足期间库存增加10-30%
+        inventoryReductionFactor = 1.1 + Math.random() * 0.2;
+      }
 
       if (isPast) {
         // 过去时间：库存 = 已交付需求 + 可用库存
@@ -288,24 +363,24 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
           isPast
         });
       } else {
-        // 未来时间：库存 = 可用库存
-        const availableValue = Math.round(availableInventoryBase * seasonalFactor * trendFactor * randomFactor);
+        // 未来时间：库存 = 可用库存（应用库存波动因子）
+        const availableValue = Math.round(availableInventoryBase * seasonalFactor * trendFactor * randomFactor * inventoryReductionFactor);
         inventoryData.push({
           value: availableValue,
           isPast
         });
         availableInventoryBase = availableInventoryBase * 0.95 + availableValue * 0.05;
 
-        // 未来时间：待评估需求（增加更大的增长趋势，让某些时间段出现缺口）
-        const pendingValue = Math.round(pendingBase * (0.7 + Math.random() * 0.6) * trendFactor * (1 + (30 - i) * 0.02));
+        // 未来时间：待评估需求（应用需求高峰期因子）
+        const pendingValue = Math.round(pendingBase * (0.7 + Math.random() * 0.6) * trendFactor * demandSpikeFactor * (1 + Math.abs(daysDiff) * 0.02));
         pendingDemandData.push({
           value: pendingValue,
           isPast
         });
         pendingBase = pendingBase * 0.9 + pendingValue * 0.1;
 
-        // 未来时间：确认待交付需求（增加更大的增长趋势）
-        const confirmedValue = Math.round(confirmedBase * seasonalFactor * (0.8 + Math.random() * 0.4) * trendFactor * (1 + (30 - i) * 0.015));
+        // 未来时间：确认待交付需求（应用需求高峰期因子）
+        const confirmedValue = Math.round(confirmedBase * seasonalFactor * (0.8 + Math.random() * 0.4) * trendFactor * demandSpikeFactor * (1 + Math.abs(daysDiff) * 0.015));
         confirmedDemandData.push({
           value: confirmedValue,
           isPast
@@ -318,7 +393,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
           isPast
         });
       }
-    }
+    });
 
     return {
       labels: dates,
@@ -358,7 +433,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
 
     // 模拟API调用
     setTimeout(() => {
-      const mockTrendData = generateTrendData();
+      const mockTrendData = generateTrendData(filters);
       setTrendData(mockTrendData);
       setLoading(false);
     }, 1000);
@@ -366,9 +441,17 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
 
   // 初始化数据
   useEffect(() => {
-    const mockTrendData = generateTrendData();
+    const mockTrendData = generateTrendData(filters);
     setTrendData(mockTrendData);
   }, []);
+
+  // 监听筛选条件变化，自动重新生成数据
+  useEffect(() => {
+    if (trendData) { // 只有在已有数据时才重新生成，避免重复初始化
+      const mockTrendData = generateTrendData(filters);
+      setTrendData(mockTrendData);
+    }
+  }, [filters.dateRange]);
 
 
   // 渲染地域选项
@@ -602,7 +685,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
       {/* 汇总说明 */}
       <SupplyDemandSummary
         data={trendData}
-        dateRange={filters.dateRange}
+        filters={filters}
         onNavigateToResourceProcurement={onNavigateToResourceProcurement}
       />
 
@@ -629,6 +712,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                     <SupplyDemandTrendChart
                       data={trendData}
                       activeTab="all"
+                      filters={filters}
                     />
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
@@ -647,6 +731,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                     <SupplyDemandTrendChart
                       data={trendData}
                       activeTab="pending"
+                      filters={filters}
                     />
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
@@ -665,6 +750,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                     <SupplyDemandTrendChart
                       data={trendData}
                       activeTab="confirmed"
+                      filters={filters}
                     />
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
@@ -703,6 +789,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                     <ResourceGapTrendChart
                       data={trendData}
                       activeTab="all"
+                      filters={filters}
                     />
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
@@ -721,6 +808,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                     <ResourceGapTrendChart
                       data={trendData}
                       activeTab="pending"
+                      filters={filters}
                     />
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
@@ -739,6 +827,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                     <ResourceGapTrendChart
                       data={trendData}
                       activeTab="confirmed"
+                      filters={filters}
                     />
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>

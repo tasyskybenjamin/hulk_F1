@@ -2,7 +2,7 @@ import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 
-const SupplyDemandTrendChart = ({ data, activeTab = 'all' }) => {
+const SupplyDemandTrendChart = ({ data, activeTab = 'all', filters }) => {
   if (!data || !data.labels || !data.datasets) {
     return (
       <div style={{

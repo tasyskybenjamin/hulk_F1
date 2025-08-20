@@ -34,7 +34,7 @@ import './InventoryManagementPage.css';
 
 const { RangePicker } = DatePicker;
 
-const InventoryManagementPage = () => {
+const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
   const [filters, setFilters] = useState({
     dateRange: [
       dayjs().subtract(1, 'month').startOf('day'), // 开始日期 00:00:00
@@ -344,16 +344,26 @@ const InventoryManagementPage = () => {
       const eventDate = trendData.labels[eventData.value[0]];
       const eventAmount = eventData.value[2];
 
-      // 构建跳转参数
-      const queryParams = new URLSearchParams({
-        type: eventType,
-        date: eventDate,
-        amount: eventAmount,
-        source: 'inventory-trend'
-      });
-
       // 跳转到资源筹措页面
-      window.open(`/resource-planning?${queryParams.toString()}`, '_blank');
+      if (onNavigateToResourceProcurement) {
+        onNavigateToResourceProcurement({
+          type: eventType,
+          date: eventDate,
+          amount: eventAmount,
+          source: 'inventory-trend'
+        });
+      } else {
+        // 备用方案：通过修改URL hash的方式跳转
+        window.location.hash = '#resource-procurement';
+
+        // 存储跳转参数到sessionStorage，供资源筹措页面使用
+        sessionStorage.setItem('procurementParams', JSON.stringify({
+          type: eventType,
+          date: eventDate,
+          amount: eventAmount,
+          source: 'inventory-trend'
+        }));
+      }
     }
   };
 
@@ -935,7 +945,6 @@ const InventoryManagementPage = () => {
                           title="库存总量"
                           value={summaryData.totalInventory}
                           valueStyle={{ color: '#1890ff', fontSize: '24px' }}
-                          suffix="核"
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                           可用+已出库+紧急+安全预留
@@ -948,7 +957,6 @@ const InventoryManagementPage = () => {
                           title="可用库存"
                           value={summaryData.availableInventory}
                           valueStyle={{ color: '#52c41a', fontSize: '24px' }}
-                          suffix="核"
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                           作为资源供给的可调配资源
@@ -961,7 +969,6 @@ const InventoryManagementPage = () => {
                           title="已出库"
                           value={summaryData.outboundInventory}
                           valueStyle={{ color: '#faad14', fontSize: '24px' }}
-                          suffix="核"
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                           已交付给业务/平台方的资源
@@ -974,7 +981,6 @@ const InventoryManagementPage = () => {
                           title="紧急资源"
                           value={summaryData.emergencyPool}
                           valueStyle={{ color: '#fa541c', fontSize: '24px' }}
-                          suffix="核"
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                           用于业务紧急场景的资源
@@ -987,7 +993,6 @@ const InventoryManagementPage = () => {
                           title="运维资源"
                           value={summaryData.operationPool}
                           valueStyle={{ color: '#13c2c2', fontSize: '24px' }}
-                          suffix="核"
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                           运维场景使用的资源
@@ -1000,7 +1005,6 @@ const InventoryManagementPage = () => {
                           title="安全预留"
                           value={summaryData.safetyReserve}
                           valueStyle={{ color: '#722ed1', fontSize: '24px' }}
-                          suffix="核"
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                           系统安全预留资源

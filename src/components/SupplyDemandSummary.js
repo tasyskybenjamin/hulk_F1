@@ -3,7 +3,7 @@ import { Card, Row, Col, Statistic, Alert, Tag, Button } from 'antd';
 import { WarningOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
-const SupplyDemandSummary = ({ data, dateRange, onNavigateToResourceProcurement }) => {
+const SupplyDemandSummary = ({ data, filters, onNavigateToResourceProcurement }) => {
   if (!data || !data.datasets) {
     return null;
   }
@@ -155,7 +155,7 @@ const SupplyDemandSummary = ({ data, dateRange, onNavigateToResourceProcurement 
     <Card
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>📊 统计汇总说明</span>
+          <span>📊 选择时间范围内资源汇总说明</span>
         </div>
       }
       className="supply-demand-summary"
@@ -163,117 +163,185 @@ const SupplyDemandSummary = ({ data, dateRange, onNavigateToResourceProcurement 
     >
       {/* 筛选条件的时间范围 */}
       <div style={{ marginBottom: 20, color: '#666', fontSize: '14px' }}>
-        筛选条件的时间范围内：{dateRange ? `${dateRange[0].format('YYYY-MM-DD')} 至 ${dateRange[1].format('YYYY-MM-DD')}` : '过去1个月 + 未来1个月'}
+        时间范围：{filters?.dateRange ? `${filters.dateRange[0].format('YYYY-MM-DD')} 至 ${filters.dateRange[1].format('YYYY-MM-DD')}` : '2025-07-20 至 2025-09-20'}
       </div>
 
-      {/* 1. 需求汇总 */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: '#1890ff' }}>
-          1. 需求：共 {summary.totalDemandSum.toLocaleString()} 核，峰值时刻为 {formatPeakTime(summary.peakDemandDate)}，需求 {summary.peakDemand.toLocaleString()} 核，其中
-        </div>
-
-        <div style={{ marginLeft: '20px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-            <span style={{ fontWeight: 'bold' }}>状态分布：</span>
-            待评估 <span style={{ color: '#faad14', fontWeight: 'bold' }}>{summary.statusDistribution.pending.toLocaleString()} 核</span>、
-            确认待交付 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.statusDistribution.confirmed.toLocaleString()} 核</span>、
-            已交付 <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.statusDistribution.delivered.toLocaleString()} 核</span>、
-            已回收 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.statusDistribution.recycled.toLocaleString()} 核</span>、
-            驳回 <span style={{ color: '#d9d9d9', fontWeight: 'bold' }}>{summary.statusDistribution.rejected.toLocaleString()} 核</span>（不算入需求总量）。
-          </div>
-        </div>
-
-        <div style={{ marginLeft: '20px' }}>
-          <div style={{ fontSize: '14px' }}>
-            <span style={{ fontWeight: 'bold' }}>渠道分布：</span>
-            日常 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.channelDistribution.daily.toLocaleString()} 核</span>、
-            活动 <span style={{ color: '#fa541c', fontWeight: 'bold' }}>{summary.channelDistribution.activity.toLocaleString()} 核</span>、
-            应急 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.channelDistribution.emergency.toLocaleString()} 核</span>、
-            专项 <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.channelDistribution.special.toLocaleString()} 核</span>、
-            资源池 <span style={{ color: '#13c2c2', fontWeight: 'bold' }}>{summary.channelDistribution.pool.toLocaleString()} 核</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. 库存汇总 */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: '#52c41a' }}>
-          2. 库存：当前可用库存 {summary.availableInventory.total.toLocaleString()} 核，需求峰值天对应库存约为 {summary.peakInventory.toLocaleString()} 核（{getInventoryStatusText(summary.inventoryStatus)}）
-        </div>
-
-        <div style={{ marginLeft: '20px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-            当前可使用库存约为：<span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.availableInventory.total.toLocaleString()} 核</span>
-          </div>
-        </div>
-
-        <div style={{ marginLeft: '20px', fontSize: '14px', lineHeight: '1.8' }}>
-          <div>【可用库存】配额余量 - <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.availableInventory.quota.toLocaleString()} 核</span></div>
-          <div>【正常供给】私有云到货 - <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.availableInventory.normalArrival.toLocaleString()} 核</span></div>
-          <div>【资源筹备】私有云提拉 - <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.availableInventory.privateCloudPull.toLocaleString()} 核</span></div>
-          <div>【资源筹措】私有云借调 - <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.availableInventory.resourceBorrow.toLocaleString()} 核</span></div>
-        </div>
-      </div>
-
-      {/* 3. 资源缺口 */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: summary.hasGap ? '#f5222d' : '#52c41a' }}>
-          3. 资源缺口：时间维度上的需求数量-可用库存
-        </div>
-
-        {summary.hasGap ? (
-          <div style={{ marginLeft: '20px' }}>
-            {summary.currentGap > 0 && (
-              <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-                最近资源缺口：<span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.currentGap.toLocaleString()} 核</span>，
-                时间：{formatPeakTime(summary.currentGapDate)}
-              </div>
-            )}
-            <div style={{ fontSize: '14px', marginBottom: '12px' }}>
-              最大资源缺口：<span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.maxGap.toLocaleString()} 核</span>，
-              时间：{formatPeakTime(summary.maxGapDate)}
+      {/* 上半部分：左右两栏布局 */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        {/* 左侧：需求信息 */}
+        <Col span={12}>
+          <div style={{
+            backgroundColor: '#fff7e6',
+            border: '1px solid #ffd591',
+            borderRadius: '6px',
+            padding: '16px',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '12px',
+              left: '12px',
+              color: '#fa8c16',
+              fontSize: '16px'
+            }}>
+              ⚠️
             </div>
+            <div style={{ marginLeft: '24px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: '#d46b08' }}>
+                需求：共 {summary.totalDemandSum.toLocaleString()} 核，峰值时刻为：{formatPeakTime(summary.peakDemandDate)}，需求为 {summary.peakDemand.toLocaleString()} 核
+              </div>
 
-            <Alert
-              message={
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>资源缺口预警</span>
-                  <Button
-                    type="primary"
-                    size="small"
-                    icon={<SettingOutlined />}
-                    onClick={handleGoToProcurement}
-                    style={{
-                      backgroundColor: '#f5222d',
-                      borderColor: '#f5222d',
-                      boxShadow: '0 2px 4px rgba(245, 34, 45, 0.3)'
-                    }}
-                  >
-                    资源筹措
-                  </Button>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: '#595959' }}>
+                  状态分布：
                 </div>
-              }
-              description={
-                <div style={{ color: '#f5222d' }}>
-                  时间范围内存在资源缺口，最大资源缺口：<span style={{ fontWeight: 'bold' }}>{summary.maxGap.toLocaleString()} 核</span>，
-                  时间：{formatPeakTime(summary.maxGapDate)}，请 Hulk 资源运营及时进行资源筹备
+                <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                  待评估 <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.statusDistribution.pending.toLocaleString()} 核</span>、
+                  确认待交付 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.statusDistribution.confirmed.toLocaleString()} 核</span>、
+                  已交付 <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.statusDistribution.delivered.toLocaleString()} 核</span>、
+                  已回收 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.statusDistribution.recycled.toLocaleString()} 核</span>、
+                  驳回 <span style={{ color: '#8c8c8c', fontWeight: 'bold' }}>{summary.statusDistribution.rejected.toLocaleString()} 核</span>（不算入需求总量）
                 </div>
-              }
-              type="warning"
-              showIcon
-            />
+              </div>
+
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: '#595959' }}>
+                  渠道分布：
+                </div>
+                <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                  日常 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.channelDistribution.daily.toLocaleString()} 核</span>、
+                  活动 <span style={{ color: '#fa541c', fontWeight: 'bold' }}>{summary.channelDistribution.activity.toLocaleString()} 核</span>、
+                  应急 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.channelDistribution.emergency.toLocaleString()} 核</span>、
+                  专项 <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.channelDistribution.special.toLocaleString()} 核</span>、
+                  资源池 <span style={{ color: '#13c2c2', fontWeight: 'bold' }}>{summary.channelDistribution.pool.toLocaleString()} 核</span>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div style={{ marginLeft: '20px' }}>
-            <Alert
-              message="资源供给充足"
-              description="当前时间范围内无资源缺口，资源供给充足"
-              type="success"
-              showIcon
-            />
+        </Col>
+
+        {/* 右侧：库存信息 */}
+        <Col span={12}>
+          <div style={{
+            backgroundColor: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: '6px',
+            padding: '16px',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '12px',
+              left: '12px',
+              color: '#52c41a',
+              fontSize: '16px'
+            }}>
+              ✅
+            </div>
+            <div style={{ marginLeft: '24px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: '#389e0d' }}>
+                库存：当前可用库存 {summary.availableInventory.total.toLocaleString()} 核 需求峰值时库存 {summary.peakInventory.toLocaleString()} 核
+                <span style={{
+                  fontSize: '12px',
+                  color: '#fa8c16',
+                  marginLeft: '8px',
+                  backgroundColor: '#fff7e6',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  border: '1px solid #ffd591'
+                }}>
+                  小于需求峰值
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '14px', marginBottom: '8px', color: '#52c41a', fontWeight: 'bold' }}>
+                  可使用库存约为：{summary.availableInventory.total.toLocaleString()} 核
+                </div>
+              </div>
+
+              <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【可用库存】</span>
+                  配额余量：<span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.availableInventory.quota.toLocaleString()} 核</span>
+                </div>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【正常供给】</span>
+                  私有云到货：<span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.availableInventory.normalArrival.toLocaleString()} 核</span>
+                </div>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【资源筹备】</span>
+                  私有云提拉：<span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.availableInventory.privateCloudPull.toLocaleString()} 核</span>
+                </div>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【资源筹措】</span>
+                  私有云借调：<span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.availableInventory.resourceBorrow.toLocaleString()} 核</span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </Col>
+      </Row>
+
+      {/* 下半部分：资源缺口预警 */}
+      {summary.hasGap ? (
+        <div style={{
+          backgroundColor: '#fff7e6',
+          border: '1px solid #ffd591',
+          borderRadius: '6px',
+          padding: '16px',
+          position: 'relative'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            color: '#fa8c16',
+            fontSize: '16px'
+          }}>
+            ⚠️
+          </div>
+          <div style={{ marginLeft: '24px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '8px'
+            }}>
+              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#d46b08' }}>
+                资源缺口预警
+              </span>
+              <Button
+                type="primary"
+                size="small"
+                icon={<SettingOutlined />}
+                onClick={handleGoToProcurement}
+                style={{
+                  backgroundColor: '#f5222d',
+                  borderColor: '#f5222d',
+                  boxShadow: '0 2px 4px rgba(245, 34, 45, 0.3)'
+                }}
+              >
+                资源筹措
+              </Button>
+            </div>
+            <div style={{ fontSize: '14px', color: '#d46b08', lineHeight: '1.6' }}>
+              时间范围内存在资源缺口，最大资源缺口：<span style={{ fontWeight: 'bold', color: '#f5222d' }}>{summary.maxGap.toLocaleString()} 核</span>，
+              时间：{formatDate(summary.maxGapDate)}
+            </div>
+            <div style={{ fontSize: '14px', color: '#f5222d', marginTop: '4px' }}>
+              请 Hulk 资源运营及时进行资源筹备
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Alert
+          message="资源供给充足"
+          description="当前时间范围内无资源缺口，资源供给充足"
+          type="success"
+          showIcon
+        />
+      )}
     </Card>
   );
 };
