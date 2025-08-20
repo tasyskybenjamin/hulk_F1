@@ -26,8 +26,7 @@ import {
   BarChartOutlined as OverviewOutlined,
   ReloadOutlined,
   SearchOutlined,
-  FilterOutlined,
-  CloseOutlined
+  FilterOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import './InventoryManagementPage.css';
@@ -419,8 +418,6 @@ const InventoryManagementPage = () => {
     const [selectedClusterGroups, setSelectedClusterGroups] = useState([]);
     const [selectedZones, setSelectedZones] = useState([]);
     const [selectedScenarios, setSelectedScenarios] = useState(filters.inventoryScenario || []);
-    const [selectedStatus, setSelectedStatus] = useState(filters.inventoryStatus || []);
-    const [selectedProductTypes, setSelectedProductTypes] = useState(filters.productType || []);
 
     // 获取可用的专区选项
     const getZoneOptions = () => {
@@ -450,10 +447,6 @@ const InventoryManagementPage = () => {
 
     const handleSubmit = () => {
       const values = form.getFieldsValue();
-      // 确保标签选择的值也被包含在提交的值中
-      values.inventoryScenario = selectedScenarios;
-      values.inventoryStatus = selectedStatus;
-      values.productType = selectedProductTypes;
       onChange(values);
     };
 
@@ -461,14 +454,7 @@ const InventoryManagementPage = () => {
       form.resetFields();
       setSelectedClusterGroups([]);
       setSelectedZones([]);
-      // 重置为所有选项
-      const allScenarios = Object.keys(scenarioTagMap);
-      const allStatus = Object.keys(statusTagMap);
-      const allProductTypes = Object.keys(productTypeTagMap);
-
-      setSelectedScenarios(allScenarios);
-      setSelectedStatus(allStatus);
-      setSelectedProductTypes(allProductTypes);
+      setSelectedScenarios(filters.inventoryScenario || []);
 
       onChange({
         dateRange: getDefaultDateRange(),
@@ -476,9 +462,9 @@ const InventoryManagementPage = () => {
         zone: [],
         caller: [],
         region: [],
-        inventoryStatus: allStatus,
-        productType: allProductTypes,
-        inventoryScenario: allScenarios
+        inventoryStatus: ['available', 'delivered'],
+        productType: ['general', 'economy', 'highPerformance'],
+        inventoryScenario: ['business', 'selfUse', 'operation', 'platform', 'emergency']
       });
     };
 
@@ -495,52 +481,18 @@ const InventoryManagementPage = () => {
       setSelectedZones(values);
     };
 
-    // 处理库存场景标签点击
-    const handleScenarioTagClick = (scenario) => {
-      const newSelectedScenarios = selectedScenarios.includes(scenario)
-        ? selectedScenarios.filter(s => s !== scenario)
-        : [...selectedScenarios, scenario];
-
-      setSelectedScenarios(newSelectedScenarios);
-
-      // 如果移除了某个场景，也需要移除该场景下的调用方
-      if (!newSelectedScenarios.includes(scenario)) {
-        const currentCallers = form.getFieldValue('caller') || [];
-        const scenarioCallers = (callerOptions[scenario] || []).map(c => c.value);
-        const newCallers = currentCallers.filter(c => !scenarioCallers.includes(c));
-        form.setFieldsValue({ caller: newCallers });
-      }
-    };
-
-    // 处理库存状态标签点击
-    const handleStatusTagClick = (status) => {
-      const newSelectedStatus = selectedStatus.includes(status)
-        ? selectedStatus.filter(s => s !== status)
-        : [...selectedStatus, status];
-
-      setSelectedStatus(newSelectedStatus);
-    };
-
-    // 处理产品类型标签点击
-    const handleProductTypeTagClick = (type) => {
-      const newSelectedProductTypes = selectedProductTypes.includes(type)
-        ? selectedProductTypes.filter(t => t !== type)
-        : [...selectedProductTypes, type];
-
-      setSelectedProductTypes(newSelectedProductTypes);
+    // 处理库存场景变化
+    const handleScenarioChange = (values) => {
+      setSelectedScenarios(values);
+      // 清空调用方选择
+      form.setFieldsValue({ caller: [] });
     };
 
     return (
       <Form
         form={form}
         layout="inline"
-        initialValues={{
-          ...filters,
-          // 不包含标签选择的字段，因为它们会单独处理
-          inventoryScenario: undefined,
-          inventoryStatus: undefined,
-          productType: undefined
-        }}
+        initialValues={filters}
         onFinish={handleSubmit}
       >
         <Row gutter={[16, 16]} style={{ width: '100%' }}>
@@ -593,6 +545,27 @@ const InventoryManagementPage = () => {
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
+              <span className="filter-label">库存场景</span>
+              <Form.Item name="inventoryScenario" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择库存场景"
+                  style={{ width: '100%' }}
+                  allowClear
+                  onChange={handleScenarioChange}
+                  options={[
+                    { value: 'business', label: '业务' },
+                    { value: 'selfUse', label: '自用' },
+                    { value: 'operation', label: '运维' },
+                    { value: 'platform', label: '平台' },
+                    { value: 'emergency', label: '紧急资源' }
+                  ]}
+                />
+              </Form.Item>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <div className="filter-item">
               <span className="filter-label">调用方</span>
               <Form.Item name="caller" style={{ width: '100%', marginBottom: 0 }}>
                 <Select
@@ -619,91 +592,41 @@ const InventoryManagementPage = () => {
               </Form.Item>
             </div>
           </Col>
-
-          {/* 库存场景标签 */}
-          <Col xs={24} sm={24} md={24} lg={24}>
-            <div className="filter-item">
-              <span className="filter-label">库存场景</span>
-              <div style={{ marginTop: 8 }}>
-                {Object.entries(scenarioTagMap).map(([key, { label, color }]) => (
-                  <Tag
-                    key={key}
-                    color={selectedScenarios.includes(key) ? color : 'default'}
-                    style={{
-                      marginBottom: 8,
-                      cursor: 'pointer',
-                      opacity: selectedScenarios.includes(key) ? 1 : 0.6
-                    }}
-                    onClick={() => handleScenarioTagClick(key)}
-                    closable={selectedScenarios.includes(key)}
-                    onClose={(e) => {
-                      e.preventDefault();
-                      handleScenarioTagClick(key);
-                    }}
-                  >
-                    {label}
-                  </Tag>
-                ))}
-              </div>
-            </div>
-          </Col>
-
-          {/* 库存状态标签 */}
-          <Col xs={24} sm={12} md={12} lg={12}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
               <span className="filter-label">库存状态</span>
-              <div style={{ marginTop: 8 }}>
-                {Object.entries(statusTagMap).map(([key, { label, color }]) => (
-                  <Tag
-                    key={key}
-                    color={selectedStatus.includes(key) ? color : 'default'}
-                    style={{
-                      marginBottom: 8,
-                      cursor: 'pointer',
-                      opacity: selectedStatus.includes(key) ? 1 : 0.6
-                    }}
-                    onClick={() => handleStatusTagClick(key)}
-                    closable={selectedStatus.includes(key)}
-                    onClose={(e) => {
-                      e.preventDefault();
-                      handleStatusTagClick(key);
-                    }}
-                  >
-                    {label}
-                  </Tag>
-                ))}
-              </div>
+              <Form.Item name="inventoryStatus" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择库存状态"
+                  style={{ width: '100%' }}
+                  allowClear
+                  options={[
+                    { value: 'available', label: '可用库存' },
+                    { value: 'delivered', label: '已出库' }
+                  ]}
+                />
+              </Form.Item>
             </div>
           </Col>
-
-          {/* 产品类型标签 */}
-          <Col xs={24} sm={12} md={12} lg={12}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
               <span className="filter-label">产品类型</span>
-              <div style={{ marginTop: 8 }}>
-                {Object.entries(productTypeTagMap).map(([key, { label, color }]) => (
-                  <Tag
-                    key={key}
-                    color={selectedProductTypes.includes(key) ? color : 'default'}
-                    style={{
-                      marginBottom: 8,
-                      cursor: 'pointer',
-                      opacity: selectedProductTypes.includes(key) ? 1 : 0.6
-                    }}
-                    onClick={() => handleProductTypeTagClick(key)}
-                    closable={selectedProductTypes.includes(key)}
-                    onClose={(e) => {
-                      e.preventDefault();
-                      handleProductTypeTagClick(key);
-                    }}
-                  >
-                    {label}
-                  </Tag>
-                ))}
-              </div>
+              <Form.Item name="productType" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择产品类型"
+                  style={{ width: '100%' }}
+                  allowClear
+                  options={[
+                    { value: 'general', label: '通用' },
+                    { value: 'economy', label: '经济' },
+                    { value: 'highPerformance', label: '高性能' }
+                  ]}
+                />
+              </Form.Item>
             </div>
           </Col>
-
           <Col xs={24} sm={24} md={24} lg={24} style={{ textAlign: 'right' }}>
             <Space>
               <Button
