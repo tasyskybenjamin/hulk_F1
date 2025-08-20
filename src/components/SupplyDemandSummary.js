@@ -43,6 +43,7 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
 
     // 库存相关数据
     const peakInventory = inventory.data[peakDemandIndex]?.value || 0;
+    const currentInventory = inventory.data[todayIndex]?.value || peakInventory;
     const inventoryStatus = peakInventory >= peakDemand ? 'sufficient' :
                            peakInventory >= peakDemand * 0.8 ? 'adequate' : 'insufficient';
 
@@ -92,6 +93,7 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
       },
       // 库存数据
       peakInventory,
+      currentInventory,
       inventoryStatus,
       availableInventory: {
         quota: quotaRemaining,
@@ -189,9 +191,11 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
           <div style={{ background: '#f6ffed', padding: '16px', borderRadius: '8px', border: '1px solid #b7eb8f' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <CheckCircleOutlined style={{ color: '#52c41a' }} />
-              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>库存：需求峰值时库存 {summary.peakInventory.toLocaleString()} 核</span>
+              <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                库存：当前可用库存 {summary.currentInventory.toLocaleString()} 核 需求峰值时库存 {summary.peakInventory.toLocaleString()} 核
+              </span>
               <Tag color={getInventoryStatusColor(summary.inventoryStatus)}>
-                {getInventoryStatusText(summary.inventoryStatus)}
+                （{getInventoryStatusText(summary.inventoryStatus)}）
               </Tag>
             </div>
 
@@ -201,11 +205,11 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
               </span>
             </div>
 
-            <div style={{ fontSize: '13px', lineHeight: '1.8' }}>
-              <div>【可用库存】配额余量 - <span style={{ color: '#52c41a' }}>{summary.availableInventory.quota.toLocaleString()} 核</span></div>
-              <div>【资源筹备】私有云提拉 - <span style={{ color: '#1890ff' }}>{summary.availableInventory.privateCloudPull.toLocaleString()} 核</span></div>
-              <div>【正常到货】私有云到货 - <span style={{ color: '#fa8c16' }}>{summary.availableInventory.normalArrival.toLocaleString()} 核</span></div>
-              <div>【资源筹措】私有云借调 - <span style={{ color: '#722ed1' }}>{summary.availableInventory.resourceBorrow.toLocaleString()} 核</span></div>
+            <div style={{ fontSize: '14px', lineHeight: '2' }}>
+              <div>【可用库存】配额余量 ： <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.availableInventory.quota.toLocaleString()} 核</span></div>
+              <div>【正常到货】私有云到货 ： <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.availableInventory.normalArrival.toLocaleString()} 核</span></div>
+              <div>【资源筹备】私有云提拉 ： <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.availableInventory.privateCloudPull.toLocaleString()} 核</span></div>
+              <div>【资源筹措】私有云借调 ： <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.availableInventory.resourceBorrow.toLocaleString()} 核</span></div>
             </div>
           </div>
         </Col>
