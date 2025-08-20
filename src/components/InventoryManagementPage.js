@@ -10,259 +10,225 @@ import {
   Tooltip,
   Tag,
   Switch,
+  Alert,
+  Tabs,
   Select,
   DatePicker,
-  Slider,
-  InputNumber,
-  Divider,
-  Progress,
-  Tabs
+  Input,
+  Form
 } from 'antd';
-
 import {
   EyeOutlined,
   TableOutlined,
   BarChartOutlined,
   InfoCircleOutlined,
-  SettingOutlined,
-  RiseOutlined,
-  AlertOutlined
+  UnorderedListOutlined,
+  BarChartOutlined as OverviewOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  FilterOutlined
 } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 import './InventoryManagementPage.css';
 
+const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const InventoryManagementPage = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // 获取当前日期前后两个月的日期范围
+  const getDefaultDateRange = () => {
+    const today = dayjs();
+    const startDate = today.subtract(2, 'month').startOf('day');
+    const endDate = today.add(2, 'month').endOf('day');
+    return [startDate, endDate];
+  };
+
   const [filters, setFilters] = useState({
-    dateRange: [dayjs().subtract(1, 'month'), dayjs().add(1, 'month')],
-    scenario: null,
-    clusterGroup: null,
-    specialZone: null,
-    caller: null
+    dateRange: getDefaultDateRange(),
+    clusterGroup: [], // 集群组
+    zone: [], // 专区
+    caller: [], // 调用方
+    region: [], // 地域/机房
+    inventoryStatus: ['available', 'delivered'], // 库存状态：可用库存、已出库
+    productType: ['general', 'economy', 'highPerformance'], // 产品类型：通用、经济、高性能
+    inventoryScenario: ['business', 'selfUse', 'operation', 'platform', 'emergency'] // 库存场景
   });
 
   const [summaryData, setSummaryData] = useState({
     totalInventory: 0,
     availableInventory: 0,
     reservedInventory: 0,
-    outboundInventory: 0,
-    safetyReserve: 0,
-    emergencyPool: 0,
-    operationPool: 0
+    allocatedInventory: 0,
+    pendingDelivery: 0,
+    pendingRecycle: 0
   });
 
   const [distributionData, setDistributionData] = useState([]);
-  const [trendData, setTrendData] = useState({ labels: [], datasets: {} });
+  const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState('chart');
-  const [distributionBy, setDistributionBy] = useState('region');
-  const [activeTab, setActiveTab] = useState('available');
-  const [showDatacenterDetails, setShowDatacenterDetails] = useState(false);
-  // 场景选项
-  const scenarioOptions = [
-    { value: 'business', label: '业务' },
-    { value: 'self-operation', label: '自运营' },
-    { value: 'operation', label: '运维' },
-    { value: 'emergency', label: '紧急资源' },
-    { value: 'platform', label: '平台' }
-  ];
+  const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'table'
+  const [distributionBy, setDistributionBy] = useState('region'); // 'region', 'status', 'pool'
 
-  // 集群组选项
+  // 模拟集群组数据
   const clusterGroupOptions = [
-    { value: 'hulk-general', label: 'hulk-general' },
-    { value: 'hulk-arm', label: 'hulk-arm' },
-    { value: 'txserverless', label: 'txserverless' }
+    { value: 'group1', label: '集群组1' },
+    { value: 'group2', label: '集群组2' },
+    { value: 'group3', label: '集群组3' }
   ];
 
-  // 专区选项（根据集群组动态变化）
-  const getSpecialZoneOptions = (clusterGroup) => {
-    const specialZoneMap = {
-      'hulk-general': [
-        { value: 'default', label: 'default' },
-        { value: 'hulk_pool_buffer', label: 'hulk_pool_buffer' },
-        { value: 'hulk_holiday', label: 'hulk_holiday' },
-        { value: 'jinrong_hulk', label: '金融' },
-        { value: 'huidu_hulk', label: '灰度专区' }
-      ],
-      'hulk-arm': [
-        { value: 'default', label: 'default' }
-      ],
-      'txserverless': [
-        { value: 'default', label: 'default' }
-      ]
-    };
-    return specialZoneMap[clusterGroup] || [];
+  // 模拟专区数据
+  const zoneOptions = {
+    group1: [
+      { value: 'zone1', label: '专区1' },
+      { value: 'zone2', label: '专区2' },
+      { value: 'non_zone1', label: '非专区1 (HRS)' }
+    ],
+    group2: [
+      { value: 'zone3', label: '专区3' },
+      { value: 'zone4', label: '专区4' },
+      { value: 'non_zone2', label: '非专区2 (HRS)' }
+    ],
+    group3: [
+      { value: 'zone5', label: '专区5' },
+      { value: 'zone6', label: '专区6' },
+      { value: 'non_zone3', label: '非专区3 (HRS)' }
+    ]
   };
 
-  // 调用方选项
-  const callerOptions = [
-    { value: 'avatar', label: 'avatar' },
-    { value: 'unit_4', label: 'unit_4' },
-    { value: 'avatar_reserved', label: 'avatar_reserved' },
-    { value: 'migration', label: 'migration' },
-    { value: 'holiday', label: 'holiday' },
-    { value: 'policy', label: 'policy' },
-    { value: 'cargo', label: 'cargo' },
-    { value: 'n_plus_one', label: 'n_plus_one' },
-    { value: 'hdr', label: 'hdr' },
-    { value: 'maoyan', label: 'maoyan' },
-    { value: 'hulk_holiday_admin', label: 'hulk_holiday_admin' },
-    { value: 'migrate_hulk_holiday', label: 'migrate_hulk_holiday' },
-    { value: 'hulk_holiday', label: 'hulk_holiday' },
-    { value: 'jinrong', label: 'jinrong' },
-    { value: 'avatarjinrong', label: 'avatarjinrong' },
-    { value: 'migrationjinrong', label: 'migrationjinrong' },
-    { value: 'policy_jinrong_hulk', label: 'policy+jinrong_hulk' },
-    { value: 'hulk_arm_admin', label: 'hulk_arm_admin' },
-    { value: 'hulk_arm', label: 'hulk_arm' },
-    { value: 'migrate_hulk_arm', label: 'migrate_hulk_arm' },
-    { value: 'policy_campaign_tx', label: 'policy_campaign_tx' },
-    { value: 'policy_txserverless', label: 'policy+txserverless' },
-    { value: 'txserverless_migration', label: 'txserverless_migration' }
-  ];
+  // 模拟调用方数据
+  const callerOptions = {
+    // 业务调用方
+    business: [
+      { value: 'avatar', label: 'avatar (公共池)' },
+      { value: 'unit_a', label: 'unit_a (A结算单元池)' },
+      { value: 'unit_b', label: 'unit_b (B结算单元池)' },
+      { value: 'holiday', label: 'holiday' },
+      { value: 'avatar_reserved', label: 'avatar_reserved (预约扩容)' }
+    ],
+    // 平台调用方
+    platform: [
+      { value: 'policy', label: 'policy (弹性)' },
+      { value: 'quake', label: 'quake' },
+      { value: 'maoyan', label: 'maoyan' }
+    ],
+    // 运维调用方
+    operation: [
+      { value: 'n_plus_one', label: 'n_plus_one (n+1容灾)' },
+      { value: 'hdr', label: 'hdr (宕机迁移)' },
+      { value: 'migration_donate_common', label: 'migration_donate_common (资源赠予池)' }
+    ],
+    // 自用调用方
+    selfUse: [
+      { value: 'buffer', label: 'buffer' },
+      { value: 'hulk_overassign', label: 'hulk_overassign' }
+    ],
+    // 紧急资源调用方
+    emergency: [
+      { value: 'emergency_resource', label: 'emergency_resource' }
+    ]
+  };
 
-  // 库存分类选项
-  const inventoryCategories = [
-    { key: 'total', label: '汇总', color: '#1890ff' },
-    { key: 'available', label: '可用库存', color: '#52c41a' },
-    { key: 'reserved', label: '已预占', color: '#faad14' },
-    { key: 'outbound', label: '已出库', color: '#f5222d' },
-    { key: 'safety', label: '安全预留', color: '#722ed1' },
-    { key: 'emergency', label: '紧急资源', color: '#fa541c' },
-    { key: 'operation', label: '运维资源', color: '#13c2c2' }
+  // 模拟地域/机房数据
+  const regionOptions = [
+    { value: 'beijing', label: '北京' },
+    { value: 'beijing_room1', label: '北京-机房1' },
+    { value: 'beijing_room2', label: '北京-机房2' },
+    { value: 'shanghai', label: '上海' },
+    { value: 'shanghai_room1', label: '上海-机房1' },
+    { value: 'huailai', label: '怀来' },
+    { value: 'huailai_room1', label: '怀来-机房1' }
   ];
 
   // 模拟数据获取
   const fetchInventoryData = async (filterParams) => {
     setLoading(true);
     try {
+      // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 模拟汇总数据
       setSummaryData({
-        totalInventory: 15680,
-        availableInventory: 8420,
-        reservedInventory: 3200,
-        outboundInventory: 1800,
-        safetyReserve: 1560,
-        emergencyPool: 600,
-        operationPool: 100
+        totalInventory: 2500,
+        availableInventory: 850,
+        reservedInventory: 320,
+        allocatedInventory: 1100,
+        pendingDelivery: 180,
+        pendingRecycle: 50
       });
 
       // 模拟分布数据
       const mockDistributionData = {
         region: [
-          { name: '北京', value: 6800, percentage: 43.4, available: 3600, reserved: 1400, safety: 800, emergency: 300, operation: 50 },
-          { name: '上海', value: 4200, percentage: 26.8, available: 2300, reserved: 900, safety: 500, emergency: 200, operation: 30 },
-          { name: '怀来', value: 3680, percentage: 23.5, available: 2020, reserved: 700, safety: 200, emergency: 80, operation: 20 },
-          { name: '其他', value: 1000, percentage: 6.4, available: 500, reserved: 200, safety: 60, emergency: 20, operation: 0 }
+          { name: '北京', value: 1200, percentage: 48 },
+          { name: '上海', value: 800, percentage: 32 },
+          { name: '怀来', value: 350, percentage: 14 },
+          { name: '其他', value: 150, percentage: 6 }
         ],
-        datacenter: [
-          { name: '北京-DC1', value: 3400, percentage: 21.7, available: 1800, reserved: 700, safety: 400, emergency: 150, operation: 25, region: '北京' },
-          { name: '北京-DC2', value: 3400, percentage: 21.7, available: 1800, reserved: 700, safety: 400, emergency: 150, operation: 25, region: '北京' },
-          { name: '上海-DC1', value: 2100, percentage: 13.4, available: 1150, reserved: 450, safety: 250, emergency: 100, operation: 15, region: '上海' },
-          { name: '上海-DC2', value: 2100, percentage: 13.4, available: 1150, reserved: 450, safety: 250, emergency: 100, operation: 15, region: '上海' },
-          { name: '怀来-DC1', value: 1840, percentage: 11.7, available: 1010, reserved: 350, safety: 100, emergency: 40, operation: 10, region: '怀来' },
-          { name: '怀来-DC2', value: 1840, percentage: 11.7, available: 1010, reserved: 350, safety: 100, emergency: 40, operation: 10, region: '怀来' },
-          { name: '其他-DC1', value: 1000, percentage: 6.4, available: 500, reserved: 200, safety: 60, emergency: 20, operation: 0, region: '其他' }
+        status: [
+          { name: '可用', value: 850, percentage: 34 },
+          { name: '已分配', value: 1100, percentage: 44 },
+          { name: '已预留', value: 320, percentage: 12.8 },
+          { name: '待交付', value: 180, percentage: 7.2 },
+          { name: '待回收', value: 50, percentage: 2 }
         ],
-        scenario: [
-          { name: '业务', value: 9500, percentage: 60.6, available: 5200, reserved: 2000, safety: 1000, emergency: 200, operation: 100 },
-          { name: '自运营', value: 3200, percentage: 20.4, available: 1800, reserved: 800, safety: 300, emergency: 200, operation: 100 },
-          { name: '运维', value: 1500, percentage: 9.6, available: 800, reserved: 300, safety: 200, emergency: 150, operation: 50 },
-          { name: '紧急资源', value: 980, percentage: 6.2, available: 420, reserved: 100, safety: 60, emergency: 50, operation: 0 },
-          { name: '平台', value: 500, percentage: 3.2, available: 200, reserved: 0, safety: 0, emergency: 0, operation: 0 }
-        ],
-        category: [
-          { name: '可用库存', value: 8420, percentage: 53.7 },
-          { name: '已出库', value: 3200, percentage: 20.4 },
-          { name: '安全预留', value: 1560, percentage: 9.9 },
-          { name: '紧急资源', value: 600, percentage: 3.8 },
-          { name: '运维资源', value: 100, percentage: 0.6 }
+        pool: [
+          { name: '通用资源池', value: 1500, percentage: 60 },
+          { name: '关键业务池', value: 500, percentage: 20 },
+          { name: '活动资源池', value: 300, percentage: 12 },
+          { name: '应急资源池', value: 200, percentage: 8 }
         ]
       };
 
-      // 根据分布维度和机房详情开关来设置数据
-      let currentData;
-      if (distributionBy === 'region') {
-        currentData = showDatacenterDetails ? mockDistributionData.datacenter : mockDistributionData.region;
-      } else {
-        currentData = mockDistributionData[distributionBy] || mockDistributionData.region;
-      }
-      setDistributionData(currentData);
+      setDistributionData(mockDistributionData[distributionBy] || mockDistributionData.region);
 
       // 模拟趋势数据
       const dates = [];
-      const inventoryLines = {
-        total: [],
-        available: [],
-        reserved: [],
-        outbound: [],
-        safety: [],
-        emergency: [],
-        operation: []
-      };
+      const totalInventory = [];
+      const availableInventory = [];
+      const allocatedInventory = [];
 
-      for (let i = 30; i >= -60; i--) {
+      for (let i = 30; i >= -30; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         dates.push(date.toISOString().split('T')[0]);
 
+        // 模拟数据，过去是实线，未来是虚线
         const isPast = i >= 0;
-        const baseValue = 15000;
-        const trend = isPast ? 0 : Math.floor(i / -10) * 500; // 未来增长趋势
-
-        inventoryLines.total.push({
-          value: baseValue + Math.floor(Math.random() * 1000) + trend,
-          isPast,
-          bubbles: !isPast && i % 15 === 0 ? [{
-            reason: i % 30 === 0 ? '私有云采购' : '公有云采购',
-            amount: 500,
-            date: date.toISOString().split('T')[0]
-          }] : []
-        });
-
-        inventoryLines.available.push({
-          value: Math.floor((baseValue + trend) * 0.55) + Math.floor(Math.random() * 500),
-          isPast,
-          bubbles: !isPast && i % 15 === 0 ? [{
-            reason: i % 30 === 0 ? '私有云采购' : '公有云采购',
-            amount: 300,
-            date: date.toISOString().split('T')[0]
-          }] : []
-        });
-
-        inventoryLines.reserved.push({
-          value: Math.floor((baseValue + trend) * 0.2) + Math.floor(Math.random() * 200),
+        totalInventory.push({
+          value: Math.floor(Math.random() * 500) + 2000,
           isPast
         });
-
-        inventoryLines.outbound.push({
-          value: Math.floor((baseValue + trend) * 0.12) + Math.floor(Math.random() * 100),
+        availableInventory.push({
+          value: Math.floor(Math.random() * 300) + 700,
           isPast
         });
-
-        inventoryLines.safety.push({
-          value: Math.floor((baseValue + trend) * 0.1) + Math.floor(Math.random() * 100),
-          isPast
-        });
-
-        inventoryLines.emergency.push({
-          value: Math.floor((baseValue + trend) * 0.04) + Math.floor(Math.random() * 50),
-          isPast
-        });
-
-        inventoryLines.operation.push({
-          value: Math.floor((baseValue + trend) * 0.01) + Math.floor(Math.random() * 20),
+        allocatedInventory.push({
+          value: Math.floor(Math.random() * 200) + 900,
           isPast
         });
       }
 
       setTrendData({
         labels: dates,
-        datasets: inventoryLines
+        datasets: [
+          {
+            label: '总库存',
+            data: totalInventory,
+            color: '#1890ff'
+          },
+          {
+            label: '可用库存',
+            data: availableInventory,
+            color: '#52c41a'
+          },
+          {
+            label: '已分配',
+            data: allocatedInventory,
+            color: '#f5222d'
+          }
+        ]
       });
 
     } catch (error) {
@@ -274,522 +240,465 @@ const InventoryManagementPage = () => {
 
   useEffect(() => {
     fetchInventoryData(filters);
-  }, [filters, distributionBy, showDatacenterDetails]);
+  }, []);
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => {
-      const newFilters = { ...prev, [key]: value };
-      // 当集群组改变时，清空专区选择
-      if (key === 'clusterGroup') {
-        newFilters.specialZone = null;
-      }
-      return newFilters;
-    });
-  };
-
-  // 处理库存增加事件点击
-  const handleEventClick = (params) => {
-    if (params.componentType === 'series' && params.seriesName === '库存增加事件') {
-      const eventData = params.data;
-      const eventType = eventData.name; // 私有云采购 或 公有云采购
-      const eventDate = trendData.labels[eventData.value[0]];
-      const eventAmount = eventData.value[2];
-
-      // 构建跳转参数
-      const queryParams = new URLSearchParams({
-        type: eventType,
-        date: eventDate,
-        amount: eventAmount,
-        source: 'inventory-trend'
-      });
-
-      // 跳转到资源筹措页面
-      window.open(`/resource-planning?${queryParams.toString()}`, '_blank');
-    }
-  };
-
-  // 库存分布图表配置
-  const getDistributionChartOption = () => {
-    if (distributionBy === 'region') {
-      return {
-        title: {
-          text: showDatacenterDetails ? '库存分布（按机房）' : '库存分布（按地域）',
-          left: 'center'
-        },
-        tooltip: {
-          trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
-        },
-        legend: {
-          orient: 'vertical',
-          left: 'left'
-        },
-        series: [
-          {
-            name: '库存分布',
-            type: 'pie',
-            radius: '50%',
-            data: distributionData.map(item => ({
-              value: item.value,
-              name: item.name
-            })),
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            }
-          }
-        ]
-      };
-    } else {
-      return {
-        title: {
-          text: '库存分布（按分类）',
-          left: 'center'
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
-          }
-        },
-        xAxis: {
-          type: 'category',
-          data: distributionData.map(item => item.name)
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            name: '库存量',
-            type: 'bar',
-            data: distributionData.map(item => item.value),
-            itemStyle: {
-              color: '#1890ff'
-            }
-          }
-        ]
-      };
-    }
-  };
-
-  // 根据Tab获取对应的库存分类
-  const getTabCategories = (tabKey) => {
-    switch (tabKey) {
-      case 'overview':
-        return ['total'];
-      case 'available':
-        return ['available'];
-      case 'reserved':
-        return ['reserved'];
-      case 'outbound':
-        return ['outbound'];
-      case 'safety':
-        return ['safety'];
-      case 'emergency':
-        return ['emergency'];
-      case 'operation':
-        return ['operation'];
-      default:
-        return ['total'];
-    }
-  };
-
-  // 库存变化趋势图表配置
-  const getTrendChartOption = (tabKey = 'overview') => {
-    if (!trendData.labels || trendData.labels.length === 0 || !trendData.datasets) {
-      return {
-        title: {
-          text: '库存变化趋势',
-          left: 'center'
-        },
-        xAxis: {
-          type: 'category',
-          data: []
-        },
-        yAxis: {
-          type: 'value',
-          name: '库存量'
-        },
-        series: []
-      };
-    }
-
-    const series = [];
-    const selectedCategories = getTabCategories(tabKey);
-    const categories = inventoryCategories.filter(cat => selectedCategories.includes(cat.key) && !cat.hidden);
-    const nowIndex = trendData.labels ? trendData.labels.findIndex(date => dayjs(date).isAfter(dayjs(), 'day')) : 30;
-
-    categories.forEach(category => {
-      const data = trendData.datasets[category.key];
-      if (data && data.length > 0) {
-        // 合并历史和预测数据为一条线，但用不同样式
-        const allData = data.map((item, index) => ({
-          value: item.value,
-          isPast: item.isPast,
-          index: index
-        }));
-
-        // 历史部分（实线）
-        const pastData = allData.filter(item => item.isPast).map(item => [item.index, item.value]);
-        // 预测部分（虚线）
-        const futureData = allData.filter(item => !item.isPast).map(item => [item.index, item.value]);
-
-        if (pastData.length > 0) {
-          series.push({
-            name: category.label,
-            type: 'line',
-            data: pastData,
-            lineStyle: { type: 'solid', color: category.color, width: 2 },
-            itemStyle: { color: category.color },
-            symbol: 'circle',
-            symbolSize: 4,
-            showSymbol: false
-          });
-        }
-
-        if (futureData.length > 0) {
-          series.push({
-            name: category.label,
-            type: 'line',
-            data: futureData,
-            lineStyle: { type: 'dashed', color: category.color, width: 2 },
-            itemStyle: { color: category.color },
-            symbol: 'circle',
-            symbolSize: 4,
-            showSymbol: false,
-            legendHoverLink: false
-          });
-        }
-
-        // 添加库存增加事件标注（三角叹号）
-        const eventData = [];
-        data.forEach((item, index) => {
-          if (item.bubbles && item.bubbles.length > 0) {
-            item.bubbles.forEach(bubble => {
-              eventData.push({
-                name: bubble.reason,
-                value: [index, item.value, bubble.amount],
-                itemStyle: { color: '#faad14' }
-              });
-            });
-          }
-        });
-
-        if (eventData.length > 0) {
-          series.push({
-            name: '库存增加事件',
-            type: 'scatter',
-            data: eventData,
-            symbol: 'triangle', // 使用三角形符号
-            symbolSize: 18,
-            itemStyle: {
-              color: '#faad14',
-              borderColor: '#d48806',
-              borderWidth: 2
-            },
-            emphasis: {
-              itemStyle: {
-                color: '#ffc53d',
-                borderColor: '#d48806',
-                borderWidth: 3
-              }
-            },
-            tooltip: {
-              formatter: (params) => {
-                return `${params.data.name}<br/>增加量: ${params.data.value[2]} 核<br/><span style="color: #1890ff;">点击查看详情</span>`;
-              }
-            },
-            zlevel: 10 // 确保事件标记显示在最上层
-          });
-        }
-      }
-    });
-
-    // 去重图例名称
-    const uniqueLegendData = [...new Set(series.map(s => s.name))];
-
-    // 添加NOW线作为单独的series
-    series.push({
-      name: 'NOW线',
-      type: 'line',
-      showInLegend: false, // 不在图例中显示
-      markLine: {
-        silent: true,
-        lineStyle: {
-          color: '#ff4d4f',
-          type: 'dashed', // 改为虚线
-          width: 2
-        },
-        label: {
-          show: true,
-          position: 'insideEndTop',
-          formatter: 'NOW',
-          color: '#ff4d4f',
-          fontSize: 12,
-          fontWeight: 'bold'
-        },
-        data: [{
-          xAxis: nowIndex >= 0 ? nowIndex : Math.floor(trendData.labels.length / 2)
-        }]
-      },
-      data: [] // 空数据，只用于显示markLine
-    });
-
-    return {
-      title: {
-        text: '库存变化趋势',
-        left: 'center',
-        textStyle: {
-          fontSize: 16,
-          fontWeight: 'normal'
-        }
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross',
-          label: {
-            backgroundColor: '#6a7985'
-          }
-        }
-      },
-      legend: {
-        data: uniqueLegendData,
-        top: 35,
-        type: 'scroll'
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'category',
-        data: trendData.labels,
-        axisLabel: {
-          formatter: (value) => dayjs(value).format('MM/DD'),
-          rotate: 45
-        },
-        boundaryGap: false
-      },
-      yAxis: {
-        type: 'value',
-        name: '库存量（核）',
-        nameLocation: 'middle',
-        nameGap: 50,
-        axisLabel: {
-          formatter: '{value}'
-        }
-      },
-      series: series
+  useEffect(() => {
+    // 当分布维度变化时，更新分布数据
+    const mockDistributionData = {
+      region: [
+        { name: '北京', value: 1200, percentage: 48 },
+        { name: '上海', value: 800, percentage: 32 },
+        { name: '怀来', value: 350, percentage: 14 },
+        { name: '其他', value: 150, percentage: 6 }
+      ],
+      status: [
+        { name: '可用', value: 850, percentage: 34 },
+        { name: '已分配', value: 1100, percentage: 44 },
+        { name: '已预留', value: 320, percentage: 12.8 },
+        { name: '待交付', value: 180, percentage: 7.2 },
+        { name: '待回收', value: 50, percentage: 2 }
+      ],
+      pool: [
+        { name: '通用资源池', value: 1500, percentage: 60 },
+        { name: '关键业务池', value: 500, percentage: 20 },
+        { name: '活动资源池', value: 300, percentage: 12 },
+        { name: '应急资源池', value: 200, percentage: 8 }
+      ]
     };
+    setDistributionData(mockDistributionData[distributionBy] || mockDistributionData.region);
+  }, [distributionBy]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    fetchInventoryData(newFilters);
   };
 
-  return (
-    <div className="inventory-management-page">
-      {/* 筛选面板 */}
-      <Card className="filter-card" size="small" style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={6}>
+  // 库存分布表格列定义
+  const distributionColumns = [
+    {
+      title: distributionBy === 'region' ? '地域' : distributionBy === 'status' ? '状态' : '资源池',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: '库存量',
+      dataIndex: 'value',
+      key: 'value',
+      render: (value) => <strong>{value}</strong>
+    },
+    {
+      title: '占比',
+      dataIndex: 'percentage',
+      key: 'percentage',
+      render: (value) => `${value}%`
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => console.log('查看详情:', record)}
+        >
+          查看详情
+        </Button>
+      )
+    }
+  ];
+
+  // 库存列表数据
+  const inventoryListData = Array(10).fill(null).map((_, index) => ({
+    key: index,
+    id: `INV-${10000 + index}`,
+    region: ['北京', '上海', '怀来'][index % 3],
+    clusterType: ['Hulk', 'Kubernetes', 'OpenStack'][index % 3],
+    productType: ['通用', '经济', '高性能'][index % 3],
+    status: ['可用', '已出库'][index % 2],
+    inventoryScenario: ['业务', '自用', '运维', '平台', '紧急资源'][index % 5],
+    caller: ['avatar', 'policy', 'n_plus_one', 'buffer', 'emergency_resource'][index % 5],
+    count: Math.floor(Math.random() * 100) + 10,
+    createTime: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  }));
+
+  // 库存列表列定义
+  const inventoryListColumns = [
+    {
+      title: '库存ID',
+      dataIndex: 'id',
+      key: 'id',
+    },
+    {
+      title: '地域/机房',
+      dataIndex: 'region',
+      key: 'region',
+    },
+    {
+      title: '产品类型',
+      dataIndex: 'productType',
+      key: 'productType',
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => {
+        const colorMap = {
+          '可用': 'green',
+          '已出库': 'blue'
+        };
+        return <Tag color={colorMap[status]}>{status}</Tag>;
+      }
+    },
+    {
+      title: '库存场景',
+      dataIndex: 'inventoryScenario',
+      key: 'inventoryScenario',
+      render: (scenario) => {
+        const colorMap = {
+          '业务': 'blue',
+          '自用': 'cyan',
+          '运维': 'purple',
+          '平台': 'orange',
+          '紧急资源': 'red'
+        };
+        return <Tag color={colorMap[scenario]}>{scenario}</Tag>;
+      }
+    },
+    {
+      title: '调用方',
+      dataIndex: 'caller',
+      key: 'caller',
+    },
+    {
+      title: '数量',
+      dataIndex: 'count',
+      key: 'count',
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createTime',
+      key: 'createTime',
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space>
+          <Button type="link" size="small">查看</Button>
+          <Button type="link" size="small">编辑</Button>
+        </Space>
+      )
+    }
+  ];
+
+  // 筛选面板组件
+  const FilterPanel = ({ filters, onChange, loading }) => {
+    const [form] = Form.useForm();
+    const [selectedClusterGroups, setSelectedClusterGroups] = useState([]);
+    const [selectedZones, setSelectedZones] = useState([]);
+    const [selectedScenarios, setSelectedScenarios] = useState(filters.inventoryScenario || []);
+
+    // 获取可用的专区选项
+    const getZoneOptions = () => {
+      if (!selectedClusterGroups || selectedClusterGroups.length === 0) {
+        // 如果没有选择集群组，返回所有专区
+        return Object.values(zoneOptions).flat();
+      }
+
+      // 返回选中集群组对应的专区
+      return selectedClusterGroups
+        .map(group => zoneOptions[group] || [])
+        .flat();
+    };
+
+    // 获取可用的调用方选项
+    const getCallerOptions = () => {
+      if (!selectedScenarios || selectedScenarios.length === 0) {
+        // 如果没有选择场景，返回所有调用方
+        return Object.values(callerOptions).flat();
+      }
+
+      // 返回选中场景对应的调用方
+      return selectedScenarios
+        .map(scenario => callerOptions[scenario] || [])
+        .flat();
+    };
+
+    const handleSubmit = () => {
+      const values = form.getFieldsValue();
+      onChange(values);
+    };
+
+    const handleReset = () => {
+      form.resetFields();
+      setSelectedClusterGroups([]);
+      setSelectedZones([]);
+      setSelectedScenarios(filters.inventoryScenario || []);
+      onChange({
+        dateRange: getDefaultDateRange(),
+        clusterGroup: [],
+        zone: [],
+        caller: [],
+        region: [],
+        inventoryStatus: ['available', 'delivered'],
+        productType: ['general', 'economy', 'highPerformance'],
+        inventoryScenario: ['business', 'selfUse', 'operation', 'platform', 'emergency']
+      });
+    };
+
+    // 处理集群组变化
+    const handleClusterGroupChange = (values) => {
+      setSelectedClusterGroups(values);
+      // 清空专区选择
+      form.setFieldsValue({ zone: [] });
+      setSelectedZones([]);
+    };
+
+    // 处理专区变化
+    const handleZoneChange = (values) => {
+      setSelectedZones(values);
+    };
+
+    // 处理库存场景变化
+    const handleScenarioChange = (values) => {
+      setSelectedScenarios(values);
+      // 清空调用方选择
+      form.setFieldsValue({ caller: [] });
+    };
+
+    return (
+      <Form
+        form={form}
+        layout="inline"
+        initialValues={filters}
+        onFinish={handleSubmit}
+      >
+        <Row gutter={[16, 16]} style={{ width: '100%' }}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
-              <label className="filter-label">时间范围：</label>
-              <RangePicker
-                value={filters.dateRange}
-                onChange={(dates) => handleFilterChange('dateRange', dates)}
-                placeholder={['开始日期', '结束日期']}
-                style={{ width: '100%' }}
-                format="YYYY-MM-DD"
-              />
+              <span className="filter-label">时间范围</span>
+              <Form.Item name="dateRange" style={{ width: '100%', marginBottom: 0 }}>
+                <RangePicker
+                  style={{ width: '100%' }}
+                  showTime={{
+                    defaultValue: [
+                      dayjs('00:00:00', 'HH:mm:ss'),
+                      dayjs('23:59:59', 'HH:mm:ss')
+                    ]
+                  }}
+                  format="YYYY-MM-DD HH:mm:ss"
+                />
+              </Form.Item>
             </div>
           </Col>
-
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
-              <label className="filter-label">场景：</label>
-              <Select
-                value={filters.scenario}
-                onChange={(value) => handleFilterChange('scenario', value)}
-                placeholder="请选择场景"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {scenarioOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
+              <span className="filter-label">集群组</span>
+              <Form.Item name="clusterGroup" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择集群组"
+                  style={{ width: '100%' }}
+                  allowClear
+                  onChange={handleClusterGroupChange}
+                  options={clusterGroupOptions}
+                />
+              </Form.Item>
             </div>
           </Col>
-
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
-              <label className="filter-label">集群组：</label>
-              <Select
-                value={filters.clusterGroup}
-                onChange={(value) => handleFilterChange('clusterGroup', value)}
-                placeholder="请选择集群组"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {clusterGroupOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
+              <span className="filter-label">专区</span>
+              <Form.Item name="zone" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择专区"
+                  style={{ width: '100%' }}
+                  allowClear
+                  onChange={handleZoneChange}
+                  options={getZoneOptions()}
+                />
+              </Form.Item>
             </div>
           </Col>
-
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
-              <label className="filter-label">专区：</label>
-              <Select
-                value={filters.specialZone}
-                onChange={(value) => handleFilterChange('specialZone', value)}
-                placeholder="请选择专区"
-                style={{ width: '100%' }}
-                allowClear
-                disabled={!filters.clusterGroup}
-              >
-                {getSpecialZoneOptions(filters.clusterGroup).map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
+              <span className="filter-label">库存场景</span>
+              <Form.Item name="inventoryScenario" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择库存场景"
+                  style={{ width: '100%' }}
+                  allowClear
+                  onChange={handleScenarioChange}
+                  options={[
+                    { value: 'business', label: '业务' },
+                    { value: 'selfUse', label: '自用' },
+                    { value: 'operation', label: '运维' },
+                    { value: 'platform', label: '平台' },
+                    { value: 'emergency', label: '紧急资源' }
+                  ]}
+                />
+              </Form.Item>
             </div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <div className="filter-item">
+              <span className="filter-label">调用方</span>
+              <Form.Item name="caller" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择调用方"
+                  style={{ width: '100%' }}
+                  allowClear
+                  options={getCallerOptions()}
+                />
+              </Form.Item>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <div className="filter-item">
+              <span className="filter-label">地域/机房</span>
+              <Form.Item name="region" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择地域/机房"
+                  style={{ width: '100%' }}
+                  allowClear
+                  options={regionOptions}
+                />
+              </Form.Item>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <div className="filter-item">
+              <span className="filter-label">库存状态</span>
+              <Form.Item name="inventoryStatus" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择库存状态"
+                  style={{ width: '100%' }}
+                  allowClear
+                  options={[
+                    { value: 'available', label: '可用库存' },
+                    { value: 'delivered', label: '已出库' }
+                  ]}
+                />
+              </Form.Item>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <div className="filter-item">
+              <span className="filter-label">产品类型</span>
+              <Form.Item name="productType" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择产品类型"
+                  style={{ width: '100%' }}
+                  allowClear
+                  options={[
+                    { value: 'general', label: '通用' },
+                    { value: 'economy', label: '经济' },
+                    { value: 'highPerformance', label: '高性能' }
+                  ]}
+                />
+              </Form.Item>
+            </div>
+          </Col>
+          <Col xs={24} sm={24} md={24} lg={24} style={{ textAlign: 'right' }}>
+            <Space>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSubmit}
+                loading={loading}
+              >
+                查询
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={handleReset}
+              >
+                重置
+              </Button>
+            </Space>
           </Col>
         </Row>
+      </Form>
+    );
+  };
 
-        <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">调用方：</label>
-              <Select
-                value={filters.caller}
-                onChange={(value) => handleFilterChange('caller', value)}
-                placeholder="请选择调用方"
-                style={{ width: '100%' }}
-                allowClear
-                showSearch
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                }
-              >
-                {callerOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-        </Row>
-      </Card>
-
+  // 库存总览内容
+  const renderOverviewContent = () => (
+    <div>
       {/* 汇总统计卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={4}>
           <Card>
             <Statistic
-              title="总库存"
+              title="库存总量"
               value={summaryData.totalInventory}
               valueStyle={{ color: '#1890ff' }}
-              suffix="核"
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={4}>
           <Card>
             <Statistic
-              title="可用库存"
+              title={
+                <span>
+                  可用库存
+                  <Tooltip title="可立即分配的库存">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
               value={summaryData.availableInventory}
               valueStyle={{ color: '#52c41a' }}
-              suffix="核"
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={4}>
           <Card>
             <Statistic
-              title="已出库"
+              title={
+                <span>
+                  已预留库存
+                  <Tooltip title="已预留但未分配的库存">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
               value={summaryData.reservedInventory}
               valueStyle={{ color: '#faad14' }}
-              suffix="核"
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={4}>
           <Card>
             <Statistic
-              title="紧急资源"
-              value={summaryData.emergencyPool}
-              valueStyle={{ color: '#fa541c' }}
-              suffix="核"
+              title="已分配库存"
+              value={summaryData.allocatedInventory}
+              valueStyle={{ color: '#f5222d' }}
             />
           </Card>
         </Col>
-      </Row>
-
-      {/* 关键资源池展示 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} md={8}>
-          <Card
-            title={
-              <span>
-                <AlertOutlined style={{ color: '#fa541c', marginRight: 8 }} />
-                紧急资源
-              </span>
-            }
-            size="small"
-          >
+        <Col xs={24} sm={12} md={4}>
+          <Card>
             <Statistic
-              title="当前余量"
-              value={summaryData.emergencyPool}
-              suffix="核"
-              valueStyle={{ color: '#fa541c' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card
-            title={
-              <span>
-                <SettingOutlined style={{ color: '#13c2c2', marginRight: 8 }} />
-                运维资源
-              </span>
-            }
-            size="small"
-          >
-            <Statistic
-              title="当前余量"
-              value={summaryData.operationPool}
-              suffix="核"
-              valueStyle={{ color: '#13c2c2' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card
-            title={
-              <span>
-                <InfoCircleOutlined style={{ color: '#722ed1', marginRight: 8 }} />
-                安全预留
-              </span>
-            }
-            size="small"
-          >
-            <Statistic
-              title="当前余量"
-              value={summaryData.safetyReserve}
-              suffix="核"
+              title="待交付"
+              value={summaryData.pendingDelivery}
               valueStyle={{ color: '#722ed1' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={4}>
+          <Card>
+            <Statistic
+              title="待回收"
+              value={summaryData.pendingRecycle}
+              valueStyle={{ color: '#8c8c8c' }}
             />
           </Card>
         </Col>
@@ -801,39 +710,31 @@ const InventoryManagementPage = () => {
           <Card
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>库存分布</span>
+                <span>库存分布（按{distributionBy === 'region' ? '地域' : distributionBy === 'status' ? '状态' : '资源池'}）</span>
                 <Space>
-                  <span style={{ fontSize: '12px', color: '#666' }}>分布维度：</span>
+                  <span style={{ fontSize: '12px', color: '#666' }}>
+                    分布维度：
+                  </span>
                   <Button.Group size="small">
                     <Button
                       type={distributionBy === 'region' ? 'primary' : 'default'}
                       onClick={() => setDistributionBy('region')}
                     >
-                      按地域
+                      地域
                     </Button>
                     <Button
-                      type={distributionBy === 'scenario' ? 'primary' : 'default'}
-                      onClick={() => setDistributionBy('scenario')}
+                      type={distributionBy === 'status' ? 'primary' : 'default'}
+                      onClick={() => setDistributionBy('status')}
                     >
-                      按场景
+                      状态
                     </Button>
                     <Button
-                      type={distributionBy === 'category' ? 'primary' : 'default'}
-                      onClick={() => setDistributionBy('category')}
+                      type={distributionBy === 'pool' ? 'primary' : 'default'}
+                      onClick={() => setDistributionBy('pool')}
                     >
-                      按分类
+                      资源池
                     </Button>
                   </Button.Group>
-                  {distributionBy === 'region' && (
-                    <>
-                      <span style={{ fontSize: '12px', color: '#666' }}>机房详情：</span>
-                      <Switch
-                        checked={showDatacenterDetails}
-                        onChange={setShowDatacenterDetails}
-                        size="small"
-                      />
-                    </>
-                  )}
                   <Switch
                     checkedChildren={<TableOutlined />}
                     unCheckedChildren={<BarChartOutlined />}
@@ -844,27 +745,19 @@ const InventoryManagementPage = () => {
               </div>
             }
             className="distribution-card"
-            style={{ minHeight: '400px' }}
           >
             {viewMode === 'chart' ? (
-              <div style={{ height: '350px' }}>
-                <ReactECharts option={getDistributionChartOption()} style={{ height: '100%' }} />
+              <div style={{ height: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Alert
+                  message="图表组件待实现"
+                  description="这里将显示库存分布图表，目前使用表格模式查看数据"
+                  type="info"
+                  showIcon
+                />
               </div>
             ) : (
               <Table
-                columns={[
-                  {
-                    title: distributionBy === 'region'
-                      ? (showDatacenterDetails ? '机房' : '地域')
-                      : distributionBy === 'scenario'
-                        ? '场景'
-                        : '分类',
-                    dataIndex: 'name',
-                    key: 'name'
-                  },
-                  { title: '库存量', dataIndex: 'value', key: 'value', render: (value) => `${value} 核` },
-                  { title: '占比', dataIndex: 'percentage', key: 'percentage', render: (value) => `${value}%` }
-                ]}
+                columns={distributionColumns}
                 dataSource={distributionData}
                 pagination={false}
                 size="small"
@@ -879,123 +772,104 @@ const InventoryManagementPage = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card
-            title="库存变化趋势"
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span>库存变化趋势</span>
+                <Tag color="blue">实线：历史数据</Tag>
+                <Tag color="purple">虚线：预测数据</Tag>
+                <Tooltip title="图表显示库存总量、可用库存和已分配库存的变化趋势">
+                  <InfoCircleOutlined style={{ color: '#999' }} />
+                </Tooltip>
+              </div>
+            }
             className="trend-card"
+            extra={
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                支持点击查看详细数据
+              </div>
+            }
           >
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={[
-                {
-                  key: 'overview',
-                  label: '总库存',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('overview')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                },
-                {
-                  key: 'available',
-                  label: '可用库存（包含库存更新事件）',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('available')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                },
-                {
-                  key: 'reserved',
-                  label: '已预占库存',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('reserved')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                },
-                {
-                  key: 'outbound',
-                  label: '已出库库存',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('outbound')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                },
-                {
-                  key: 'safety',
-                  label: '安全预留',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('safety')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                },
-                {
-                  key: 'emergency',
-                  label: '紧急资源',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('emergency')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                },
-                {
-                  key: 'operation',
-                  label: '运维资源',
-                  children: (
-                    <div style={{ height: '400px' }}>
-                      <ReactECharts
-                        option={getTrendChartOption('operation')}
-                        style={{ height: '100%' }}
-                        onEvents={{
-                          'click': handleEventClick
-                        }}
-                      />
-                    </div>
-                  )
-                }
-              ]}
-            />
+            <div style={{ height: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Alert
+                message="图表组件待实现"
+                description="这里将显示库存变化趋势图表"
+                type="info"
+                showIcon
+              />
+            </div>
           </Card>
         </Col>
       </Row>
+    </div>
+  );
+
+  // 库存列表内容
+  const renderInventoryListContent = () => (
+    <div>
+      <Table
+        columns={inventoryListColumns}
+        dataSource={inventoryListData}
+        pagination={{
+          pageSize: 10,
+          total: 100,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total) => `共 ${total} 条记录`
+        }}
+        size="middle"
+        rowKey="key"
+      />
+    </div>
+  );
+
+  // Tab配置
+  const tabItems = [
+    {
+      key: 'overview',
+      label: (
+        <span>
+          <OverviewOutlined />
+          库存总览
+        </span>
+      ),
+      children: renderOverviewContent()
+    },
+    {
+      key: 'list',
+      label: (
+        <span>
+          <UnorderedListOutlined />
+          库存列表
+        </span>
+      ),
+      children: renderInventoryListContent()
+    }
+  ];
+
+  return (
+    <div className="inventory-management-page">
+      {/* 筛选面板 */}
+      <Card className="filter-card" size="small" style={{ marginBottom: 16 }}>
+        <FilterPanel
+          filters={filters}
+          onChange={handleFilterChange}
+          loading={loading}
+        />
+      </Card>
+
+      {/* Tab切换区域 */}
+      <Card>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+          size="large"
+          tabBarStyle={{
+            marginBottom: 24,
+            borderBottom: '1px solid #f0f0f0'
+          }}
+        />
+      </Card>
     </div>
   );
 };
