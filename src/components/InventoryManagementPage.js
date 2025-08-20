@@ -45,26 +45,6 @@ const InventoryManagementPage = () => {
     return [startDate, endDate];
   };
 
-  // 定义标签映射
-  const scenarioTagMap = {
-    business: { label: '业务', color: 'blue' },
-    selfUse: { label: '自用', color: 'cyan' },
-    operation: { label: '运维', color: 'purple' },
-    platform: { label: '平台', color: 'orange' },
-    emergency: { label: '紧急资源', color: 'red' }
-  };
-
-  const statusTagMap = {
-    available: { label: '可用库存', color: 'green' },
-    delivered: { label: '已出库', color: 'blue' }
-  };
-
-  const productTypeTagMap = {
-    general: { label: '通用', color: 'default' },
-    economy: { label: '经济', color: 'default' },
-    highPerformance: { label: '高性能', color: 'default' }
-  };
-
   const [filters, setFilters] = useState({
     dateRange: getDefaultDateRange(),
     clusterGroup: [], // 集群组
@@ -545,27 +525,6 @@ const InventoryManagementPage = () => {
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
             <div className="filter-item">
-              <span className="filter-label">库存场景</span>
-              <Form.Item name="inventoryScenario" style={{ width: '100%', marginBottom: 0 }}>
-                <Select
-                  mode="multiple"
-                  placeholder="选择库存场景"
-                  style={{ width: '100%' }}
-                  allowClear
-                  onChange={handleScenarioChange}
-                  options={[
-                    { value: 'business', label: '业务' },
-                    { value: 'selfUse', label: '自用' },
-                    { value: 'operation', label: '运维' },
-                    { value: 'platform', label: '平台' },
-                    { value: 'emergency', label: '紧急资源' }
-                  ]}
-                />
-              </Form.Item>
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <div className="filter-item">
               <span className="filter-label">调用方</span>
               <Form.Item name="caller" style={{ width: '100%', marginBottom: 0 }}>
                 <Select
@@ -622,6 +581,27 @@ const InventoryManagementPage = () => {
                     { value: 'general', label: '通用' },
                     { value: 'economy', label: '经济' },
                     { value: 'highPerformance', label: '高性能' }
+                  ]}
+                />
+              </Form.Item>
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <div className="filter-item">
+              <span className="filter-label">库存场景</span>
+              <Form.Item name="inventoryScenario" style={{ width: '100%', marginBottom: 0 }}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择库存场景"
+                  style={{ width: '100%' }}
+                  allowClear
+                  onChange={handleScenarioChange}
+                  options={[
+                    { value: 'business', label: '业务' },
+                    { value: 'selfUse', label: '自用' },
+                    { value: 'operation', label: '运维' },
+                    { value: 'platform', label: '平台' },
+                    { value: 'emergency', label: '紧急资源' }
                   ]}
                 />
               </Form.Item>
