@@ -1,558 +1,313 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Tag, Space, Tooltip, DatePicker, Select, Input, Modal, Form, InputNumber, message } from 'antd';
-import { EyeOutlined, SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import './ResourceProcurementPage.css';
-
-const { RangePicker } = DatePicker;
-const { Option } = Select;
+import React, { useState } from 'react';
+import {
+  Card,
+  Row,
+  Col,
+  Button,
+  Table,
+  Tag,
+  Space,
+  Statistic,
+  Progress,
+  Tabs,
+  Alert
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  PlusOutlined,
+  CloudServerOutlined,
+  DatabaseOutlined,
+  SettingOutlined
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const ResourceProcurementPage = () => {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState([]);
-  const [filters, setFilters] = useState({
-    procurementMethod: null,
-    deliveryMethod: null,
-    operator: null,
-    dateRange: null
-  });
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [createForm] = Form.useForm();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('ongoing');
 
-  // 模拟数据
-  const mockData = [
-    {
-      id: 1,
-      procurementMethod: '私有云-采购',
-      supplyTime: '2024-01-15 10:00:00',
-      supplyAmount: 5000,
-      deliveryMethod: '系统对接',
-      releaseTime: '2024-03-15 10:00:00',
-      operator: '张三',
-      createTime: '2024-01-10 14:30:00',
-      status: 'active'
-    },
-    {
-      id: 2,
-      procurementMethod: '公有云-采购',
-      supplyTime: '2024-01-20 09:00:00',
-      supplyAmount: 8000,
-      deliveryMethod: '手动录入',
-      releaseTime: '2024-04-20 09:00:00',
-      operator: '李四',
-      createTime: '2024-01-18 16:45:00',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      procurementMethod: '私有云-提拉',
-      supplyTime: '2024-01-12 08:30:00',
-      supplyAmount: 3200,
-      deliveryMethod: '系统对接',
-      releaseTime: '2024-02-28 08:30:00',
-      operator: '王五',
-      createTime: '2024-01-08 11:20:00',
-      status: 'completed'
-    },
-    {
-      id: 4,
-      procurementMethod: '私有云-借调',
-      supplyTime: '2024-01-25 15:00:00',
-      supplyAmount: 1500,
-      deliveryMethod: '手动录入',
-      releaseTime: '2024-02-10 15:00:00',
-      operator: '赵六',
-      createTime: '2024-01-25 14:00:00',
-      status: 'active'
-    },
-    {
-      id: 5,
-      procurementMethod: '公有云-释放',
-      supplyTime: '2024-02-01 12:00:00',
-      supplyAmount: 6500,
-      deliveryMethod: '系统对接',
-      releaseTime: '2024-05-01 12:00:00',
-      operator: '孙七',
-      createTime: '2024-01-28 09:15:00',
-      status: 'pending'
-    },
-    {
-      id: 6,
-      procurementMethod: '私有云-搬迁',
-      supplyTime: '2024-01-30 14:00:00',
-      supplyAmount: 2800,
-      deliveryMethod: '手动录入',
-      releaseTime: '2024-04-30 14:00:00',
-      operator: '陈八',
-      createTime: '2024-01-29 10:30:00',
-      status: 'pending'
-    },
-    {
-      id: 7,
-      procurementMethod: '公有云-腾退',
-      supplyTime: '2024-02-05 16:00:00',
-      supplyAmount: 4200,
-      deliveryMethod: '系统对接',
-      releaseTime: '2024-03-05 16:00:00',
-      operator: '刘九',
-      createTime: '2024-02-03 11:45:00',
-      status: 'active'
-    },
-    {
-      id: 8,
-      procurementMethod: '私有云-归还',
-      supplyTime: '2024-02-08 10:30:00',
-      supplyAmount: 3500,
-      deliveryMethod: '手动录入',
-      releaseTime: '2024-03-08 10:30:00',
-      operator: '周十',
-      createTime: '2024-02-06 14:15:00',
-      status: 'completed'
-    },
-    {
-      id: 9,
-      procurementMethod: '私有云-报废',
-      supplyTime: '2024-02-10 09:00:00',
-      supplyAmount: 800,
-      deliveryMethod: '系统对接',
-      releaseTime: '2024-02-10 18:00:00',
-      operator: '吴十一',
-      createTime: '2024-02-09 16:20:00',
-      status: 'completed'
-    },
-    {
-      id: 10,
-      procurementMethod: '私有云-改配',
-      supplyTime: '2024-02-12 14:00:00',
-      supplyAmount: 2200,
-      deliveryMethod: '手动录入',
-      releaseTime: '2024-04-12 14:00:00',
-      operator: '郑十二',
-      createTime: '2024-02-10 11:30:00',
-      status: 'pending'
-    }
-  ];
-
-  // 获取状态标签
-  const getStatusTag = (status) => {
-    const statusMap = {
-      active: { color: 'green', text: '进行中' },
-      pending: { color: 'orange', text: '待执行' },
-      completed: { color: 'blue', text: '已完成' },
-      cancelled: { color: 'red', text: '已取消' }
-    };
-    const config = statusMap[status] || { color: 'default', text: '未知' };
-    return <Tag color={config.color}>{config.text}</Tag>;
+  // 模拟资源筹措数据
+  const procurementData = {
+    ongoing: [
+      {
+        key: '1',
+        id: 'RP-2024-001',
+        type: '私有云提拉',
+        amount: 5000,
+        progress: 75,
+        status: 'processing',
+        expectedDate: '2024-12-25',
+        responsible: '张三',
+        description: '双十二活动资源筹措'
+      },
+      {
+        key: '2',
+        id: 'RP-2024-002',
+        type: '私有云到货',
+        amount: 3000,
+        progress: 45,
+        status: 'processing',
+        expectedDate: '2024-12-30',
+        responsible: '李四',
+        description: '年终大促资源补充'
+      },
+      {
+        key: '3',
+        id: 'RP-2024-003',
+        type: '私有云借调',
+        amount: 2000,
+        progress: 90,
+        status: 'processing',
+        expectedDate: '2024-12-22',
+        responsible: '王五',
+        description: '紧急需求资源调配'
+      }
+    ],
+    completed: [
+      {
+        key: '4',
+        id: 'RP-2024-004',
+        type: '私有云提拉',
+        amount: 4500,
+        progress: 100,
+        status: 'success',
+        expectedDate: '2024-12-15',
+        responsible: '赵六',
+        description: '黑五活动资源筹措'
+      },
+      {
+        key: '5',
+        id: 'RP-2024-005',
+        type: '私有云到货',
+        amount: 2800,
+        progress: 100,
+        status: 'success',
+        expectedDate: '2024-12-10',
+        responsible: '钱七',
+        description: '常规资源补充'
+      }
+    ]
   };
 
-  // 格式化数字
-  const formatNumber = (num) => {
-    return num.toLocaleString() + ' 核';
-  };
-
-  // 表格列定义
   const columns = [
     {
-      title: '筹措方式',
-      dataIndex: 'procurementMethod',
-      key: 'procurementMethod',
+      title: '筹措ID',
+      dataIndex: 'id',
+      key: 'id',
       width: 120,
-      render: (text) => (
-        <Tooltip title={text}>
-          <span style={{ fontWeight: 'bold', color: '#1890ff' }}>{text}</span>
-        </Tooltip>
-      )
+      render: (text) => <span style={{ fontFamily: 'monospace', color: '#1890ff' }}>{text}</span>
     },
     {
-      title: '供给时间',
-      dataIndex: 'supplyTime',
-      key: 'supplyTime',
-      width: 150,
-      render: (text) => (
-        <span style={{ fontSize: '12px' }}>
-          {dayjs(text).format('YYYY-MM-DD HH:mm')}
-        </span>
-      ),
-      sorter: (a, b) => dayjs(a.supplyTime).unix() - dayjs(b.supplyTime).unix()
+      title: '筹措类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
+      render: (type) => {
+        const colorMap = {
+          '私有云提拉': 'blue',
+          '私有云到货': 'orange',
+          '私有云借调': 'purple'
+        };
+        return <Tag color={colorMap[type]}>{type}</Tag>;
+      }
     },
     {
-      title: '供给量级',
-      dataIndex: 'supplyAmount',
-      key: 'supplyAmount',
+      title: '筹措数量',
+      dataIndex: 'amount',
+      key: 'amount',
       width: 100,
-      render: (amount) => (
-        <span style={{ fontWeight: 'bold', color: '#52c41a' }}>
-          {formatNumber(amount)}
-        </span>
-      ),
-      sorter: (a, b) => a.supplyAmount - b.supplyAmount
+      render: (amount) => <span style={{ fontWeight: 'bold' }}>{amount.toLocaleString()} 核</span>
     },
-     {
-       title: '交付方式',
-       dataIndex: 'deliveryMethod',
-       key: 'deliveryMethod',
-       width: 100,
-       render: (method) => {
-         const colorMap = {
-           '系统对接': 'blue',
-           '手动录入': 'orange'
-         };
-         return <Tag color={colorMap[method] || 'default'}>{method}</Tag>;
-       }
-     },
     {
-      title: '释放时间',
-      dataIndex: 'releaseTime',
-      key: 'releaseTime',
+      title: '进度',
+      dataIndex: 'progress',
+      key: 'progress',
       width: 150,
-      render: (text) => (
-        <span style={{ fontSize: '12px' }}>
-          {dayjs(text).format('YYYY-MM-DD HH:mm')}
-        </span>
-      ),
-      sorter: (a, b) => dayjs(a.releaseTime).unix() - dayjs(b.releaseTime).unix()
-    },
-    {
-      title: '操作人',
-      dataIndex: 'operator',
-      key: 'operator',
-      width: 80,
-      render: (name) => (
-        <span style={{ color: '#722ed1' }}>{name}</span>
+      render: (progress, record) => (
+        <Progress
+          percent={progress}
+          size="small"
+          status={record.status === 'success' ? 'success' : 'active'}
+        />
       )
     },
     {
-      title: '筹措创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 150,
-      render: (text) => (
-        <span style={{ fontSize: '12px', color: '#666' }}>
-          {dayjs(text).format('YYYY-MM-DD HH:mm')}
-        </span>
-      ),
-      sorter: (a, b) => dayjs(a.createTime).unix() - dayjs(b.createTime).unix()
+      title: '预计完成时间',
+      dataIndex: 'expectedDate',
+      key: 'expectedDate',
+      width: 120
+    },
+    {
+      title: '负责人',
+      dataIndex: 'responsible',
+      key: 'responsible',
+      width: 80
+    },
+    {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true
     },
     {
       title: '操作',
       key: 'action',
-      width: 100,
-      fixed: 'right',
+      width: 120,
       render: (_, record) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(record)}
-          >
-            查看详情
-          </Button>
+        <Space size="small">
+          <Button type="link" size="small">详情</Button>
+          {record.status === 'processing' && (
+            <Button type="link" size="small">编辑</Button>
+          )}
         </Space>
       )
     }
   ];
 
-  // 查看详情
-  const handleViewDetail = (record) => {
-    console.log('查看详情:', record);
-    // 这里可以打开详情弹窗或跳转到详情页面
+  const handleBack = () => {
+    navigate('/supply-demand-matching');
   };
 
-  // 搜索和筛选
-  const handleSearch = () => {
-    setLoading(true);
-    // 模拟API调用
-    setTimeout(() => {
-      setData(mockData);
-      setLoading(false);
-    }, 1000);
-  };
-
-  // 重置筛选
-  const handleReset = () => {
-    setFilters({
-      procurementMethod: null,
-      deliveryMethod: null,
-      operator: null,
-      dateRange: null
-    });
-    setData(mockData);
-  };
-
-  // 创建资源筹措
   const handleCreateProcurement = () => {
-    setCreateModalVisible(true);
-    createForm.resetFields();
+    // 这里可以打开创建资源筹措的弹窗或跳转到创建页面
+    console.log('创建资源筹措');
   };
 
-  // 提交创建表单
-  const handleCreateSubmit = async () => {
-    try {
-      const values = await createForm.validateFields();
-      console.log('创建资源筹措:', values);
-
-      // 模拟API调用
-      const newRecord = {
-        id: data.length + 1,
-        procurementMethod: values.procurementMethod,
-        supplyTime: values.supplyTime.format('YYYY-MM-DD HH:mm:ss'),
-        supplyAmount: values.supplyAmount,
-        deliveryMethod: values.deliveryMethod,
-        releaseTime: values.releaseTime.format('YYYY-MM-DD HH:mm:ss'),
-        operator: values.operator,
-        createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        status: 'pending'
-      };
-
-      // 添加到数据列表
-      setData([newRecord, ...data]);
-      setCreateModalVisible(false);
-      message.success('资源筹措创建成功！');
-    } catch (error) {
-      console.error('表单验证失败:', error);
-    }
-  };
-
-  // 取消创建
-  const handleCreateCancel = () => {
-    setCreateModalVisible(false);
-    createForm.resetFields();
-  };
-
-  // 初始化数据
-  useEffect(() => {
-    handleSearch();
-  }, []);
+  // 计算统计数据
+  const ongoingTotal = procurementData.ongoing.reduce((sum, item) => sum + item.amount, 0);
+  const completedTotal = procurementData.completed.reduce((sum, item) => sum + item.amount, 0);
+  const totalAmount = ongoingTotal + completedTotal;
 
   return (
-    <div className="resource-procurement-page">
-      <Card
-        title={
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1890ff' }}>
-            📋 资源筹措管理
+    <div className="resource-procurement-page" style={{ padding: '24px' }}>
+      {/* 页面头部 */}
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={handleBack}
+              type="text"
+            >
+              返回供需匹配
+            </Button>
+            <div>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <SettingOutlined style={{ color: '#1890ff' }} />
+                资源筹措管理
+              </h2>
+              <p style={{ margin: '4px 0 0 0', color: '#666' }}>
+                管理和跟踪资源筹措进度，确保资源供给充足
+              </p>
+            </div>
           </div>
-        }
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreateProcurement}
+          >
+            新建筹措
+          </Button>
+        </div>
+      </Card>
+
+      {/* 统计概览 */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="总筹措量"
+              value={totalAmount}
+              suffix="核"
+              valueStyle={{ color: '#1890ff' }}
+              prefix={<DatabaseOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="进行中筹措"
+              value={ongoingTotal}
+              suffix="核"
+              valueStyle={{ color: '#faad14' }}
+              prefix={<CloudServerOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="已完成筹措"
+              value={completedTotal}
+              suffix="核"
+              valueStyle={{ color: '#52c41a' }}
+              prefix={<SettingOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 筹措列表 */}
+      <Card
+        title="资源筹措列表"
         extra={
           <Space>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreateProcurement}
-            >
-              创建资源筹措
-            </Button>
-            <Button
-              type="primary"
-              icon={<SearchOutlined />}
-              onClick={handleSearch}
-              loading={loading}
-            >
-              查询
-            </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={handleReset}
-            >
-              重置
-            </Button>
+            <Tag color="processing">进行中: {procurementData.ongoing.length}</Tag>
+            <Tag color="success">已完成: {procurementData.completed.length}</Tag>
           </Space>
         }
       >
-        {/* 筛选条件 */}
-        <div className="filter-section" style={{ marginBottom: '16px' }}>
-          <Space wrap>
-            <div>
-              <span style={{ marginRight: '8px' }}>筹措方式：</span>
-               <Select
-                 placeholder="请选择筹措方式"
-                 style={{ width: 180 }}
-                 value={filters.procurementMethod}
-                 onChange={(value) => setFilters({...filters, procurementMethod: value})}
-                 allowClear
-               >
-                 <Select.OptGroup label="私有云">
-                   <Option value="私有云-采购">采购</Option>
-                   <Option value="私有云-提拉">提拉</Option>
-                   <Option value="私有云-借调">借调</Option>
-                   <Option value="私有云-归还">归还</Option>
-                   <Option value="私有云-报废">报废</Option>
-                   <Option value="私有云-搬迁">搬迁</Option>
-                   <Option value="私有云-改配">改配</Option>
-                 </Select.OptGroup>
-                 <Select.OptGroup label="公有云">
-                   <Option value="公有云-采购">采购</Option>
-                   <Option value="公有云-释放">释放</Option>
-                   <Option value="公有云-腾退">腾退</Option>
-                 </Select.OptGroup>
-               </Select>
-            </div>
-
-             <div>
-               <span style={{ marginRight: '8px' }}>交付方式：</span>
-               <Select
-                 placeholder="请选择交付方式"
-                 style={{ width: 120 }}
-                 value={filters.deliveryMethod}
-                 onChange={(value) => setFilters({...filters, deliveryMethod: value})}
-                 allowClear
-               >
-                 <Option value="系统对接">系统对接</Option>
-                 <Option value="手动录入">手动录入</Option>
-               </Select>
-             </div>
-
-            <div>
-              <span style={{ marginRight: '8px' }}>操作人：</span>
-              <Input
-                placeholder="请输入操作人"
-                style={{ width: 120 }}
-                value={filters.operator}
-                onChange={(e) => setFilters({...filters, operator: e.target.value})}
-                allowClear
-              />
-            </div>
-
-            <div>
-              <span style={{ marginRight: '8px' }}>创建时间：</span>
-              <RangePicker
-                style={{ width: 240 }}
-                value={filters.dateRange}
-                onChange={(dates) => setFilters({...filters, dateRange: dates})}
-                showTime={{ format: 'HH:mm' }}
-                format="YYYY-MM-DD HH:mm"
-              />
-            </div>
-          </Space>
-        </div>
-
-        {/* 数据表格 */}
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1200 }}
-          pagination={{
-            total: data.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
-          }}
-          size="small"
-         />
-       </Card>
-
-       {/* 创建资源筹措弹窗 */}
-       <Modal
-         title={
-           <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>
-             ➕ 创建资源筹措
-           </div>
-         }
-         open={createModalVisible}
-         onOk={handleCreateSubmit}
-         onCancel={handleCreateCancel}
-         width={600}
-         okText="创建"
-         cancelText="取消"
-       >
-         <Form
-           form={createForm}
-           layout="vertical"
-           initialValues={{
-             operator: '当前用户'
-           }}
-         >
-            <Form.Item
-              label="筹措方式"
-              name="procurementMethod"
-              rules={[{ required: true, message: '请选择筹措方式' }]}
-            >
-              <Select placeholder="请选择筹措方式">
-                <Select.OptGroup label="私有云">
-                  <Option value="私有云-采购">采购</Option>
-                  <Option value="私有云-提拉">提拉</Option>
-                  <Option value="私有云-借调">借调</Option>
-                  <Option value="私有云-归还">归还</Option>
-                  <Option value="私有云-报废">报废</Option>
-                  <Option value="私有云-搬迁">搬迁</Option>
-                  <Option value="私有云-改配">改配</Option>
-                </Select.OptGroup>
-                <Select.OptGroup label="公有云">
-                  <Option value="公有云-采购">采购</Option>
-                  <Option value="公有云-释放">释放</Option>
-                  <Option value="公有云-腾退">腾退</Option>
-                </Select.OptGroup>
-              </Select>
-            </Form.Item>
-
-           <Form.Item
-             label="供给量级（核）"
-             name="supplyAmount"
-             rules={[
-               { required: true, message: '请输入供给量级' },
-               { type: 'number', min: 1, message: '供给量级必须大于0' }
-             ]}
-           >
-             <InputNumber
-               style={{ width: '100%' }}
-               placeholder="请输入供给量级"
-               min={1}
-               formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-               parser={value => value.replace(/\$\s?|(,*)/g, '')}
-             />
-           </Form.Item>
-
-           <Form.Item
-             label="供给时间"
-             name="supplyTime"
-             rules={[{ required: true, message: '请选择供给时间' }]}
-           >
-             <DatePicker
-               style={{ width: '100%' }}
-               showTime={{ format: 'HH:mm' }}
-               format="YYYY-MM-DD HH:mm"
-               placeholder="请选择供给时间"
-             />
-           </Form.Item>
-
-           <Form.Item
-             label="释放时间"
-             name="releaseTime"
-             rules={[{ required: true, message: '请选择释放时间' }]}
-           >
-             <DatePicker
-               style={{ width: '100%' }}
-               showTime={{ format: 'HH:mm' }}
-               format="YYYY-MM-DD HH:mm"
-               placeholder="请选择释放时间"
-             />
-           </Form.Item>
-
-            <Form.Item
-              label="交付方式"
-              name="deliveryMethod"
-              rules={[{ required: true, message: '请选择交付方式' }]}
-            >
-              <Select placeholder="请选择交付方式">
-                <Option value="系统对接">系统对接</Option>
-                <Option value="手动录入">手动录入</Option>
-              </Select>
-            </Form.Item>
-
-           <Form.Item
-             label="操作人"
-             name="operator"
-             rules={[{ required: true, message: '请输入操作人' }]}
-           >
-             <Input placeholder="请输入操作人" />
-           </Form.Item>
-         </Form>
-       </Modal>
-     </div>
-   );
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'ongoing',
+              label: `进行中 (${procurementData.ongoing.length})`,
+              children: (
+                <div>
+                  <Alert
+                    message="进行中的资源筹措"
+                    description="以下是当前正在进行的资源筹措项目，请及时跟踪进度确保按时完成。"
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                  />
+                  <Table
+                    columns={columns}
+                    dataSource={procurementData.ongoing}
+                    pagination={false}
+                    size="middle"
+                  />
+                </div>
+              )
+            },
+            {
+              key: 'completed',
+              label: `已完成 (${procurementData.completed.length})`,
+              children: (
+                <div>
+                  <Alert
+                    message="已完成的资源筹措"
+                    description="以下是已经完成的资源筹措项目，资源已成功交付。"
+                    type="success"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                  />
+                  <Table
+                    columns={columns}
+                    dataSource={procurementData.completed}
+                    pagination={false}
+                    size="middle"
+                  />
+                </div>
+              )
+            }
+          ]}
+        />
+      </Card>
+    </div>
+  );
 };
 
 export default ResourceProcurementPage;

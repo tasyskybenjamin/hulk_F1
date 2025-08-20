@@ -1,12 +1,20 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, Alert, Tag } from 'antd';
-import { WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Statistic, Alert, Tag, Button } from 'antd';
+import { WarningOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 const SupplyDemandSummary = ({ data, dateRange }) => {
+  const navigate = useNavigate();
+
   if (!data || !data.datasets) {
     return null;
   }
+
+  // 跳转到资源筹措页面
+  const handleGoToProcurement = () => {
+    navigate('/resource-procurement');
+  };
 
   // 计算汇总数据
   const calculateSummary = () => {
@@ -219,7 +227,24 @@ const SupplyDemandSummary = ({ data, dateRange }) => {
       <div style={{ marginTop: '16px' }}>
         {summary.hasGap ? (
           <Alert
-            message="资源缺口预警"
+            message={
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>资源缺口预警</span>
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<SettingOutlined />}
+                  onClick={handleGoToProcurement}
+                  style={{
+                    backgroundColor: '#f5222d',
+                    borderColor: '#f5222d',
+                    boxShadow: '0 2px 4px rgba(245, 34, 45, 0.3)'
+                  }}
+                >
+                  资源筹措
+                </Button>
+              </div>
+            }
             description={
               <div>
                 <div style={{ marginBottom: '8px' }}>
