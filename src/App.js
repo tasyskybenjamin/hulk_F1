@@ -217,7 +217,12 @@ function App() {
           <div className="content-wrapper">
           {/* 根据选中的菜单项显示不同内容 */}
           {selectedKey === 'supply-demand-match' ? (
-            <SupplyDemandMatchingPage />
+            <SupplyDemandMatchingPage
+              onNavigateToResourceProcurement={() => {
+                setSelectedKey('resource-procurement');
+                console.log('跳转到资源筹措页面');
+              }}
+            />
           ) : selectedKey === 'resource-procurement' ? (
             <ResourceProcurementPage />
           ) : selectedKey === 'demand-management' ? (

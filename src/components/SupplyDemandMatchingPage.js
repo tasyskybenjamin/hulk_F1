@@ -20,7 +20,7 @@ import './SupplyDemandMatchingPage.css';
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-const SupplyDemandMatchingPage = () => {
+const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
   const [filters, setFilters] = useState({
     dateRange: [
       dayjs().subtract(1, 'month').startOf('day'), // 开始日期 00:00:00
@@ -603,6 +603,7 @@ const SupplyDemandMatchingPage = () => {
       <SupplyDemandSummary
         data={trendData}
         dateRange={filters.dateRange}
+        onNavigateToResourceProcurement={onNavigateToResourceProcurement}
       />
 
       {/* 供需匹配趋势图表 */}

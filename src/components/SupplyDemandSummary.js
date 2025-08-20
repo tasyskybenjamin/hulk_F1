@@ -1,19 +1,18 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Alert, Tag, Button } from 'antd';
 import { WarningOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
-const SupplyDemandSummary = ({ data, dateRange }) => {
-  const navigate = useNavigate();
-
+const SupplyDemandSummary = ({ data, dateRange, onNavigateToResourceProcurement }) => {
   if (!data || !data.datasets) {
     return null;
   }
 
   // 跳转到资源筹措页面
   const handleGoToProcurement = () => {
-    navigate('/resource-procurement');
+    if (onNavigateToResourceProcurement) {
+      onNavigateToResourceProcurement();
+    }
   };
 
   // 计算汇总数据
