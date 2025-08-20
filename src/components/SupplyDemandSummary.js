@@ -199,24 +199,35 @@ const SupplyDemandSummary = ({ data, dateRange, onNavigateToResourceProcurement 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <CheckCircleOutlined style={{ color: '#52c41a' }} />
               <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                库存：当前可用库存 {summary.currentInventory.toLocaleString()} 核 需求峰值时库存 {summary.peakInventory.toLocaleString()} 核
+                库存：当前可用库存 {summary.currentInventory.toLocaleString()} 核 需求峰值时库存 {summary.peakInventory.toLocaleString()} 核（{getInventoryStatusText(summary.inventoryStatus)}）
               </span>
-              <Tag color={getInventoryStatusColor(summary.inventoryStatus)}>
-                （{getInventoryStatusText(summary.inventoryStatus)}）
-              </Tag>
             </div>
 
             <div style={{ marginBottom: '12px' }}>
-              可使用库存约为：<span style={{ color: '#52c41a', fontWeight: 'bold' }}>
-                {summary.availableInventory.total.toLocaleString()} 核
-              </span>
+              <div style={{ marginBottom: '8px' }}>
+                当前可用库存约为：<span style={{ color: '#52c41a', fontWeight: 'bold' }}>q+a+b+c核</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                需求峰值时可用库存约为：<span style={{ color: '#52c41a', fontWeight: 'bold' }}>q+a+b+c核</span>
+              </div>
             </div>
 
             <div style={{ fontSize: '14px', lineHeight: '2' }}>
-              <div>【可用库存】配额余量 ： <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.availableInventory.quota.toLocaleString()} 核</span></div>
-              <div>【正常到货】私有云到货 ： <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.availableInventory.normalArrival.toLocaleString()} 核</span></div>
-              <div>【资源筹备】私有云提拉 ： <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.availableInventory.privateCloudPull.toLocaleString()} 核</span></div>
-              <div>【资源筹措】私有云借调 ： <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.availableInventory.resourceBorrow.toLocaleString()} 核</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div>【可用库存】配额余量—q 核</div>
+                <div>【可用库存】配额余量—q 核</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div>【正常到货】私有云到货—b 核</div>
+                <div>【正常到货】私有云到货—b 核</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div>【资源筹备】私有云提拉—a 核</div>
+                <div>【资源筹备】私有云提拉—a 核</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div>【资源筹措】私有云借调—c 核</div>
+                <div>【资源筹措】私有云借调—c 核</div>
+              </div>
             </div>
           </div>
         </Col>
