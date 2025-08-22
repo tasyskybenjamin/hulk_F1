@@ -1,6 +1,6 @@
 .inventory-management-page {
-  padding: 24px;
-  background-color: #f5f5f5;
+  padding: 0;
+  background: #f5f5f5;
   min-height: 100vh;
 }
 
@@ -164,4 +164,108 @@
 .ant-space-item {
   display: flex;
   align-items: center;
+}
+
+/* 核心指标卡片样式 */
+.inventory-management-page .summary-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+}
+
+.inventory-management-page .summary-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.inventory-management-page .summary-card .ant-statistic {
+  text-align: center;
+}
+
+.inventory-management-page .summary-card .ant-statistic-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.inventory-management-page .summary-card .ant-statistic-content {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* 状态卡片样式 */
+.inventory-management-page .status-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.inventory-management-page .status-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.inventory-management-page .status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #f0f0f0;
+}
+
+.inventory-management-page .status-card.available-inventory::before {
+  background: linear-gradient(90deg, #52c41a, #73d13d);
+}
+
+.inventory-management-page .status-card.outbound-inventory::before {
+  background: linear-gradient(90deg, #faad14, #ffc53d);
+}
+
+.inventory-management-page .status-card.safety-reserve::before {
+  background: linear-gradient(90deg, #722ed1, #9254de);
+}
+
+.inventory-management-page .status-card.emergency-pool::before {
+  background: linear-gradient(90deg, #fa541c, #ff7875);
+}
+
+.inventory-management-page .status-card.operation-pool::before {
+  background: linear-gradient(90deg, #13c2c2, #36cfc9);
+}
+
+.inventory-management-page .status-card.reserved-inventory::before {
+  background: linear-gradient(90deg, #8c8c8c, #bfbfbf);
+}
+
+.inventory-management-page .status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.inventory-management-page .status-title {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.inventory-management-page .status-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.inventory-management-page .status-percentage {
+  font-size: 12px;
+  color: #999;
 }
