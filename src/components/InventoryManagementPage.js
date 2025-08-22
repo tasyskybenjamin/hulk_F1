@@ -244,20 +244,25 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // 模拟汇总数据
-      const availableInventory = 8420;
-      const outboundInventory = 1800;
-      const safetyReserve = 1560;
-      const emergencyPool = 600;
-      const operationPool = 100;
+      // 实际库存数据
+      const availableInventory = 1941243;
+      const outboundInventory = 22611138;
+      const emergencyPool = 100000;
+      const operationPool = 100; // 运维资源保持较小值
+
+      // 安全预留计算逻辑：总库存的5% + 固定值100,000核
+      const totalInventoryBeforeSafety = availableInventory + outboundInventory + emergencyPool + operationPool;
+      const safetyReserveCalculated = Math.round(totalInventoryBeforeSafety * 0.05) + 100000;
+      const safetyReserve = 607154; // 实际值
+
       const totalInventory = availableInventory + outboundInventory + safetyReserve + emergencyPool + operationPool;
 
       setSummaryData({
         totalInventory: totalInventory,
         availableInventory: availableInventory,
-        reservedInventory: 3200, // 已预占不计入总量
         outboundInventory: outboundInventory,
         safetyReserve: safetyReserve,
+        safetyReserveCalculated: safetyReserveCalculated, // 用于显示计算逻辑
         emergencyPool: emergencyPool,
         operationPool: operationPool
       });
@@ -816,60 +821,66 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                         </div>
                       </Card>
                     </Col>
-                    <Col xs={24} sm={12} md={8} lg={4}>
-                      <Card className="status-card safety-reserve">
-                        <div className="status-header">
-                          <span className="status-title">安全预留</span>
-                          <Tooltip title="系统安全预留资源">
-                            <InfoCircleOutlined style={{ color: '#999' }} />
-                          </Tooltip>
-                        </div>
-                        <div className="status-value">{summaryData.safetyReserve.toLocaleString()}</div>
-                        <div className="status-percentage">
-                          {((summaryData.safetyReserve / summaryData.totalInventory) * 100).toFixed(1)}%
-                        </div>
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={12} md={8} lg={4}>
-                      <Card className="status-card emergency-pool">
-                        <div className="status-header">
-                          <span className="status-title">紧急资源</span>
-                          <Tooltip title="用于业务紧急场景的资源">
-                            <InfoCircleOutlined style={{ color: '#999' }} />
-                          </Tooltip>
-                        </div>
-                        <div className="status-value">{summaryData.emergencyPool.toLocaleString()}</div>
-                        <div className="status-percentage">
-                          {((summaryData.emergencyPool / summaryData.totalInventory) * 100).toFixed(1)}%
-                        </div>
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={12} md={8} lg={4}>
-                      <Card className="status-card operation-pool">
-                        <div className="status-header">
-                          <span className="status-title">运维资源</span>
-                          <Tooltip title="运维场景使用的资源">
-                            <InfoCircleOutlined style={{ color: '#999' }} />
-                          </Tooltip>
-                        </div>
-                        <div className="status-value">{summaryData.operationPool.toLocaleString()}</div>
-                        <div className="status-percentage">
-                          {((summaryData.operationPool / summaryData.totalInventory) * 100).toFixed(1)}%
-                        </div>
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={12} md={8} lg={4}>
-                      <Card className="status-card reserved-inventory">
-                        <div className="status-header">
-                          <span className="status-title">已预占</span>
-                          <Tooltip title="已被预占但未出库的资源">
-                            <InfoCircleOutlined style={{ color: '#999' }} />
-                          </Tooltip>
-                        </div>
-                        <div className="status-value">{summaryData.reservedInventory.toLocaleString()}</div>
-                        <div className="status-percentage">预占资源</div>
-                      </Card>
-                    </Col>
+                     <Col xs={24} sm={12} md={8} lg={5}>
+                       <Card className="status-card safety-reserve">
+                         <div className="status-header">
+                           <span className="status-title">安全预留</span>
+                           <Tooltip
+                             title={
+                               <div>
+                                 <div style={{ marginBottom: '8px' }}>
+                                   <strong>计算逻辑：</strong>总库存的5% + 固定值100,000核
+                                 </div>
+                                 <div style={{ marginBottom: '4px' }}>
+                                   • 某某平台应急预留：10,000核
+                                 </div>
+                                 <div>
+                                   • 夏战为PaaS预留：90,000核
+                                 </div>
+                               </div>
+                             }
+                             overlayStyle={{ maxWidth: '300px' }}
+                           >
+                             <InfoCircleOutlined style={{ color: '#999' }} />
+                           </Tooltip>
+                         </div>
+                         <div className="status-value">{summaryData.safetyReserve.toLocaleString()}</div>
+                         <div className="status-percentage">
+                           {((summaryData.safetyReserve / summaryData.totalInventory) * 100).toFixed(1)}%
+                         </div>
+                         <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                           计算值: {summaryData.safetyReserveCalculated?.toLocaleString()}
+                         </div>
+                       </Card>
+                     </Col>
+                     <Col xs={24} sm={12} md={8} lg={5}>
+                       <Card className="status-card emergency-pool">
+                         <div className="status-header">
+                           <span className="status-title">紧急资源</span>
+                           <Tooltip title="用于业务紧急场景的资源">
+                             <InfoCircleOutlined style={{ color: '#999' }} />
+                           </Tooltip>
+                         </div>
+                         <div className="status-value">{summaryData.emergencyPool.toLocaleString()}</div>
+                         <div className="status-percentage">
+                           {((summaryData.emergencyPool / summaryData.totalInventory) * 100).toFixed(1)}%
+                         </div>
+                       </Card>
+                     </Col>
+                     <Col xs={24} sm={12} md={8} lg={5}>
+                       <Card className="status-card operation-pool">
+                         <div className="status-header">
+                           <span className="status-title">运维资源</span>
+                           <Tooltip title="运维场景使用的资源">
+                             <InfoCircleOutlined style={{ color: '#999' }} />
+                           </Tooltip>
+                         </div>
+                         <div className="status-value">{summaryData.operationPool.toLocaleString()}</div>
+                         <div className="status-percentage">
+                           {((summaryData.operationPool / summaryData.totalInventory) * 100).toFixed(1)}%
+                         </div>
+                       </Card>
+                     </Col>
                   </Row>
 
                   {/* 库存分布 */}
