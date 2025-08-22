@@ -880,6 +880,57 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                      </Col>
                   </Row>
 
+                  {/* 库存洞察 */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                    <Col span={24}>
+                      <Card
+                        title="📊 库存洞察"
+                        className="insight-card"
+                      >
+                        <Row gutter={[16, 16]}>
+                          <Col xs={24} sm={12} md={6}>
+                            <div className="insight-item">
+                              <div className="insight-label">热点地域</div>
+                              <div className="insight-value">北京 (89.5%)</div>
+                              <div className="insight-trend">↗ +2.3%</div>
+                            </div>
+                          </Col>
+                          <Col xs={24} sm={12} md={6}>
+                            <div className="insight-item">
+                              <div className="insight-label">主要用途</div>
+                              <div className="insight-value">已出库 (89.5%)</div>
+                              <div className="insight-value">可用库存 (7.7%)</div>
+                            </div>
+                          </Col>
+                          <Col xs={24} sm={12} md={6}>
+                            <div className="insight-item">
+                              <div className="insight-label">Top 5 集群组</div>
+                              <div className="insight-list">
+                                <div className="insight-list-item">1. hulk-general (85%)</div>
+                                <div className="insight-list-item">2. hulk-arm (10%)</div>
+                                <div className="insight-list-item">3. txserverless (5%)</div>
+                                <div className="insight-list-item">4. 其他集群 (0%)</div>
+                                <div className="insight-list-item">5. 预留扩展 (0%)</div>
+                              </div>
+                            </div>
+                          </Col>
+                          <Col xs={24} sm={12} md={6}>
+                            <div className="insight-item">
+                              <div className="insight-label">Top 5 调用方</div>
+                              <div className="insight-list">
+                                <div className="insight-list-item">1. avatar (35%)</div>
+                                <div className="insight-list-item">2. policy (25%)</div>
+                                <div className="insight-list-item">3. unit_4 (15%)</div>
+                                <div className="insight-list-item">4. holiday (12%)</div>
+                                <div className="insight-list-item">5. maoyan (8%)</div>
+                              </div>
+                            </div>
+                          </Col>
+                        </Row>
+                      </Card>
+                    </Col>
+                  </Row>
+
                   {/* 库存分布 */}
                   <Card
                     title={
