@@ -208,103 +208,93 @@ const InventoryFilterPanel = ({ filters, onChange, loading }) => {
 
   return (
     <div>
-      <Row gutter={[16, 16]} align="middle">
-        <Col flex="auto">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <div className="filter-item">
-                <div className="filter-label">时间范围</div>
-                <RangePicker
-                  value={filters.dateRange}
-                  onChange={(dates) => handleFilterChange('dateRange', dates)}
-                  style={{ width: '100%' }}
-                  showTime={{
-                    defaultValue: [dayjs('00:00:00', 'HH:mm:ss'), dayjs('23:59:49', 'HH:mm:ss')]
-                  }}
-                  format="YYYY-MM-DD HH:mm:ss"
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <div className="filter-item">
-                <div className="filter-label">集群组/专区</div>
-                <Cascader
-                  multiple
-                  value={filters.clusterCascader}
-                  onChange={(value) => handleFilterChange('clusterCascader', value)}
-                  options={clusterCascaderOptions}
-                  placeholder="请选择集群组/专区"
-                  style={{ width: '100%' }}
-                  showSearch
-                  maxTagCount="responsive"
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <div className="filter-item">
-                <div className="filter-label">地域/机房</div>
-                <Cascader
-                  multiple
-                  value={filters.regionCascader}
-                  onChange={(value) => handleFilterChange('regionCascader', value)}
-                  options={regionCascaderOptions}
-                  placeholder="请选择地域/机房"
-                  style={{ width: '100%' }}
-                  showSearch
-                  maxTagCount="responsive"
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <div className="filter-item">
-                <div className="filter-label">产品类型</div>
-                <Select
-                  mode="multiple"
-                  value={filters.productType}
-                  onChange={(value) => handleFilterChange('productType', value)}
-                  options={productTypeOptions}
-                  placeholder="请选择产品类型"
-                  style={{ width: '100%' }}
-                  maxTagCount="responsive"
-                />
-              </div>
-            </Col>
-
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <div className="filter-item">
-                <div className="filter-label">库存用途</div>
-                <Select
-                  mode="multiple"
-                  value={filters.inventoryUsage}
-                  onChange={(value) => handleFilterChange('inventoryUsage', value)}
-                  placeholder="请选择库存用途"
-                  style={{ width: '100%' }}
-                  maxTagCount="responsive"
-                >
-                  {inventoryUsageOptions.map(option => (
-                    <Select.Option key={option.value} value={option.value}>
-                      <Tooltip title={option.description} placement="right">
-                        {option.label}
-                      </Tooltip>
-                    </Select.Option>
-                  ))}
-                </Select>
-              </div>
-            </Col>
-          </Row>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <div className="filter-item">
+            <div className="filter-label">时间范围</div>
+            <RangePicker
+              value={filters.dateRange}
+              onChange={(dates) => handleFilterChange('dateRange', dates)}
+              style={{ width: '100%' }}
+              showTime={{
+                defaultValue: [dayjs('00:00:00', 'HH:mm:ss'), dayjs('23:59:49', 'HH:mm:ss')]
+              }}
+              format="YYYY-MM-DD HH:mm:ss"
+            />
+          </div>
         </Col>
 
-        <Col flex="none">
-          <Space>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={handleReset}
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <div className="filter-item">
+            <div className="filter-label">集群组/专区</div>
+            <Cascader
+              multiple
+              value={filters.clusterCascader}
+              onChange={(value) => handleFilterChange('clusterCascader', value)}
+              options={clusterCascaderOptions}
+              placeholder="请选择集群组/专区"
+              style={{ width: '100%' }}
+              showSearch
+              maxTagCount="responsive"
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <div className="filter-item">
+            <div className="filter-label">地域/机房</div>
+            <Cascader
+              multiple
+              value={filters.regionCascader}
+              onChange={(value) => handleFilterChange('regionCascader', value)}
+              options={regionCascaderOptions}
+              placeholder="请选择地域/机房"
+              style={{ width: '100%' }}
+              showSearch
+              maxTagCount="responsive"
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <div className="filter-item">
+            <div className="filter-label">产品类型</div>
+            <Select
+              mode="multiple"
+              value={filters.productType}
+              onChange={(value) => handleFilterChange('productType', value)}
+              options={productTypeOptions}
+              placeholder="请选择产品类型"
+              style={{ width: '100%' }}
+              maxTagCount="responsive"
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <div className="filter-item">
+            <div className="filter-label">库存用途</div>
+            <Select
+              mode="multiple"
+              value={filters.inventoryUsage}
+              onChange={(value) => handleFilterChange('inventoryUsage', value)}
+              placeholder="请选择库存用途"
+              style={{ width: '100%' }}
+              maxTagCount="responsive"
             >
-              重置
-            </Button>
+              {inventoryUsageOptions.map(option => (
+                <Select.Option key={option.value} value={option.value}>
+                  <Tooltip title={option.description} placement="right">
+                    {option.label}
+                  </Tooltip>
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        </Col>
+
+        <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <Space>
             <Button
               type="primary"
               icon={<FilterOutlined />}
@@ -312,6 +302,12 @@ const InventoryFilterPanel = ({ filters, onChange, loading }) => {
               onClick={() => onChange(filters)}
             >
               查询
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={handleReset}
+            >
+              重置
             </Button>
           </Space>
         </Col>
