@@ -729,75 +729,273 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                 <div>
                   {/* 数字卡片 */}
                   <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                    <Col xs={24} sm={12} md={4}>
-                      <Card size="small" className="overview-card">
-                        <Statistic
-                          title="库存总量"
-                          value={summaryData.totalInventory}
-                          valueStyle={{ color: '#1890ff', fontSize: '24px' }}
-                        />
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          可用+已出库+紧急+运维+安全预留
+                    <Col xs={24} sm={12} lg={4}>
+                      <Card
+                        className="overview-card total-inventory"
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '8px' }}>
+                              库存总量
+                            </div>
+                            <div style={{ color: '#fff', fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                              {summaryData.totalInventory?.toLocaleString() || 0}
+                            </div>
+                            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                              可用+已出库+紧急+运维+安全预留
+                            </div>
+                          </div>
+                          <div style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            borderRadius: '50%',
+                            width: '48px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: '#fff', fontSize: '20px' }}>📊</span>
+                          </div>
                         </div>
                       </Card>
                     </Col>
-                    <Col xs={24} sm={12} md={4}>
-                      <Card size="small" className="overview-card">
-                        <Statistic
-                          title="可用库存"
-                          value={summaryData.availableInventory}
-                          valueStyle={{ color: '#52c41a', fontSize: '24px' }}
-                        />
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          作为资源供给的可调配资源
+
+                    <Col xs={24} sm={12} lg={4}>
+                      <Card
+                        className="overview-card available-inventory"
+                        style={{
+                          background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(17, 153, 142, 0.15)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '8px' }}>
+                              可用库存
+                            </div>
+                            <div style={{ color: '#fff', fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                              {summaryData.availableInventory?.toLocaleString() || 0}
+                            </div>
+                            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                              作为资源供给的可调配资源
+                            </div>
+                            <Progress
+                              percent={Math.round((summaryData.availableInventory / summaryData.totalInventory) * 100)}
+                              showInfo={false}
+                              strokeColor="rgba(255,255,255,0.8)"
+                              trailColor="rgba(255,255,255,0.2)"
+                              size="small"
+                              style={{ marginTop: '8px' }}
+                            />
+                          </div>
+                          <div style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            borderRadius: '50%',
+                            width: '48px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: '#fff', fontSize: '20px' }}>✅</span>
+                          </div>
                         </div>
                       </Card>
                     </Col>
-                    <Col xs={24} sm={12} md={4}>
-                      <Card size="small" className="overview-card">
-                        <Statistic
-                          title="已出库"
-                          value={summaryData.outboundInventory}
-                          valueStyle={{ color: '#faad14', fontSize: '24px' }}
-                        />
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          已交付给业务/平台方的资源
+
+                    <Col xs={24} sm={12} lg={4}>
+                      <Card
+                        className="overview-card outbound-inventory"
+                        style={{
+                          background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(252, 182, 159, 0.15)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ color: '#8b4513', fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
+                              已出库
+                            </div>
+                            <div style={{ color: '#d2691e', fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                              {summaryData.outboundInventory?.toLocaleString() || 0}
+                            </div>
+                            <div style={{ color: '#8b4513', fontSize: '12px' }}>
+                              已交付给业务/平台方的资源
+                            </div>
+                            <Progress
+                              percent={Math.round((summaryData.outboundInventory / summaryData.totalInventory) * 100)}
+                              showInfo={false}
+                              strokeColor="#d2691e"
+                              trailColor="rgba(139, 69, 19, 0.2)"
+                              size="small"
+                              style={{ marginTop: '8px' }}
+                            />
+                          </div>
+                          <div style={{
+                            background: 'rgba(139, 69, 19, 0.1)',
+                            borderRadius: '50%',
+                            width: '48px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: '#d2691e', fontSize: '20px' }}>📦</span>
+                          </div>
                         </div>
                       </Card>
                     </Col>
-                    <Col xs={24} sm={12} md={4}>
-                      <Card size="small" className="overview-card">
-                        <Statistic
-                          title="紧急资源"
-                          value={summaryData.emergencyPool}
-                          valueStyle={{ color: '#fa541c', fontSize: '24px' }}
-                        />
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          用于业务紧急场景的资源
+
+                    <Col xs={24} sm={12} lg={4}>
+                      <Card
+                        className="overview-card emergency-inventory"
+                        style={{
+                          background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(255, 154, 158, 0.15)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ color: '#8b0000', fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
+                              紧急资源
+                            </div>
+                            <div style={{ color: '#dc143c', fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                              {summaryData.emergencyPool?.toLocaleString() || 0}
+                            </div>
+                            <div style={{ color: '#8b0000', fontSize: '12px' }}>
+                              用于业务紧急场景的资源
+                            </div>
+                            <div style={{
+                              marginTop: '8px',
+                              padding: '2px 8px',
+                              background: 'rgba(220, 20, 60, 0.1)',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              color: '#dc143c',
+                              display: 'inline-block'
+                            }}>
+                              🚨 应急储备
+                            </div>
+                          </div>
+                          <div style={{
+                            background: 'rgba(139, 0, 0, 0.1)',
+                            borderRadius: '50%',
+                            width: '48px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: '#dc143c', fontSize: '20px' }}>🚨</span>
+                          </div>
                         </div>
                       </Card>
                     </Col>
-                    <Col xs={24} sm={12} md={4}>
-                      <Card size="small" className="overview-card">
-                        <Statistic
-                          title="运维资源"
-                          value={summaryData.operationPool}
-                          valueStyle={{ color: '#13c2c2', fontSize: '24px' }}
-                        />
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          运维场景使用的资源
+
+                    <Col xs={24} sm={12} lg={4}>
+                      <Card
+                        className="overview-card operation-inventory"
+                        style={{
+                          background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(168, 237, 234, 0.15)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ color: '#2f4f4f', fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
+                              运维资源
+                            </div>
+                            <div style={{ color: '#008b8b', fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                              {summaryData.operationPool?.toLocaleString() || 0}
+                            </div>
+                            <div style={{ color: '#2f4f4f', fontSize: '12px' }}>
+                              运维场景使用的资源
+                            </div>
+                            <div style={{
+                              marginTop: '8px',
+                              padding: '2px 8px',
+                              background: 'rgba(0, 139, 139, 0.1)',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              color: '#008b8b',
+                              display: 'inline-block'
+                            }}>
+                              🔧 运维专用
+                            </div>
+                          </div>
+                          <div style={{
+                            background: 'rgba(47, 79, 79, 0.1)',
+                            borderRadius: '50%',
+                            width: '48px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: '#008b8b', fontSize: '20px' }}>🔧</span>
+                          </div>
                         </div>
                       </Card>
                     </Col>
-                    <Col xs={24} sm={12} md={4}>
-                      <Card size="small" className="overview-card">
-                        <Statistic
-                          title="安全预留"
-                          value={summaryData.safetyReserve}
-                          valueStyle={{ color: '#722ed1', fontSize: '24px' }}
-                        />
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          系统安全预留资源
+
+                    <Col xs={24} sm={12} lg={4}>
+                      <Card
+                        className="overview-card safety-inventory"
+                        style={{
+                          background: 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(210, 153, 194, 0.15)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ color: '#4b0082', fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
+                              安全预留
+                            </div>
+                            <div style={{ color: '#8a2be2', fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                              {summaryData.safetyReserve?.toLocaleString() || 0}
+                            </div>
+                            <div style={{ color: '#4b0082', fontSize: '12px' }}>
+                              系统安全预留资源
+                            </div>
+                            <div style={{
+                              marginTop: '8px',
+                              padding: '2px 8px',
+                              background: 'rgba(138, 43, 226, 0.1)',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              color: '#8a2be2',
+                              display: 'inline-block'
+                            }}>
+                              🛡️ 安全保障
+                            </div>
+                          </div>
+                          <div style={{
+                            background: 'rgba(75, 0, 130, 0.1)',
+                            borderRadius: '50%',
+                            width: '48px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <span style={{ color: '#8a2be2', fontSize: '20px' }}>🛡️</span>
+                          </div>
                         </div>
                       </Card>
                     </Col>
