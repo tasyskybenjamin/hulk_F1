@@ -245,14 +245,21 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 模拟汇总数据
+      const availableInventory = 8420;
+      const outboundInventory = 1800;
+      const safetyReserve = 1560;
+      const emergencyPool = 600;
+      const operationPool = 100;
+      const totalInventory = availableInventory + outboundInventory + safetyReserve + emergencyPool + operationPool;
+
       setSummaryData({
-        totalInventory: 15680,
-        availableInventory: 8420,
-        reservedInventory: 3200,
-        outboundInventory: 1800,
-        safetyReserve: 1560,
-        emergencyPool: 600,
-        operationPool: 100
+        totalInventory: totalInventory,
+        availableInventory: availableInventory,
+        reservedInventory: 3200, // 已预占不计入总量
+        outboundInventory: outboundInventory,
+        safetyReserve: safetyReserve,
+        emergencyPool: emergencyPool,
+        operationPool: operationPool
       });
 
       // 模拟分布数据
@@ -730,7 +737,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                           valueStyle={{ color: '#1890ff', fontSize: '24px' }}
                         />
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                          可用+已出库+紧急+安全预留
+                          可用+已出库+紧急+运维+安全预留
                         </div>
                       </Card>
                     </Col>
