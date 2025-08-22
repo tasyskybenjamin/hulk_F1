@@ -10,8 +10,6 @@ import {
   Tooltip,
   Tag,
   Switch,
-  Select,
-  DatePicker,
   Slider,
   InputNumber,
   Divider,
@@ -30,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
+import InventoryFilterPanel from './InventoryFilterPanel';
 import './InventoryManagementPage.css';
 
 const { RangePicker } = DatePicker;
@@ -37,16 +36,13 @@ const { RangePicker } = DatePicker;
 const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
   const [filters, setFilters] = useState({
     dateRange: [
-      dayjs().subtract(1, 'month').startOf('day'), // 开始日期 00:00:00
-      dayjs().add(1, 'month').endOf('day').subtract(11, 'seconds') // 结束日期 23:59:49
+      dayjs().subtract(2, 'month').startOf('day'), // 开始日期 00:00:00
+      dayjs().add(2, 'month').endOf('day').subtract(11, 'seconds') // 结束日期 23:59:49
     ],
-    clusterGroup: [], // 改为多选，默认全部选中
-    specialZone: [], // 改为多选
-    caller: [], // 改为多选
-    region: [], // 新增地域/机房多选
-    inventoryStatus: 'available', // 新增库存状态，默认可用库存
-    productType: [], // 新增产品类型多选
-    inventoryScenario: [] // 新增库存场景多选
+    clusterCascader: [], // 级联选择器：集群组->专区->调用方
+    regionCascader: [], // 地域级联选择器：地域->机房
+    productType: [], // 产品类型多选：通用、经济、高性能
+    inventoryUsage: ['business', 'platform', 'self-use', 'operation', 'emergency'] // 库存用途多选，默认全部
   });
 
   const [summaryData, setSummaryData] = useState({
@@ -66,13 +62,38 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
   const [distributionBy, setDistributionBy] = useState('region');
   const [activeTab, setActiveTab] = useState('available');
   const [showDatacenterDetails, setShowDatacenterDetails] = useState(false);
-  // 库存场景选项
-  const inventoryScenarioOptions = [
-    { value: 'business', label: '业务', description: '承诺交付业务用户的资源' },
-    { value: 'platform', label: '平台', description: '承诺交付平台用户的资源' },
-    { value: 'operation', label: '运维', description: '运维场景使用资源' },
-    { value: 'self-use', label: '自用', description: 'Hulk自用库存，作为资源缓冲等' },
-    { value: 'emergency', label: '紧急资源', description: '用于业务紧急场景的资源' }
+  // 库存用途选项
+  const inventoryUsageOptions = [
+    {
+      value: 'business',
+      label: '业务',
+      description: '承诺交付业务用户的资源',
+      callers: ['avatar', 'unit_xx', 'holiday', 'avatar_reserved']
+    },
+    {
+      value: 'platform',
+      label: '平台',
+      description: '承诺交付平台用户的资源',
+      callers: ['policy', 'quake', 'maoyan']
+    },
+    {
+      value: 'operation',
+      label: '运维',
+      description: '运维场景使用资源',
+      callers: ['n_plus_one', 'hdr', 'migration_donate_common']
+    },
+    {
+      value: 'self-use',
+      label: '自用',
+      description: 'Hulk自用库存，作为资源缓冲等',
+      callers: ['buffer', 'hulk_overassign']
+    },
+    {
+      value: 'emergency',
+      label: '紧急资源',
+      description: '用于业务紧急场景的资源',
+      callers: []
+    }
   ];
 
   // 产品类型选项
@@ -82,95 +103,130 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     { value: 'high-performance', label: '高性能' }
   ];
 
-  // 库存状态选项
-  const inventoryStatusOptions = [
-    { value: 'available', label: '可用库存' },
-    { value: 'outbound', label: '已出库' }
-  ];
 
-  // 地域/机房选项
-  const regionOptions = [
-    { value: 'beijing', label: '北京' },
-    { value: 'shanghai', label: '上海' },
-    { value: 'huailai', label: '怀来' },
-    { value: 'guangzhou', label: '广州' },
-    { value: 'shenzhen', label: '深圳' }
-  ];
-
-  // 集群组选项
-  const clusterGroupOptions = [
-    { value: 'hulk-general', label: 'hulk-general' },
-    { value: 'hulk-arm', label: 'hulk-arm' },
-    { value: 'txserverless', label: 'txserverless' }
-  ];
-
-  // 专区选项（根据集群组动态变化）
-  const getSpecialZoneOptions = (clusterGroups) => {
-    const specialZoneMap = {
-      'hulk-general': [
-        { value: 'default', label: 'default', type: 'zone' },
-        { value: 'hulk_pool_buffer', label: 'hulk_pool_buffer', type: 'zone' },
-        { value: 'hulk_holiday', label: 'hulk_holiday', type: 'zone' },
-        { value: 'jinrong_hulk', label: '金融', type: 'zone' },
-        { value: 'huidu_hulk', label: '灰度专区', type: 'zone' },
-        { value: 'hrs_non_zone_general', label: 'HRS视野内非专区部分', type: 'non-zone' }
-      ],
-      'hulk-arm': [
-        { value: 'default', label: 'default', type: 'zone' },
-        { value: 'hrs_non_zone_arm', label: 'HRS视野内非专区部分', type: 'non-zone' }
-      ],
-      'txserverless': [
-        { value: 'default', label: 'default', type: 'zone' },
-        { value: 'hrs_non_zone_serverless', label: 'HRS视野内非专区部分', type: 'non-zone' }
+  // 地域/机房级联选择器选项
+  const regionCascaderOptions = [
+    {
+      value: 'beijing',
+      label: '北京',
+      children: [
+        { value: 'beijing-dc1', label: '北京-机房1' },
+        { value: 'beijing-dc2', label: '北京-机房2' },
+        { value: 'beijing-dc3', label: '北京-机房3' }
       ]
-    };
-
-    if (!clusterGroups || clusterGroups.length === 0) {
-      return [];
+    },
+    {
+      value: 'shanghai',
+      label: '上海',
+      children: [
+        { value: 'shanghai-dc1', label: '上海-机房1' },
+        { value: 'shanghai-dc2', label: '上海-机房2' }
+      ]
+    },
+    {
+      value: 'huailai',
+      label: '怀来',
+      children: [
+        { value: 'huailai-dc1', label: '怀来-机房1' }
+      ]
+    },
+    {
+      value: 'other',
+      label: '其他',
+      children: [
+        { value: 'other-any', label: '其他-Any' }
+      ]
     }
-
-    // 如果选择了多个集群组，合并所有选项
-    const allOptions = [];
-    clusterGroups.forEach(group => {
-      if (specialZoneMap[group]) {
-        allOptions.push(...specialZoneMap[group]);
-      }
-    });
-
-    // 去重
-    const uniqueOptions = allOptions.filter((option, index, self) =>
-      index === self.findIndex(o => o.value === option.value)
-    );
-
-    return uniqueOptions;
-  };
-
-  // 调用方选项
-  const callerOptions = [
-    { value: 'avatar', label: 'avatar' },
-    { value: 'unit_4', label: 'unit_4' },
-    { value: 'avatar_reserved', label: 'avatar_reserved' },
-    { value: 'migration', label: 'migration' },
-    { value: 'holiday', label: 'holiday' },
-    { value: 'policy', label: 'policy' },
-    { value: 'cargo', label: 'cargo' },
-    { value: 'n_plus_one', label: 'n_plus_one' },
-    { value: 'hdr', label: 'hdr' },
-    { value: 'maoyan', label: 'maoyan' },
-    { value: 'hulk_holiday_admin', label: 'hulk_holiday_admin' },
-    { value: 'migrate_hulk_holiday', label: 'migrate_hulk_holiday' },
-    { value: 'hulk_holiday', label: 'hulk_holiday' },
-    { value: 'jinrong', label: 'jinrong' },
-    { value: 'avatarjinrong', label: 'avatarjinrong' },
-    { value: 'migrationjinrong', label: 'migrationjinrong' },
-    { value: 'policy_jinrong_hulk', label: 'policy+jinrong_hulk' },
-    { value: 'hulk_arm_admin', label: 'hulk_arm_admin' },
-    { value: 'hulk_arm', label: 'hulk_arm' },
-    { value: 'migrate_hulk_arm', label: 'migrate_hulk_arm' },
-    { value: 'policy_campaign_tx', label: 'policy_campaign_tx' },
-    { value: 'policy_txserverless', label: 'policy+txserverless' },
-    { value: 'txserverless_migration', label: 'txserverless_migration' }
   ];
+
+  // 集群组/专区/调用方级联选择器选项
+  const clusterCascaderOptions = [
+    {
+      value: 'hulk-general',
+      label: 'hulk-general',
+      children: [
+        {
+          value: 'default',
+          label: 'default',
+          children: [
+            { value: 'avatar', label: 'avatar' },
+            { value: 'unit_4', label: 'unit_4' },
+            { value: 'avatar_reserved', label: 'avatar_reserved' },
+            { value: 'migration', label: 'migration' },
+            { value: 'holiday', label: 'holiday' },
+            { value: 'policy', label: 'policy' },
+            { value: 'cargo', label: 'cargo' },
+            { value: 'n_plus_one', label: 'n_plus_one' },
+            { value: 'hdr', label: 'hdr' },
+            { value: 'maoyan', label: 'maoyan' }
+          ]
+        },
+        {
+          value: 'hulk_pool_buffer',
+          label: 'hulk_pool_buffer',
+          children: [
+            { value: 'buffer', label: 'buffer' },
+            { value: 'hulk_overassign', label: 'hulk_overassign' }
+          ]
+        },
+        {
+          value: 'hulk_holiday',
+          label: 'hulk_holiday',
+          children: [
+            { value: 'hulk_holiday_admin', label: 'hulk_holiday_admin' },
+            { value: 'migrate_hulk_holiday', label: 'migrate_hulk_holiday' },
+            { value: 'hulk_holiday', label: 'hulk_holiday' }
+          ]
+        },
+        {
+          value: 'jinrong_hulk',
+          label: '金融',
+          children: [
+            { value: 'jinrong', label: 'jinrong' },
+            { value: 'avatarjinrong', label: 'avatarjinrong' },
+            { value: 'migrationjinrong', label: 'migrationjinrong' },
+            { value: 'policy_jinrong_hulk', label: 'policy+jinrong_hulk' }
+          ]
+        },
+        {
+          value: 'huidu_hulk',
+          label: '灰度专区',
+          children: []
+        }
+      ]
+    },
+    {
+      value: 'hulk-arm',
+      label: 'hulk-arm',
+      children: [
+        {
+          value: 'default',
+          label: 'default',
+          children: [
+            { value: 'hulk_arm_admin', label: 'hulk_arm_admin' },
+            { value: 'hulk_arm', label: 'hulk_arm' },
+            { value: 'migrate_hulk_arm', label: 'migrate_hulk_arm' }
+          ]
+        }
+      ]
+    },
+    {
+      value: 'txserverless',
+      label: 'txserverless',
+      children: [
+        {
+          value: 'default',
+          label: 'default',
+          children: [
+            { value: 'policy_campaign_tx', label: 'policy_campaign_tx' },
+            { value: 'policy_txserverless', label: 'policy+txserverless' },
+            { value: 'txserverless_migration', label: 'txserverless_migration' }
+          ]
+        }
+      ]
+    }
+  ];
+
 
   // 库存分类选项
   const inventoryCategories = [
@@ -325,15 +381,9 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     fetchInventoryData(filters);
   }, [filters, distributionBy, showDatacenterDetails]);
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => {
-      const newFilters = { ...prev, [key]: value };
-      // 当集群组改变时，清空专区选择
-      if (key === 'clusterGroup') {
-        newFilters.specialZone = [];
-      }
-      return newFilters;
-    });
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    fetchInventoryData(newFilters);
   };
 
   // 处理库存增加事件点击
@@ -653,278 +703,12 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     <div className="inventory-management-page">
       {/* 筛选面板 */}
       <Card className="filter-card" size="small" style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">时间范围：</label>
-              <RangePicker
-                value={filters.dateRange}
-                onChange={(dates) => handleFilterChange('dateRange', dates)}
-                placeholder={['开始日期', '结束日期']}
-                style={{ width: '100%' }}
-                format="YYYY-MM-DD"
-              />
-            </div>
-          </Col>
+        <InventoryFilterPanel
+          filters={filters}
+          onChange={handleFilterChange}
+          loading={loading}
+        />
 
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">集群组：</label>
-              <Select
-                mode="multiple"
-                value={filters.clusterGroup}
-                onChange={(value) => handleFilterChange('clusterGroup', value)}
-                placeholder="请选择集群组"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {clusterGroupOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">专区：</label>
-              <Select
-                mode="multiple"
-                value={filters.specialZone}
-                onChange={(value) => handleFilterChange('specialZone', value)}
-                placeholder="请选择专区"
-                style={{ width: '100%' }}
-                allowClear
-                disabled={!filters.clusterGroup || filters.clusterGroup.length === 0}
-              >
-                {getSpecialZoneOptions(filters.clusterGroup).map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    <span style={{ color: option.type === 'non-zone' ? '#666' : 'inherit' }}>
-                      {option.label}
-                      {option.type === 'non-zone' && <span style={{ fontSize: '12px', marginLeft: 4 }}>(非专区)</span>}
-                    </span>
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">调用方：</label>
-              <Select
-                mode="multiple"
-                value={filters.caller}
-                onChange={(value) => handleFilterChange('caller', value)}
-                placeholder="请选择调用方"
-                style={{ width: '100%' }}
-                allowClear
-                showSearch
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                }
-              >
-                {callerOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">地域/机房：</label>
-              <Select
-                mode="multiple"
-                value={filters.region}
-                onChange={(value) => handleFilterChange('region', value)}
-                placeholder="请选择地域/机房"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {regionOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">库存状态：</label>
-              <Select
-                value={filters.inventoryStatus}
-                onChange={(value) => handleFilterChange('inventoryStatus', value)}
-                placeholder="请选择库存状态"
-                style={{ width: '100%' }}
-              >
-                {inventoryStatusOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">产品类型：</label>
-              <Select
-                mode="multiple"
-                value={filters.productType}
-                onChange={(value) => handleFilterChange('productType', value)}
-                placeholder="请选择产品类型"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {productTypeOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <div className="filter-item">
-              <label className="filter-label">库存场景：</label>
-              <Select
-                mode="multiple"
-                value={filters.inventoryScenario}
-                onChange={(value) => handleFilterChange('inventoryScenario', value)}
-                placeholder="请选择库存场景"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {inventoryScenarioOptions.map(option => (
-                  <Select.Option key={option.value} value={option.value}>
-                    <Tooltip title={option.description} placement="right">
-                      {option.label}
-                    </Tooltip>
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
-
-          {/* 操作按钮 */}
-          <Col xs={24} sm={12} md={6} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-            <div style={{ paddingBottom: '5px' }}>
-              <Space>
-                <Button onClick={() => {
-                  const resetFilters = {
-                    dateRange: [
-                      dayjs().subtract(1, 'month').startOf('day'),
-                      dayjs().add(1, 'month').endOf('day').subtract(11, 'seconds')
-                    ],
-                    clusterGroup: [],
-                    specialZone: [],
-                    caller: [],
-                    region: [],
-                    inventoryStatus: 'available',
-                    productType: [],
-                    inventoryScenario: []
-                  };
-                  setFilters(resetFilters);
-                }}>
-                  重置
-                </Button>
-                <Button type="primary" onClick={() => fetchInventoryData(filters)}>
-                  查询
-                </Button>
-              </Space>
-            </div>
-          </Col>
-        </Row>
-
-        {/* 已选择的筛选条件展示 */}
-        {(filters.clusterGroup.length > 0 || filters.specialZone.length > 0 || filters.caller.length > 0 ||
-          filters.region.length > 0 || filters.productType.length > 0 || filters.inventoryScenario.length > 0 ||
-          filters.inventoryStatus !== 'available') && (
-          <div style={{ marginTop: 16, padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '6px' }}>
-            <div style={{ marginBottom: 8, fontSize: '14px', fontWeight: 500, color: '#666' }}>已选择的筛选条件：</div>
-            <Space wrap>
-              {filters.clusterGroup.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>集群组：</span>
-                  {filters.clusterGroup.map(group => (
-                    <Tag key={group} closable onClose={() => handleFilterChange('clusterGroup', filters.clusterGroup.filter(g => g !== group))}>
-                      {clusterGroupOptions.find(opt => opt.value === group)?.label || group}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-              {filters.specialZone.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>专区：</span>
-                  {filters.specialZone.map(zone => (
-                    <Tag key={zone} closable onClose={() => handleFilterChange('specialZone', filters.specialZone.filter(z => z !== zone))}>
-                      {getSpecialZoneOptions(filters.clusterGroup).find(opt => opt.value === zone)?.label || zone}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-              {filters.caller.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>调用方：</span>
-                  {filters.caller.map(caller => (
-                    <Tag key={caller} closable onClose={() => handleFilterChange('caller', filters.caller.filter(c => c !== caller))}>
-                      {caller}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-              {filters.region.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>地域/机房：</span>
-                  {filters.region.map(region => (
-                    <Tag key={region} closable onClose={() => handleFilterChange('region', filters.region.filter(r => r !== region))}>
-                      {regionOptions.find(opt => opt.value === region)?.label || region}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-              {filters.inventoryStatus !== 'available' && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>库存状态：</span>
-                  <Tag closable onClose={() => handleFilterChange('inventoryStatus', 'available')}>
-                    {inventoryStatusOptions.find(opt => opt.value === filters.inventoryStatus)?.label || filters.inventoryStatus}
-                  </Tag>
-                </div>
-              )}
-              {filters.productType.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>产品类型：</span>
-                  {filters.productType.map(type => (
-                    <Tag key={type} closable onClose={() => handleFilterChange('productType', filters.productType.filter(t => t !== type))}>
-                      {productTypeOptions.find(opt => opt.value === type)?.label || type}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-              {filters.inventoryScenario.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>库存场景：</span>
-                  {filters.inventoryScenario.map(scenario => (
-                    <Tag key={scenario} closable onClose={() => handleFilterChange('inventoryScenario', filters.inventoryScenario.filter(s => s !== scenario))}>
-                      {inventoryScenarioOptions.find(opt => opt.value === scenario)?.label || scenario}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-            </Space>
-          </div>
-        )}
       </Card>
 
       {/* 库存概览和明细 */}
