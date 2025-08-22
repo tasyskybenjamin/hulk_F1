@@ -827,7 +827,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                               type={distributionBy === 'cluster' ? 'primary' : 'default'}
                               onClick={() => setDistributionBy('cluster')}
                             >
-                              集群组/专区/调用方
+                              集群组/专区
                             </Button>
                           </Button.Group>
                           {distributionBy === 'region' && (

@@ -231,13 +231,13 @@ const InventoryFilterPanel = ({ filters, onChange, loading }) => {
 
             <Col xs={24} sm={12} md={8} lg={6}>
               <div className="filter-item">
-                <div className="filter-label">集群组/专区/调用方</div>
+                <div className="filter-label">集群组/专区</div>
                 <Cascader
                   multiple
                   value={filters.clusterCascader}
                   onChange={(value) => handleFilterChange('clusterCascader', value)}
                   options={clusterCascaderOptions}
-                  placeholder="请选择集群组/专区/调用方"
+                  placeholder="请选择集群组/专区"
                   style={{ width: '100%' }}
                   showSearch
                   maxTagCount="responsive"
