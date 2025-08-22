@@ -848,9 +848,6 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                          <div className="status-percentage">
                            {((summaryData.safetyReserve / summaryData.totalInventory) * 100).toFixed(1)}%
                          </div>
-                         <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                           计算值: {summaryData.safetyReserveCalculated?.toLocaleString()}
-                         </div>
                        </Card>
                      </Col>
                      <Col xs={24} sm={12} md={8} lg={5}>
