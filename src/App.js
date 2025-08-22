@@ -11,7 +11,9 @@ import {
   MonitorOutlined,
   TeamOutlined,
   FileTextOutlined,
-  ToolOutlined
+  ToolOutlined,
+  MenuUnfoldOutlined,
+  MenuFoldOutlined
 } from '@ant-design/icons';
 import FilterPanel from './components/FilterPanel';
 import SummaryPanel from './components/SummaryPanel';
@@ -46,6 +48,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedKey, setSelectedKey] = useState('inventory-management');
+  const [collapsed, setCollapsed] = useState(false);
 
   // 左侧导航菜单项
   const menuItems = [
@@ -185,14 +188,32 @@ function App() {
   return (
     <Layout className="app-layout">
       <Header className="app-header">
-        <Title level={2} style={{ color: 'white', margin: 0 }}>
-          HOM-Hulk运维平台
-        </Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              fontSize: '16px',
+              width: 40,
+              height: 40,
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          />
+          <Title level={2} style={{ color: 'white', margin: 0 }}>
+            HOM-Hulk运维平台
+          </Title>
+        </div>
       </Header>
 
       <Layout>
         <Sider
           width={250}
+          collapsedWidth={80}
+          collapsed={collapsed}
           className="app-sider"
           style={{
             background: '#fff',

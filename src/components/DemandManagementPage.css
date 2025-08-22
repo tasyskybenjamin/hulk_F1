@@ -50,7 +50,226 @@
   padding: 16px 24px;
 }
 
-/* 统计卡片样式 */
+/* 核心指标卡片样式 */
+.demand-management-page .summary-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+}
+
+.demand-management-page .summary-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.demand-management-page .summary-card .ant-statistic {
+  text-align: center;
+}
+
+.demand-management-page .summary-card .ant-statistic-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.demand-management-page .summary-card .ant-statistic-content {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* 状态卡片样式 */
+.demand-management-page .status-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.demand-management-page .status-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.demand-management-page .status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #f0f0f0;
+}
+
+.demand-management-page .status-card.pending-evaluation::before {
+  background: linear-gradient(90deg, #faad14, #ffc53d);
+}
+
+.demand-management-page .status-card.confirmed-pending::before {
+  background: linear-gradient(90deg, #f5222d, #ff4d4f);
+}
+
+.demand-management-page .status-card.delivered::before {
+  background: linear-gradient(90deg, #52c41a, #73d13d);
+}
+
+.demand-management-page .status-card.recycled::before {
+  background: linear-gradient(90deg, #722ed1, #9254de);
+}
+
+.demand-management-page .status-card.rejected::before {
+  background: linear-gradient(90deg, #8c8c8c, #bfbfbf);
+}
+
+.demand-management-page .status-card.urgent::before {
+  background: linear-gradient(90deg, #ff4d4f, #ff7875);
+}
+
+.demand-management-page .status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.demand-management-page .status-title {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.demand-management-page .status-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.demand-management-page .status-percentage {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 洞察卡片样式 */
+.demand-management-page .insight-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.demand-management-page .insight-item {
+  text-align: center;
+  padding: 16px 8px;
+  border-radius: 6px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.demand-management-page .insight-item:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.demand-management-page .insight-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.demand-management-page .insight-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.demand-management-page .insight-trend {
+  font-size: 11px;
+  color: #52c41a;
+}
+
+.demand-management-page .insight-list {
+  margin-top: 8px;
+}
+
+.demand-management-page .insight-list-item {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+/* 优先级卡片样式 */
+.demand-management-page .priority-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.demand-management-page .priority-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.demand-management-page .priority-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 6px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.demand-management-page .priority-item:hover {
+  background: #f0f0f0;
+}
+
+.demand-management-page .priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.demand-management-page .priority-item.urgent .priority-dot {
+  background: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+}
+
+.demand-management-page .priority-item.warning .priority-dot {
+  background: #faad14;
+  box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.2);
+}
+
+.demand-management-page .priority-item.info .priority-dot {
+  background: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.demand-management-page .priority-content {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.demand-management-page .priority-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #262626;
+  margin-bottom: 2px;
+}
+
+.demand-management-page .priority-desc {
+  font-size: 11px;
+  color: #999;
+}
+
+/* 统计卡片样式（保留原有的） */
 .demand-management-page .ant-statistic {
   text-align: center;
 }

@@ -12,7 +12,9 @@ import {
   Row,
   Col,
   Pagination,
-  Divider
+  Divider,
+  Modal,
+  message
 } from 'antd';
 import {
   EyeOutlined,
@@ -36,6 +38,9 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
   });
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [lastRefreshTime, setLastRefreshTime] = useState(null);
+  const [editTagModalVisible, setEditTagModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [editingTag, setEditingTag] = useState('');
 
   // 渠道、场景、产品类型映射（与筛选面板保持一致）
   const channelMap = {
@@ -80,6 +85,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'beijing',
       clusterType: '通用',
       productType: 'economy',
+      demandTags: 'expected', // 需求标签：预期内
       demandAmount: 3,
       actualAmount: 0,
       serviceCount: 30,
@@ -95,6 +101,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'beijing',
       clusterType: '通用',
       productType: 'general',
+      demandTags: 'expected', // 需求标签：预期内
       demandAmount: 1200,
       actualAmount: 1200,
       serviceCount: 15,
@@ -110,6 +117,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'shanghai',
       clusterType: '通用',
       productType: 'high-performance',
+      demandTags: 'unexpected', // 需求标签：预期外
       demandAmount: 800,
       actualAmount: 800,
       serviceCount: 8,
@@ -125,6 +133,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'beijing',
       clusterType: '高性能',
       productType: 'dedicated-host',
+      demandTags: 'unexpected', // 需求标签：预期外
       demandAmount: 500,
       actualAmount: 0,
       serviceCount: 5,
@@ -140,6 +149,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'huailai',
       clusterType: '弹性集群',
       productType: 'economy',
+      demandTags: 'expected', // 需求标签：预期内
       demandAmount: 2000,
       actualAmount: 0,
       serviceCount: 20,
@@ -155,6 +165,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'shanghai',
       clusterType: '专用',
       productType: 'general',
+      demandTags: 'expected', // 需求标签：预期内
       demandAmount: 300,
       actualAmount: 300,
       serviceCount: 3,
@@ -170,6 +181,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'beijing',
       clusterType: '通用',
       productType: 'high-performance',
+      demandTags: 'unexpected', // 需求标签：预期外
       demandAmount: 1500,
       actualAmount: 1500,
       serviceCount: 12,
@@ -185,6 +197,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'shanghai',
       clusterType: '通用',
       productType: 'economy',
+      demandTags: 'expected', // 需求标签：预期内
       demandAmount: 600,
       actualAmount: 600,
       serviceCount: 6,
@@ -200,6 +213,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'beijing',
       clusterType: 'Cargo集群',
       productType: 'general',
+      demandTags: 'expected', // 需求标签：预期内
       demandAmount: 400,
       actualAmount: 400,
       serviceCount: 4,
@@ -215,6 +229,7 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       region: 'huailai',
       clusterType: '通用',
       productType: 'economy',
+      demandTags: 'unexpected', // 需求标签：预期外
       demandAmount: 200,
       actualAmount: 0,
       serviceCount: 2,
@@ -252,10 +267,13 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       const allData = [];
       for (let i = 0; i < total; i++) {
         const baseData = mockDetailData[i % mockDetailData.length];
+        // 随机分配需求标签，保持一定比例
+        const randomTag = Math.random() > 0.3 ? 'expected' : 'unexpected'; // 70%预期内，30%预期外
         allData.push({
           ...baseData,
           id: `REQ-2025-${String(i + 1).padStart(3, '0')}`,
-          key: `REQ-2025-${String(i + 1).padStart(3, '0')}`
+          key: `REQ-2025-${String(i + 1).padStart(3, '0')}`,
+          demandTags: randomTag
         });
       }
 
@@ -287,6 +305,13 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       if (filterParams.demandStatus && filterParams.demandStatus.length > 0) {
         filteredData = filteredData.filter(item =>
           filterParams.demandStatus.includes(item.demandStatus)
+        );
+      }
+
+      // 需求标签筛选
+      if (filterParams.demandTags && filterParams.demandTags.length > 0) {
+        filteredData = filteredData.filter(item =>
+          filterParams.demandTags.includes(item.demandTags)
         );
       }
 
@@ -346,6 +371,16 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       'low': { color: 'default', text: '低' }
     };
     const config = priorityMap[priority] || { color: 'default', text: priority };
+    return <Tag color={config.color}>{config.text}</Tag>;
+  };
+
+  // 需求标签渲染
+  const renderDemandTag = (tag) => {
+    const tagMap = {
+      'expected': { color: 'green', text: '预期内' },
+      'unexpected': { color: 'orange', text: '预期外' }
+    };
+    const config = tagMap[tag] || { color: 'default', text: tag };
     return <Tag color={config.color}>{config.text}</Tag>;
   };
 
@@ -426,6 +461,26 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
       key: 'productType',
       width: 100,
       render: (value) => productTypeMap[value] || value
+    },
+    {
+      title: '需求标签',
+      dataIndex: 'demandTags',
+      key: 'demandTags',
+      width: 100,
+      render: (tag, record) => (
+        <div
+          style={{ cursor: 'pointer' }}
+          onClick={() => handleEditTag(record)}
+          title="点击编辑标签"
+        >
+          {renderDemandTag(tag)}
+        </div>
+      ),
+      filters: [
+        { text: '预期内', value: 'expected' },
+        { text: '预期外', value: 'unexpected' }
+      ],
+      onFilter: (value, record) => record.demandTags === value
     },
     {
       title: '集群组/专区',
@@ -523,6 +578,48 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
     // 这里可以添加批量操作的逻辑
   };
 
+  // 处理编辑标签
+  const handleEditTag = (record) => {
+    setEditingRecord(record);
+    setEditingTag(record.demandTags);
+    setEditTagModalVisible(true);
+  };
+
+  // 保存标签修改
+  const handleSaveTag = async () => {
+    if (!editingRecord || !editingTag) {
+      message.error('请选择标签');
+      return;
+    }
+
+    try {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 更新本地数据
+      const updatedData = detailData.map(item =>
+        item.id === editingRecord.id
+          ? { ...item, demandTags: editingTag }
+          : item
+      );
+      setDetailData(updatedData);
+
+      message.success('标签修改成功');
+      setEditTagModalVisible(false);
+      setEditingRecord(null);
+      setEditingTag('');
+    } catch (error) {
+      message.error('标签修改失败');
+    }
+  };
+
+  // 取消编辑标签
+  const handleCancelEditTag = () => {
+    setEditTagModalVisible(false);
+    setEditingRecord(null);
+    setEditingTag('');
+  };
+
   // 初始化数据
   useEffect(() => {
     fetchDetailData(filters);
@@ -615,6 +712,48 @@ const DemandDetailPage = ({ filters, onFilterChange }) => {
           bordered
         />
       </Card>
+
+      {/* 编辑需求标签Modal */}
+      <Modal
+        title="编辑需求标签"
+        open={editTagModalVisible}
+        onOk={handleSaveTag}
+        onCancel={handleCancelEditTag}
+        okText="保存"
+        cancelText="取消"
+        width={400}
+      >
+        <div style={{ padding: '20px 0' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <span style={{ fontWeight: 'bold' }}>需求ID：</span>
+            {editingRecord?.id}
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <span style={{ fontWeight: 'bold' }}>客户名称：</span>
+            {editingRecord?.customerName}
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <span style={{ fontWeight: 'bold' }}>当前标签：</span>
+            {editingRecord && renderDemandTag(editingRecord.demandTags)}
+          </div>
+          <div>
+            <span style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>选择新标签：</span>
+            <Select
+              value={editingTag}
+              onChange={setEditingTag}
+              style={{ width: '100%' }}
+              placeholder="请选择标签"
+            >
+              <Select.Option value="expected">
+                <Tag color="green">预期内</Tag>
+              </Select.Option>
+              <Select.Option value="unexpected">
+                <Tag color="orange">预期外</Tag>
+              </Select.Option>
+            </Select>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

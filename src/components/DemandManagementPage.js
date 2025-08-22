@@ -35,8 +35,8 @@ const DemandManagementPage = () => {
     demandScenario: [], // 多选数组
     customerName: [], // 多选数组
     demandStatus: [], // 多选数组
-    region: [], // 多选数组
-    clusterType: [], // 多选数组
+    regionCascader: [], // 地域级联选择器：地域->机房
+    clusterCascader: [], // 级联选择器：集群组->专区
     productType: [], // 多选数组
     demandTags: [] // 多选数组
   });
@@ -66,12 +66,12 @@ const DemandManagementPage = () => {
 
       // 模拟汇总数据
       setSummaryData({
-        totalDemand: 1250,
-        pendingEvaluation: 85,
-        confirmedPending: 320,
-        delivered: 680,
-        recycled: 120,
-        rejected: 45
+        totalDemand: 3200000,
+        pendingEvaluation: 150000,
+        confirmedPending: 250000,
+        delivered: 2800000,
+        recycled: 180000,
+        rejected: 20000
       });
 
       // 模拟分布数据
@@ -355,74 +355,193 @@ const DemandManagementPage = () => {
   // 需求总览内容
   const renderOverviewContent = () => (
     <div>
-      {/* 汇总统计卡片 */}
+      {/* 核心指标卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={4}>
-          <Card>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
             <Statistic
-              title="需求总量"
+              title="总需求"
               value={summaryData.totalDemand}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
+              suffix="核"
+              formatter={(value) => value.toLocaleString()}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={4}>
-          <Card>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
             <Statistic
               title={
                 <span>
-                  待评估需求
-                  <Tooltip title="不保障SLA的需求">
+                  需求满足率
+                  <Tooltip title="需求满足率 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
                     <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
                   </Tooltip>
                 </span>
               }
-              value={summaryData.pendingEvaluation}
-              valueStyle={{ color: '#faad14' }}
+              value={(((summaryData.confirmedPending + summaryData.delivered + summaryData.recycled) / summaryData.totalDemand) * 100).toFixed(1)}
+              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
+              suffix="%"
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={4}>
-          <Card>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
             <Statistic
               title={
                 <span>
-                  确认待交付
-                  <Tooltip title="保障SLA的需求">
+                  平均交付时长
+                  <Tooltip title="从需求提交到完成交付的平均用时">
                     <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
                   </Tooltip>
                 </span>
               }
-              value={summaryData.confirmedPending}
-              valueStyle={{ color: '#f5222d' }}
+              value="2.3"
+              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
+              suffix="天"
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={4}>
-          <Card>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
             <Statistic
-              title="已交付"
-              value={summaryData.delivered}
-              valueStyle={{ color: '#52c41a' }}
+              title="SLA达成率"
+              value="100"
+              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
+              suffix="%"
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={4}>
-          <Card>
-            <Statistic
-              title="已回收"
-              value={summaryData.recycled}
-              valueStyle={{ color: '#722ed1' }}
-            />
+      </Row>
+
+      {/* 需求状态分布 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card className="status-card pending-evaluation">
+            <div className="status-header">
+              <span className="status-title">待评估</span>
+              <Tooltip title="不保障SLA的需求，需要进一步评估资源可行性">
+                <InfoCircleOutlined style={{ color: '#999' }} />
+              </Tooltip>
+            </div>
+            <div className="status-value">{summaryData.pendingEvaluation.toLocaleString()}</div>
+            <div className="status-percentage">
+              {((summaryData.pendingEvaluation / summaryData.totalDemand) * 100).toFixed(1)}%
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={4}>
-          <Card>
-            <Statistic
-              title="驳回"
-              value={summaryData.rejected}
-              valueStyle={{ color: '#8c8c8c' }}
-            />
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card className="status-card confirmed-pending">
+            <div className="status-header">
+              <span className="status-title">确认待交付</span>
+              <Tooltip title="保障SLA的需求，已确认资源并等待交付">
+                <InfoCircleOutlined style={{ color: '#999' }} />
+              </Tooltip>
+            </div>
+            <div className="status-value">{summaryData.confirmedPending.toLocaleString()}</div>
+            <div className="status-percentage">
+              {((summaryData.confirmedPending / summaryData.totalDemand) * 100).toFixed(1)}%
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card className="status-card delivered">
+            <div className="status-header">
+              <span className="status-title">已交付</span>
+            </div>
+            <div className="status-value">{summaryData.delivered.toLocaleString()}</div>
+            <div className="status-percentage">
+              {((summaryData.delivered / summaryData.totalDemand) * 100).toFixed(1)}%
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card className="status-card recycled">
+            <div className="status-header">
+              <span className="status-title">已回收</span>
+            </div>
+            <div className="status-value">{summaryData.recycled.toLocaleString()}</div>
+            <div className="status-percentage">
+              {((summaryData.recycled / summaryData.totalDemand) * 100).toFixed(1)}%
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card className="status-card rejected">
+            <div className="status-header">
+              <span className="status-title">无效</span>
+            </div>
+            <div className="status-value">{summaryData.rejected.toLocaleString()}</div>
+            <div className="status-percentage">
+              {((summaryData.rejected / summaryData.totalDemand) * 100).toFixed(1)}%
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <Card className="status-card urgent">
+            <div className="status-header">
+              <span className="status-title">预期外需求</span>
+              <Tooltip title="超出预期的需求，需要特别关注">
+                <InfoCircleOutlined style={{ color: '#999' }} />
+              </Tooltip>
+            </div>
+            <div className="status-value">58,000</div>
+            <div className="status-percentage">1.8%</div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 快速洞察 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card
+            title="📊 需求洞察"
+            className="insight-card"
+            extra={
+              <Button type="link" size="small">
+                查看详细报告 →
+              </Button>
+            }
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">热点地域</div>
+                  <div className="insight-value">北京 (36%)</div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">热点渠道</div>
+                  <div className="insight-value">日常 (32%)</div>
+                  <div className="insight-value">活动 (28%)</div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">Top 5 机房</div>
+                  <div className="insight-list">
+                    <div className="insight-list-item">1. 北京-机房1 (18%)</div>
+                    <div className="insight-list-item">2. 上海-机房1 (15%)</div>
+                    <div className="insight-list-item">3. 北京-机房2 (12%)</div>
+                    <div className="insight-list-item">4. 怀来-机房1 (10%)</div>
+                    <div className="insight-list-item">5. 上海-机房2 (8%)</div>
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">Top 5 客户</div>
+                  <div className="insight-list">
+                    <div className="insight-list-item">1. 美团外卖 (22%)</div>
+                    <div className="insight-list-item">2. 点评事业部 (18%)</div>
+                    <div className="insight-list-item">3. 美团优选 (15%)</div>
+                    <div className="insight-list-item">4. 美团买菜 (12%)</div>
+                    <div className="insight-list-item">5. 美团打车 (10%)</div>
+                  </div>
+                </div>
+              </Col>
+            </Row>
           </Card>
         </Col>
       </Row>

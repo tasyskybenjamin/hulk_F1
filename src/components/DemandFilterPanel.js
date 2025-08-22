@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, DatePicker, Select, Button, Space, Tag } from 'antd';
+import { Row, Col, DatePicker, Select, Button, Space, Tag, Cascader } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -49,19 +49,92 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
     }
   };
 
-  // 场景对应的客户映射（收敛后的客户名称）
+  // 客户名称级联选择器数据结构：业务/平台 -> 具体客户
+  const customerCascaderOptions = [
+    {
+      value: 'business',
+      label: '业务',
+      children: [
+        { value: 'meituan-platform', label: '美团平台' },
+        { value: 'meituan-waimai', label: '美团外卖' },
+        { value: 'meituan-maicai', label: '美团买菜' },
+        { value: 'meituan-youxuan', label: '美团优选' },
+        { value: 'meituan-shangou', label: '美团闪购' },
+        { value: 'meituan-dache', label: '美团打车' },
+        { value: 'meituan-jiudian', label: '美团酒店' },
+        { value: 'dianping-division', label: '点评事业部' },
+        { value: 'finance-business', label: '金融业务' },
+        { value: 'payment-system', label: '支付系统' },
+        { value: 'settlement-center', label: '结算中心' },
+        { value: 'finance-system', label: '财务系统' }
+      ]
+    },
+    {
+      value: 'platform',
+      label: '平台',
+      children: [
+        { value: 'avatar', label: 'Avatar' },
+        { value: 'cargo', label: 'Cargo' },
+        { value: 'cargo-platform', label: 'Cargo平台' },
+        { value: 'container-orchestration', label: '容器编排' },
+        { value: 'elastic-computing', label: '弹性计算' },
+        { value: 'container-service', label: '容器服务' },
+        { value: 'platform-ops', label: '平台运维' }
+      ]
+    }
+  ];
+
+  // 场景对应的客户映射（更新为级联路径）
   const scenarioCustomerMap = {
-    'avatar-daily': ['美团外卖', '美团买菜', '美团优选'],
-    'scheduled-expansion': ['美团打车', '美团酒店'],
-    '2025-qixi': ['美团外卖', '美团买菜', '美团闪购'],
-    '2025-0818-voucher': ['美团外卖', '美团优选', '美团酒店'],
-    '2025-double11': ['美团外卖', '美团买菜', '美团优选', '美团酒店'],
-    '2025-618': ['美团外卖', '美团闪购', '美团优选'],
-    'emergency-pool-supplement': ['平台运维'],
-    'elastic': ['弹性计算', '容器服务'],
-    'cargo': ['Cargo平台', '容器编排'],
-    'finance-zone': ['金融业务', '支付系统'],
-    'settlement-unit': ['结算中心', '财务系统']
+    'avatar-daily': [
+      ['business', 'meituan-waimai'],
+      ['business', 'meituan-maicai'],
+      ['business', 'meituan-youxuan']
+    ],
+    'scheduled-expansion': [
+      ['business', 'meituan-dache'],
+      ['business', 'meituan-jiudian']
+    ],
+    '2025-qixi': [
+      ['business', 'meituan-waimai'],
+      ['business', 'meituan-maicai'],
+      ['business', 'meituan-shangou']
+    ],
+    '2025-0818-voucher': [
+      ['business', 'meituan-waimai'],
+      ['business', 'meituan-youxuan'],
+      ['business', 'meituan-jiudian']
+    ],
+    '2025-double11': [
+      ['business', 'meituan-waimai'],
+      ['business', 'meituan-maicai'],
+      ['business', 'meituan-youxuan'],
+      ['business', 'meituan-jiudian']
+    ],
+    '2025-618': [
+      ['business', 'meituan-waimai'],
+      ['business', 'meituan-shangou'],
+      ['business', 'meituan-youxuan']
+    ],
+    'emergency-pool-supplement': [
+      ['platform', 'platform-ops']
+    ],
+    'elastic': [
+      ['platform', 'elastic-computing'],
+      ['platform', 'container-service']
+    ],
+    'cargo': [
+      ['platform', 'cargo-platform'],
+      ['platform', 'container-orchestration']
+    ],
+    'finance-zone': [
+      ['business', 'finance-business'],
+      ['business', 'payment-system']
+    ],
+    'settlement-unit': [
+      ['business', 'settlement-center'],
+      ['business', 'finance-system']
+    ]
   };
 
   // 需求状态选项
@@ -73,115 +146,160 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
     { value: 'rejected', label: '驳回', color: 'default' }
   ];
 
-  // 地域/机房选项（每个地域添加Any选项）
-  const regionOptions = [
+  // 地域/机房级联选择器数据结构
+  const regionCascaderOptions = [
     {
-      label: '北京',
       value: 'beijing',
+      label: '北京',
       children: [
-        { label: 'Any', value: 'beijing-any' },
-        { label: '机房1', value: 'beijing-room1' },
-        { label: '机房2', value: 'beijing-room2' },
-        { label: '机房3', value: 'beijing-room3' }
+        { value: 'any', label: 'Any' },
+        { value: 'room1', label: '机房1' },
+        { value: 'room2', label: '机房2' },
+        { value: 'room3', label: '机房3' }
       ]
     },
     {
-      label: '上海',
       value: 'shanghai',
+      label: '上海',
       children: [
-        { label: 'Any', value: 'shanghai-any' },
-        { label: '机房1', value: 'shanghai-room1' },
-        { label: '机房2', value: 'shanghai-room2' }
+        { value: 'any', label: 'Any' },
+        { value: 'room1', label: '机房1' },
+        { value: 'room2', label: '机房2' }
       ]
     },
     {
-      label: '怀来',
       value: 'huailai',
+      label: '怀来',
       children: [
-        { label: 'Any', value: 'huailai-any' },
-        { label: '机房1', value: 'huailai-room1' }
+        { value: 'any', label: 'Any' },
+        { value: 'room1', label: '机房1' }
       ]
     },
     {
-      label: '其他',
-      value: 'other',
+      value: 'guangzhou',
+      label: '广州',
       children: [
-        { label: 'Any', value: 'other-any' }
+        { value: 'any', label: 'Any' },
+        { value: 'room1', label: '机房1' }
+      ]
+    },
+    {
+      value: 'shenzhen',
+      label: '深圳',
+      children: [
+        { value: 'any', label: 'Any' },
+        { value: 'room1', label: '机房1' }
       ]
     }
   ];
 
-  // 集群组选项
-  const clusterGroupOptions = [
-    { value: 'hulk-general', label: 'hulk-general' },
-    { value: 'hulk-arm', label: 'hulk-arm' },
-    { value: 'txserverless', label: 'txserverless' }
-  ];
-
-  // 专区选项（根据集群组动态变化）
-  const getSpecialZoneOptions = (clusterGroups) => {
-    const specialZoneMap = {
-      'hulk-general': [
-        { value: 'default', label: 'default', type: 'zone' },
-        { value: 'hulk_pool_buffer', label: 'hulk_pool_buffer', type: 'zone' },
-        { value: 'hulk_holiday', label: 'hulk_holiday', type: 'zone' },
-        { value: 'jinrong_hulk', label: '金融', type: 'zone' },
-        { value: 'huidu_hulk', label: '灰度专区', type: 'zone' },
-        { value: 'hrs_non_zone_general', label: 'HRS视野内非专区部分', type: 'non-zone' }
-      ],
-      'hulk-arm': [
-        { value: 'default', label: 'default', type: 'zone' },
-        { value: 'hrs_non_zone_arm', label: 'HRS视野内非专区部分', type: 'non-zone' }
-      ],
-      'txserverless': [
-        { value: 'default', label: 'default', type: 'zone' },
-        { value: 'hrs_non_zone_serverless', label: 'HRS视野内非专区部分', type: 'non-zone' }
+  // 级联选择器数据结构：集群组 -> 专区 -> 调用方
+  const clusterCascaderOptions = [
+    {
+      value: 'hulk-general',
+      label: 'hulk-general',
+      children: [
+        {
+          value: 'default',
+          label: 'default',
+          children: [
+            { value: 'avatar', label: 'avatar' },
+            { value: 'unit_4', label: 'unit_4' },
+            { value: 'avatar_reserved', label: 'avatar_reserved' },
+            { value: 'policy', label: 'policy' }
+          ]
+        },
+        {
+          value: 'hulk_pool_buffer',
+          label: 'hulk_pool_buffer',
+          children: [
+            { value: 'avatar', label: 'avatar' },
+            { value: 'policy', label: 'policy' }
+          ]
+        },
+        {
+          value: 'hulk_holiday',
+          label: 'hulk_holiday',
+          children: [
+            { value: 'holiday', label: 'holiday' },
+            { value: 'hulk_holiday_admin', label: 'hulk_holiday_admin' },
+            { value: 'migrate_hulk_holiday', label: 'migrate_hulk_holiday' },
+            { value: 'hulk_holiday', label: 'hulk_holiday' }
+          ]
+        },
+        {
+          value: 'jinrong_hulk',
+          label: '金融专区',
+          children: [
+            { value: 'jinrong', label: 'jinrong' },
+            { value: 'avatarjinrong', label: 'avatarjinrong' },
+            { value: 'migrationjinrong', label: 'migrationjinrong' },
+            { value: 'policy_jinrong_hulk', label: 'policy+jinrong_hulk' }
+          ]
+        },
+        {
+          value: 'huidu_hulk',
+          label: '灰度专区',
+          children: [
+            { value: 'avatar', label: 'avatar' },
+            { value: 'policy', label: 'policy' }
+          ]
+        },
+        {
+          value: 'hrs_non_zone_general',
+          label: 'HRS视野内非专区部分',
+          children: [
+            { value: 'n_plus_one', label: 'n_plus_one' },
+            { value: 'hdr', label: 'hdr' },
+            { value: 'maoyan', label: 'maoyan' }
+          ]
+        }
       ]
-    };
-
-    if (!clusterGroups || clusterGroups.length === 0) {
-      return [];
+    },
+    {
+      value: 'hulk-arm',
+      label: 'hulk-arm',
+      children: [
+        {
+          value: 'default',
+          label: 'default',
+          children: [
+            { value: 'hulk_arm_admin', label: 'hulk_arm_admin' },
+            { value: 'hulk_arm', label: 'hulk_arm' },
+            { value: 'migrate_hulk_arm', label: 'migrate_hulk_arm' }
+          ]
+        },
+        {
+          value: 'hrs_non_zone_arm',
+          label: 'HRS视野内非专区部分',
+          children: [
+            { value: 'hulk_arm', label: 'hulk_arm' }
+          ]
+        }
+      ]
+    },
+    {
+      value: 'txserverless',
+      label: 'txserverless',
+      children: [
+        {
+          value: 'default',
+          label: 'default',
+          children: [
+            { value: 'policy_campaign_tx', label: 'policy_campaign_tx' },
+            { value: 'policy_txserverless', label: 'policy+txserverless' },
+            { value: 'txserverless_migration', label: 'txserverless_migration' }
+          ]
+        },
+        {
+          value: 'hrs_non_zone_serverless',
+          label: 'HRS视野内非专区部分',
+          children: [
+            { value: 'policy_txserverless', label: 'policy+txserverless' }
+          ]
+        }
+      ]
     }
-
-    // 如果选择了多个集群组，合并所有选项
-    const allOptions = [];
-    clusterGroups.forEach(group => {
-      if (specialZoneMap[group]) {
-        allOptions.push(...specialZoneMap[group]);
-      }
-    });
-
-    // 去重
-    const uniqueOptions = allOptions.filter((option, index, self) =>
-      index === self.findIndex(o => o.value === option.value)
-    );
-
-    return uniqueOptions;
-  };
-
-  // 调用方选项
-  const callerOptions = [
-    { value: 'avatar', label: 'avatar' },
-    { value: 'unit_4', label: 'unit_4' },
-    { value: 'avatar_reserved', label: 'avatar_reserved' },
-    { value: 'holiday', label: 'holiday' },
-    { value: 'policy', label: 'policy' },
-    { value: 'n_plus_one', label: 'n_plus_one' },
-    { value: 'hdr', label: 'hdr' },
-    { value: 'maoyan', label: 'maoyan' },
-    { value: 'hulk_holiday_admin', label: 'hulk_holiday_admin' },
-    { value: 'migrate_hulk_holiday', label: 'migrate_hulk_holiday' },
-    { value: 'hulk_holiday', label: 'hulk_holiday' },
-    { value: 'jinrong', label: 'jinrong' },
-    { value: 'avatarjinrong', label: 'avatarjinrong' },
-    { value: 'migrationjinrong', label: 'migrationjinrong' },
-    { value: 'policy_jinrong_hulk', label: 'policy+jinrong_hulk' },
-    { value: 'hulk_arm_admin', label: 'hulk_arm_admin' },
-    { value: 'hulk_arm', label: 'hulk_arm' },
-    { value: 'migrate_hulk_arm', label: 'migrate_hulk_arm' },
-    { value: 'policy_campaign_tx', label: 'policy_campaign_tx' },
-    { value: 'policy_txserverless', label: 'policy+txserverless' },
-    { value: 'txserverless_migration', label: 'txserverless_migration' }
   ];
 
   // 产品类型选项
@@ -216,17 +334,18 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
   // 获取可用的客户选项（支持多选场景）
   const getAvailableCustomers = () => {
     if (!filters.demandScenario || filters.demandScenario.length === 0) return [];
-    const allCustomers = [];
+    const allCustomerPaths = [];
     filters.demandScenario.forEach(scenario => {
-      const customers = scenarioCustomerMap[scenario] || [];
-      allCustomers.push(...customers);
+      const customerPaths = scenarioCustomerMap[scenario] || [];
+      allCustomerPaths.push(...customerPaths);
     });
-    // 去重并格式化
-    const uniqueCustomers = [...new Set(allCustomers)];
-    return uniqueCustomers.map(customer => ({
-      value: customer.toLowerCase().replace(/\s+/g, '-'),
-      label: customer
-    }));
+
+    // 去重：将路径转换为字符串进行比较
+    const uniqueCustomerPaths = allCustomerPaths.filter((path, index, self) =>
+      index === self.findIndex(p => JSON.stringify(p) === JSON.stringify(path))
+    );
+
+    return uniqueCustomerPaths;
   };
 
   // 处理筛选条件变化
@@ -244,12 +363,22 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
       newFilters.customerName = [];
     }
 
-    // 联动逻辑：当集群组变化时，清空专区选择
-    if (key === 'clusterGroup') {
-      newFilters.specialZone = [];
-    }
-
     onChange(newFilters);
+  };
+
+  // 处理集群级联选择器变化
+  const handleCascaderChange = (value) => {
+    handleFilterChange('clusterCascader', value);
+  };
+
+  // 处理地域级联选择器变化
+  const handleRegionCascaderChange = (value) => {
+    handleFilterChange('regionCascader', value);
+  };
+
+  // 处理客户级联选择器变化
+  const handleCustomerCascaderChange = (value) => {
+    handleFilterChange('customerName', value);
   };
 
    // 重置筛选条件（设置默认全选）
@@ -260,10 +389,8 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
        demandScenario: [], // 场景根据渠道联动
        customerName: [], // 客户根据场景联动
        demandStatus: demandStatusOptions.map(s => s.value), // 默认全选所有状态
-       region: [], // 地域多选，默认全选
-       clusterGroup: [], // 集群组多选，默认全选
-       specialZone: [], // 专区根据集群组联动
-       caller: [], // 调用方多选，默认全选
+       regionCascader: [], // 地域级联选择器：地域->机房
+       clusterCascader: [], // 级联选择器：集群组->专区
        productType: productTypeOptions.map(p => p.value), // 默认全选所有产品类型
        demandTags: demandTagOptions.map(t => t.value) // 默认全选所有标签
      };
@@ -277,27 +404,6 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
     }
   }, []);
 
-  // 渲染地域选项
-  const renderRegionOptions = () => {
-    return regionOptions.map(region => {
-      if (region.children) {
-        return (
-          <OptGroup key={region.value} label={region.label}>
-            {region.children.map(child => (
-              <Option key={child.value} value={child.value}>
-                {child.label}
-              </Option>
-            ))}
-          </OptGroup>
-        );
-      }
-      return (
-        <Option key={region.value} value={region.value}>
-          {region.label}
-        </Option>
-      );
-    });
-  };
 
   return (
     <div className="demand-filter-panel">
@@ -362,26 +468,25 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
         <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
             <label className="filter-label">客户名称：</label>
-            <Select
-              mode="multiple"
+            <Cascader
+              options={customerCascaderOptions}
               value={filters.customerName}
-              onChange={(value) => handleFilterChange('customerName', value)}
-              placeholder="请选择客户（默认全选）"
+              onChange={handleCustomerCascaderChange}
+              placeholder="请选择客户"
               style={{ width: '100%' }}
               allowClear
-              showSearch
+              showSearch={{
+                filter: (inputValue, path) =>
+                  path.some(option => option.label.toLowerCase().indexOf(inputValue.toLowerCase()) > -1)
+              }}
+              multiple
               maxTagCount="responsive"
               disabled={!filters.demandScenario || filters.demandScenario.length === 0}
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {getAvailableCustomers().map(customer => (
-                <Option key={customer.value} value={customer.value}>
-                  {customer.label}
-                </Option>
-              ))}
-            </Select>
+              displayRender={(labels, selectedOptions) => {
+                if (labels.length === 0) return '';
+                return labels.join(' / ');
+              }}
+            />
           </div>
         </Col>
 
@@ -413,91 +518,52 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
         <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
             <label className="filter-label">地域/机房：</label>
-            <Select
-              mode="multiple"
-              value={filters.region}
-              onChange={(value) => handleFilterChange('region', value)}
-              placeholder="请选择地域/机房（默认全选）"
+            <Cascader
+              options={regionCascaderOptions}
+              value={filters.regionCascader}
+              onChange={handleRegionCascaderChange}
+              placeholder="请选择地域/机房"
               style={{ width: '100%' }}
               allowClear
+              showSearch={{
+                filter: (inputValue, path) =>
+                  path.some(option => option.label.toLowerCase().indexOf(inputValue.toLowerCase()) > -1)
+              }}
+              multiple
               maxTagCount="responsive"
-            >
-              {renderRegionOptions()}
-            </Select>
+              displayRender={(labels, selectedOptions) => {
+                if (labels.length === 0) return '';
+                return labels.join(' / ');
+              }}
+            />
           </div>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
-            <label className="filter-label">集群组：</label>
-            <Select
-              mode="multiple"
-              value={filters.clusterGroup}
-              onChange={(value) => handleFilterChange('clusterGroup', value)}
-              placeholder="请选择集群组"
+            <label className="filter-label">集群组/专区：</label>
+            <Cascader
+              options={clusterCascaderOptions}
+              value={filters.clusterCascader}
+              onChange={handleCascaderChange}
+              placeholder="请选择集群组/专区"
               style={{ width: '100%' }}
               allowClear
+              showSearch={{
+                filter: (inputValue, path) =>
+                  path.some(option => option.label.toLowerCase().indexOf(inputValue.toLowerCase()) > -1)
+              }}
+              multiple
               maxTagCount="responsive"
-            >
-              {clusterGroupOptions.map(cluster => (
-                <Option key={cluster.value} value={cluster.value}>
-                  {cluster.label}
-                </Option>
-              ))}
-            </Select>
+              displayRender={(labels, selectedOptions) => {
+                if (labels.length === 0) return '';
+                return labels.join(' / ');
+              }}
+            />
           </div>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
-          <div className="filter-item">
-            <label className="filter-label">专区：</label>
-            <Select
-              mode="multiple"
-              value={filters.specialZone}
-              onChange={(value) => handleFilterChange('specialZone', value)}
-              placeholder="请选择专区"
-              style={{ width: '100%' }}
-              allowClear
-              maxTagCount="responsive"
-              disabled={!filters.clusterGroup || filters.clusterGroup.length === 0}
-            >
-              {getSpecialZoneOptions(filters.clusterGroup).map(option => (
-                <Option key={option.value} value={option.value}>
-                  <span style={{ color: option.type === 'non-zone' ? '#666' : 'inherit' }}>
-                    {option.label}
-                    {option.type === 'non-zone' && <span style={{ fontSize: '12px', marginLeft: 4 }}>(非专区)</span>}
-                  </span>
-                </Option>
-              ))}
-            </Select>
-          </div>
-        </Col>
-
-        {/* 第三行：调用方、产品类型、需求标签 */}
-        <Col xs={24} sm={12} md={6}>
-          <div className="filter-item">
-            <label className="filter-label">调用方：</label>
-            <Select
-              mode="multiple"
-              value={filters.caller}
-              onChange={(value) => handleFilterChange('caller', value)}
-              placeholder="请选择调用方"
-              style={{ width: '100%' }}
-              allowClear
-              showSearch
-              maxTagCount="responsive"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {callerOptions.map(caller => (
-                <Option key={caller.value} value={caller.value}>
-                  {caller.label}
-                </Option>
-              ))}
-            </Select>
-          </div>
-        </Col>
+        {/* 第三行：产品类型、需求标签 */}
 
         <Col xs={24} sm={12} md={6}>
           <div className="filter-item">
@@ -543,7 +609,7 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
 
         {/* 操作按钮 */}
         <Col xs={24} sm={12} md={6}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingLeft: '80px' }}>
             <Button
               icon={<ReloadOutlined />}
               onClick={handleReset}
@@ -565,8 +631,7 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
 
       {/* 当前筛选条件展示 */}
       {(filters.demandChannel?.length > 0 || filters.demandScenario?.length > 0 || filters.customerName?.length > 0 ||
-        filters.demandStatus?.length > 0 || filters.clusterGroup?.length > 0 || filters.specialZone?.length > 0 ||
-        filters.caller?.length > 0 || filters.demandTags?.length > 0) && (
+        filters.demandStatus?.length > 0 || filters.regionCascader?.length > 0 || filters.clusterCascader?.length > 0 || filters.demandTags?.length > 0) && (
         <Row style={{ marginTop: 16 }}>
           <Col span={24}>
             <div style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: '4px' }}>
@@ -581,9 +646,13 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
                   场景: {getAvailableScenarios().find(s => s.value === scenario)?.label}
                 </Tag>
               ))}
-              {filters.customerName?.map(customer => (
-                <Tag key={customer} closable onClose={() => handleFilterChange('customerName', filters.customerName.filter(c => c !== customer))}>
-                  客户: {getAvailableCustomers().find(c => c.value === customer)?.label}
+              {filters.customerName?.map((cascaderValue, index) => (
+                <Tag
+                  key={`customer-cascader-${index}`}
+                  closable
+                  onClose={() => handleFilterChange('customerName', filters.customerName.filter((_, i) => i !== index))}
+                >
+                  {cascaderValue.join(' / ')}
                 </Tag>
               ))}
               {filters.demandStatus?.map(status => (
@@ -596,19 +665,22 @@ const DemandFilterPanel = ({ filters, onChange, loading }) => {
                   状态: {demandStatusOptions.find(s => s.value === status)?.label}
                 </Tag>
               ))}
-              {filters.clusterGroup?.map(cluster => (
-                <Tag key={cluster} closable onClose={() => handleFilterChange('clusterGroup', filters.clusterGroup.filter(c => c !== cluster))}>
-                  集群组: {clusterGroupOptions.find(c => c.value === cluster)?.label}
+              {filters.regionCascader?.map((cascaderValue, index) => (
+                <Tag
+                  key={`region-cascader-${index}`}
+                  closable
+                  onClose={() => handleFilterChange('regionCascader', filters.regionCascader.filter((_, i) => i !== index))}
+                >
+                  {cascaderValue.join(' / ')}
                 </Tag>
               ))}
-              {filters.specialZone?.map(zone => (
-                <Tag key={zone} closable onClose={() => handleFilterChange('specialZone', filters.specialZone.filter(z => z !== zone))}>
-                  专区: {getSpecialZoneOptions(filters.clusterGroup).find(z => z.value === zone)?.label || zone}
-                </Tag>
-              ))}
-              {filters.caller?.map(caller => (
-                <Tag key={caller} closable onClose={() => handleFilterChange('caller', filters.caller.filter(c => c !== caller))}>
-                  调用方: {caller}
+              {filters.clusterCascader?.map((cascaderValue, index) => (
+                <Tag
+                  key={`cluster-cascader-${index}`}
+                  closable
+                  onClose={() => handleFilterChange('clusterCascader', filters.clusterCascader.filter((_, i) => i !== index))}
+                >
+                  {cascaderValue.join(' / ')}
                 </Tag>
               ))}
               {filters.demandTags?.map(tag => (

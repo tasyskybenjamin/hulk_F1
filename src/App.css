@@ -13,6 +13,7 @@
 
 .app-sider {
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
 }
 
 .app-sider .ant-menu {
@@ -30,6 +31,22 @@
 
 .app-sider .ant-menu-submenu-title:hover {
   background-color: #f0f0f0;
+}
+
+/* 收起状态下的样式优化 */
+.app-sider.ant-layout-sider-collapsed .ant-menu-item-selected {
+  border-right: none;
+  background-color: #e6f7ff;
+}
+
+.app-sider.ant-layout-sider-collapsed .ant-menu-item {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+.app-sider.ant-layout-sider-collapsed .ant-menu-submenu-title {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
 }
 
 .app-content {
