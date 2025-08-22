@@ -296,18 +296,18 @@ const InventoryFilterPanel = ({ filters, onChange, loading }) => {
         <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'flex-end' }}>
           <Space>
             <Button
+              icon={<ReloadOutlined />}
+              onClick={handleReset}
+            >
+              重置
+            </Button>
+            <Button
               type="primary"
               icon={<FilterOutlined />}
               loading={loading}
               onClick={() => onChange(filters)}
             >
               查询
-            </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={handleReset}
-            >
-              重置
             </Button>
           </Space>
         </Col>
