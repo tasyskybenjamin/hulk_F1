@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Row,
   Col,
@@ -12,16 +12,13 @@ import {
 } from 'antd';
 import {
   FilterOutlined,
-  ReloadOutlined,
-  DownOutlined,
-  UpOutlined
+  ReloadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
 const InventoryFilterPanel = ({ filters, onChange, loading }) => {
-  const [collapsed, setCollapsed] = useState(false);
 
   // 产品类型选项
   const productTypeOptions = [
@@ -261,59 +258,47 @@ const InventoryFilterPanel = ({ filters, onChange, loading }) => {
               </div>
             </Col>
 
-            {!collapsed && (
-              <>
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <div className="filter-item">
-                    <div className="filter-label">产品类型</div>
-                    <Select
-                      mode="multiple"
-                      value={filters.productType}
-                      onChange={(value) => handleFilterChange('productType', value)}
-                      options={productTypeOptions}
-                      placeholder="请选择产品类型"
-                      style={{ width: '100%' }}
-                      maxTagCount="responsive"
-                    />
-                  </div>
-                </Col>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <div className="filter-item">
+                <div className="filter-label">产品类型</div>
+                <Select
+                  mode="multiple"
+                  value={filters.productType}
+                  onChange={(value) => handleFilterChange('productType', value)}
+                  options={productTypeOptions}
+                  placeholder="请选择产品类型"
+                  style={{ width: '100%' }}
+                  maxTagCount="responsive"
+                />
+              </div>
+            </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <div className="filter-item">
-                    <div className="filter-label">库存用途</div>
-                    <Select
-                      mode="multiple"
-                      value={filters.inventoryUsage}
-                      onChange={(value) => handleFilterChange('inventoryUsage', value)}
-                      placeholder="请选择库存用途"
-                      style={{ width: '100%' }}
-                      maxTagCount="responsive"
-                    >
-                      {inventoryUsageOptions.map(option => (
-                        <Select.Option key={option.value} value={option.value}>
-                          <Tooltip title={option.description} placement="right">
-                            {option.label}
-                          </Tooltip>
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
-                </Col>
-              </>
-            )}
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <div className="filter-item">
+                <div className="filter-label">库存用途</div>
+                <Select
+                  mode="multiple"
+                  value={filters.inventoryUsage}
+                  onChange={(value) => handleFilterChange('inventoryUsage', value)}
+                  placeholder="请选择库存用途"
+                  style={{ width: '100%' }}
+                  maxTagCount="responsive"
+                >
+                  {inventoryUsageOptions.map(option => (
+                    <Select.Option key={option.value} value={option.value}>
+                      <Tooltip title={option.description} placement="right">
+                        {option.label}
+                      </Tooltip>
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            </Col>
           </Row>
         </Col>
 
         <Col flex="none">
           <Space>
-            <Button
-              type="primary"
-              icon={<FilterOutlined />}
-              loading={loading}
-              onClick={() => onChange(filters)}
-            >
-              查询
-            </Button>
             <Button
               icon={<ReloadOutlined />}
               onClick={handleReset}
@@ -321,11 +306,12 @@ const InventoryFilterPanel = ({ filters, onChange, loading }) => {
               重置
             </Button>
             <Button
-              type="link"
-              icon={collapsed ? <DownOutlined /> : <UpOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
+              type="primary"
+              icon={<FilterOutlined />}
+              loading={loading}
+              onClick={() => onChange(filters)}
             >
-              {collapsed ? '展开' : '收起'}
+              查询
             </Button>
           </Space>
         </Col>
