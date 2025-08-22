@@ -31,7 +31,6 @@ import dayjs from 'dayjs';
 import InventoryFilterPanel from './InventoryFilterPanel';
 import './InventoryManagementPage.css';
 
-const { RangePicker } = DatePicker;
 
 const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
   const [filters, setFilters] = useState({
