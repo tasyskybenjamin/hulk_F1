@@ -195,7 +195,7 @@ const DemandManagementPage = () => {
         });
         confirmedBase = confirmedBase * 0.9 + confirmedValue * 0.1;
 
-        // 已交付需求：相对平稳，有轻微增长
+        // 已交付+已回收需求：相对平稳，有轻微增长
         const deliveredValue = Math.round(deliveredBase * (0.85 + Math.random() * 0.3) * trendFactor);
         delivered.push({
           value: deliveredValue,
@@ -223,7 +223,7 @@ const DemandManagementPage = () => {
             color: '#f5222d'
           },
           {
-            label: '已交付',
+            label: '已交付+已回收',
             data: delivered,
             color: '#52c41a'
           }
@@ -321,33 +321,85 @@ const DemandManagementPage = () => {
   // 需求分布表格列定义
   const distributionColumns = [
     {
-      title: distributionBy === 'region' ? (showRoomDetail ? '机房' : '地域') : distributionBy === 'channel' ? '渠道' : '状态',
+      title: distributionBy === 'region' ? (showRoomDetail ? '机房' : '地域') : '渠道',
       dataIndex: 'name',
       key: 'name',
+      width: 150,
+      fixed: 'left',
+      sorter: (a, b) => a.name.localeCompare(b.name),
+      render: (text) => (
+        <div style={{ fontWeight: '500' }}>
+          {text}
+        </div>
+      )
     },
     {
       title: '需求量',
       dataIndex: 'value',
       key: 'value',
-      render: (value) => <strong>{value}</strong>
+      width: 120,
+      sorter: (a, b) => a.value - b.value,
+      defaultSortOrder: 'descend',
+      render: (value) => (
+        <div style={{ textAlign: 'right' }}>
+          <strong style={{ color: '#1890ff' }}>{value.toLocaleString()}</strong>
+          <span style={{ color: '#666', fontSize: '12px', marginLeft: '4px' }}>核</span>
+        </div>
+      )
     },
     {
       title: '占比',
       dataIndex: 'percentage',
       key: 'percentage',
-      render: (value) => `${value}%`
+      width: 100,
+      sorter: (a, b) => a.percentage - b.percentage,
+      render: (value) => (
+        <div style={{ textAlign: 'center' }}>
+          <Tag color={value >= 30 ? 'red' : value >= 20 ? 'orange' : value >= 10 ? 'blue' : 'default'}>
+            {value}%
+          </Tag>
+        </div>
+      )
+    },
+    {
+      title: '趋势',
+      key: 'trend',
+      width: 80,
+      render: (_, record) => {
+        // 模拟趋势数据
+        const trendValue = Math.random() > 0.5 ? 1 : -1;
+        const trendPercent = (Math.random() * 20).toFixed(1);
+        return (
+          <div style={{ textAlign: 'center' }}>
+            {trendValue > 0 ? (
+              <span style={{ color: '#52c41a', fontSize: '12px' }}>
+                ↗ +{trendPercent}%
+              </span>
+            ) : (
+              <span style={{ color: '#ff4d4f', fontSize: '12px' }}>
+                ↘ -{trendPercent}%
+              </span>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: '操作',
       key: 'action',
+      width: 120,
+      fixed: 'right',
       render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => console.log('查看详情:', record)}
-        >
-          查看详情
-        </Button>
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => console.log('查看详情:', record)}
+          >
+            详情
+          </Button>
+        </Space>
       )
     }
   ];
@@ -497,11 +549,6 @@ const DemandManagementPage = () => {
           <Card
             title="📊 需求洞察"
             className="insight-card"
-            extra={
-              <Button type="link" size="small">
-                查看详细报告 →
-              </Button>
-            }
           >
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} md={6}>
@@ -551,35 +598,41 @@ const DemandManagementPage = () => {
         <Col span={24}>
           <Card
             title={
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>需求分布（按{distributionBy === 'region' ? '地域' : distributionBy === 'channel' ? '渠道' : '状态'}）</span>
-                <Space>
-                  <span style={{ fontSize: '12px', color: '#666' }}>
-                    分布维度：
-                  </span>
-                  <Button.Group size="small">
-                    <Button
-                      type={distributionBy === 'region' ? 'primary' : 'default'}
-                      onClick={() => setDistributionBy('region')}
-                    >
-                      地域
-                    </Button>
-                    <Button
-                      type={distributionBy === 'channel' ? 'primary' : 'default'}
-                      onClick={() => setDistributionBy('channel')}
-                    >
-                      渠道
-                    </Button>
-                    <Button
-                      type={distributionBy === 'status' ? 'primary' : 'default'}
-                      onClick={() => setDistributionBy('status')}
-                    >
-                      状态
-                    </Button>
-                  </Button.Group>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '600' }}>📈 需求分布</span>
+                   <Tag color="blue" style={{ margin: 0 }}>
+                     按{distributionBy === 'region' ? '地域' : '渠道'}
+                   </Tag>
+                  {distributionBy === 'region' && showRoomDetail && (
+                    <Tag color="green" style={{ margin: 0 }}>机房详情</Tag>
+                  )}
+                </div>
+                <Space wrap>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
+                      分布维度：
+                    </span>
+                     <Button.Group size="small" className="dimension-button-group">
+                       <Button
+                         type={distributionBy === 'region' ? 'primary' : 'default'}
+                         onClick={() => setDistributionBy('region')}
+                         style={{ borderRadius: '4px 0 0 4px' }}
+                       >
+                         地域
+                       </Button>
+                       <Button
+                         type={distributionBy === 'channel' ? 'primary' : 'default'}
+                         onClick={() => setDistributionBy('channel')}
+                         style={{ borderRadius: '0 4px 4px 0' }}
+                       >
+                         渠道
+                       </Button>
+                     </Button.Group>
+                  </div>
                   {distributionBy === 'region' && (
-                    <>
-                      <span style={{ fontSize: '12px', color: '#666' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
                         机房详情：
                       </span>
                       <Switch
@@ -589,36 +642,65 @@ const DemandManagementPage = () => {
                         checkedChildren="显示"
                         unCheckedChildren="隐藏"
                       />
-                    </>
+                    </div>
                   )}
-                  <Switch
-                    checkedChildren={<TableOutlined />}
-                    unCheckedChildren={<BarChartOutlined />}
-                    checked={viewMode === 'table'}
-                    onChange={(checked) => setViewMode(checked ? 'table' : 'chart')}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
+                      视图模式：
+                    </span>
+                    <Switch
+                      checkedChildren={<TableOutlined />}
+                      unCheckedChildren={<BarChartOutlined />}
+                      checked={viewMode === 'table'}
+                      onChange={(checked) => setViewMode(checked ? 'table' : 'chart')}
+                    />
+                  </div>
                 </Space>
               </div>
             }
             className="distribution-card"
           >
-            {viewMode === 'chart' ? (
-              <div style={{ height: '300px' }}>
-                <DemandDistributionChart
-                  data={distributionData}
-                  distributionBy={distributionBy}
-                  showRoomDetail={showRoomDetail}
-                />
-              </div>
-            ) : (
-              <Table
-                columns={distributionColumns}
-                dataSource={distributionData}
-                pagination={false}
-                size="small"
-                rowKey="name"
-              />
-            )}
+            <div>
+              {/* 图表或表格视图 */}
+              {viewMode === 'chart' ? (
+                <div style={{ height: '350px' }}>
+                  <DemandDistributionChart
+                    data={distributionData}
+                    distributionBy={distributionBy}
+                    showRoomDetail={showRoomDetail}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      共 {distributionData.length} 条记录，总需求量 {distributionData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} 核
+                    </span>
+                    <Space>
+                      <Button size="small" onClick={() => console.log('导出数据')}>
+                        导出数据
+                      </Button>
+                    </Space>
+                  </div>
+                   <Table
+                     className="distribution-table"
+                     columns={distributionColumns}
+                     dataSource={distributionData.map((item, index) => ({ ...item, key: item.name || index }))}
+                     pagination={{
+                       size: 'small',
+                       showSizeChanger: true,
+                       showQuickJumper: true,
+                       showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                       pageSizeOptions: ['10', '20', '50', '100']
+                     }}
+                     size="small"
+                     rowKey="key"
+                     scroll={{ x: 'max-content' }}
+                     bordered
+                   />
+                </div>
+              )}
+            </div>
           </Card>
         </Col>
       </Row>
@@ -686,7 +768,7 @@ const DemandManagementPage = () => {
                 },
                 {
                   key: 'delivered',
-                  label: '已交付需求',
+                  label: '已交付+已回收需求',
                   children: (
                     <div style={{ height: '400px' }}>
                       <DemandTrendChart

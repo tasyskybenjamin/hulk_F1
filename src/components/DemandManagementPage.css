@@ -332,6 +332,126 @@
   background: #1890ff;
 }
 
+/* 需求分布统计概览样式 */
+.demand-management-page .distribution-stats {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.demand-management-page .distribution-stats:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.demand-management-page .distribution-stat-item {
+  padding: 12px;
+  text-align: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+}
+
+.demand-management-page .distribution-stat-item:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
+}
+
+.demand-management-page .distribution-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.demand-management-page .distribution-stat-label {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.2;
+}
+
+/* 分布维度按钮组样式 */
+.demand-management-page .dimension-button-group .ant-btn {
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.demand-management-page .dimension-button-group .ant-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.demand-management-page .dimension-button-group .ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff, #40a9ff);
+  border: none;
+}
+
+/* 表格优化样式 */
+.demand-management-page .distribution-table .ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #fafafa, #f0f0f0);
+  font-weight: 600;
+  color: #262626;
+  border-bottom: 2px solid #e8e8e8;
+  position: relative;
+}
+
+.demand-management-page .distribution-table .ant-table-thead > tr > th::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #1890ff, #40a9ff);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.demand-management-page .distribution-table .ant-table-thead > tr > th:hover::after {
+  opacity: 1;
+}
+
+.demand-management-page .distribution-table .ant-table-tbody > tr {
+  transition: all 0.3s ease;
+}
+
+.demand-management-page .distribution-table .ant-table-tbody > tr:hover {
+  background: #f0f8ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.demand-management-page .distribution-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f5f5f5;
+  vertical-align: middle;
+}
+
+/* 趋势指示器样式 */
+.demand-management-page .trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.demand-management-page .trend-indicator.trend-up {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.demand-management-page .trend-indicator.trend-down {
+  background: rgba(255, 77, 79, 0.1);
+  color: #ff4d4f;
+}
+
+.demand-management-page .trend-indicator:hover {
+  transform: scale(1.05);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .demand-management-page .filter-item {
@@ -345,6 +465,14 @@
   .demand-management-page .distribution-card .ant-card-body,
   .demand-management-page .trend-card .ant-card-body {
     padding: 12px 16px;
+  }
+
+  .demand-management-page .distribution-stat-value {
+    font-size: 18px;
+  }
+
+  .demand-management-page .dimension-button-group {
+    flex-wrap: wrap;
   }
 }
 
