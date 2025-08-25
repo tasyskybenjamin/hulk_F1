@@ -240,9 +240,12 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     { key: 'available', label: '可用库存', color: '#52c41a' },
     { key: 'reserved', label: '已预占', color: '#faad14' },
     { key: 'outbound', label: '已出库', color: '#f5222d' },
-    { key: 'safety', label: '安全预留', color: '#722ed1' },
-    { key: 'emergency', label: '紧急资源', color: '#fa541c' },
-    { key: 'operation', label: '运维资源', color: '#13c2c2' }
+    { key: 'safety', label: '安全预留余量', color: '#722ed1' },
+    { key: 'safety_outbound', label: '安全预留已出库', color: '#9254de' },
+    { key: 'emergency', label: '紧急资源余量', color: '#fa541c' },
+    { key: 'emergency_outbound', label: '紧急资源已出库', color: '#ff7a45' },
+    { key: 'operation', label: '运维资源余量', color: '#13c2c2' },
+    { key: 'operation_outbound', label: '运维资源已出库', color: '#36cfc9' }
   ];
 
   // 模拟数据获取
@@ -373,8 +376,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
         reserved: [],
         outbound: [],
         safety: [],
+        safety_outbound: [],
         emergency: [],
-        operation: []
+        emergency_outbound: [],
+        operation: [],
+        operation_outbound: []
       };
 
       for (let i = 30; i >= -60; i--) {
@@ -416,18 +422,39 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
           isPast
         });
 
+        // 安全预留余量
         inventoryLines.safety.push({
-          value: Math.floor((baseValue + trend) * 0.1) + Math.floor(Math.random() * 100),
+          value: Math.floor((baseValue + trend) * 0.08) + Math.floor(Math.random() * 80),
           isPast
         });
 
+        // 安全预留已出库
+        inventoryLines.safety_outbound.push({
+          value: Math.floor((baseValue + trend) * 0.02) + Math.floor(Math.random() * 20),
+          isPast
+        });
+
+        // 紧急资源余量
         inventoryLines.emergency.push({
-          value: Math.floor((baseValue + trend) * 0.04) + Math.floor(Math.random() * 50),
+          value: Math.floor((baseValue + trend) * 0.03) + Math.floor(Math.random() * 40),
           isPast
         });
 
+        // 紧急资源已出库
+        inventoryLines.emergency_outbound.push({
+          value: Math.floor((baseValue + trend) * 0.01) + Math.floor(Math.random() * 10),
+          isPast
+        });
+
+        // 运维资源余量
         inventoryLines.operation.push({
-          value: Math.floor((baseValue + trend) * 0.01) + Math.floor(Math.random() * 20),
+          value: Math.floor((baseValue + trend) * 0.008) + Math.floor(Math.random() * 15),
+          isPast
+        });
+
+        // 运维资源已出库
+        inventoryLines.operation_outbound.push({
+          value: Math.floor((baseValue + trend) * 0.002) + Math.floor(Math.random() * 5),
           isPast
         });
       }
@@ -910,11 +937,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
       case 'outbound':
         return ['outbound'];
       case 'safety':
-        return ['safety'];
+        return ['safety', 'safety_outbound']; // 安全预留：余量 + 已出库
       case 'emergency':
-        return ['emergency'];
+        return ['emergency', 'emergency_outbound']; // 紧急资源：余量 + 已出库
       case 'operation':
-        return ['operation'];
+        return ['operation', 'operation_outbound']; // 运维资源：余量 + 已出库
       default:
         return ['total'];
     }
