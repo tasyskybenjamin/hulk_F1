@@ -14,420 +14,515 @@ import {
   Input,
   DatePicker,
   message,
-  Divider
+  Divider,
+  Popconfirm,
+  Tooltip
 } from 'antd';
 import {
   PlusOutlined,
   SettingOutlined,
   EyeOutlined,
-  MinusCircleOutlined
+  EditOutlined,
+  DeleteOutlined,
+  MinusCircleOutlined,
+  DownOutlined,
+  RightOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import './ResourceProcurementPage.css';
 
 const { Option } = Select;
 const { TextArea } = Input;
 
 const ResourceProcurementPage = () => {
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [form] = Form.useForm();
-  const [editForm] = Form.useForm();
+  const [createPlanModalVisible, setCreatePlanModalVisible] = useState(false);
+  const [editPlanModalVisible, setEditPlanModalVisible] = useState(false);
+  const [addMeasureModalVisible, setAddMeasureModalVisible] = useState(false);
+  const [editMeasureModalVisible, setEditMeasureModalVisible] = useState(false);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [editingMeasure, setEditingMeasure] = useState(null);
+  const [currentPlanId, setCurrentPlanId] = useState(null);
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
 
-  // 处理从其他页面跳转过来的参数
-  React.useEffect(() => {
-    const procurementParams = sessionStorage.getItem('procurementParams');
-    if (procurementParams) {
-      try {
-        const params = JSON.parse(procurementParams);
-        console.log('接收到跳转参数:', params);
+  const [planForm] = Form.useForm();
+  const [editPlanForm] = Form.useForm();
+  const [measureForm] = Form.useForm();
+  const [editMeasureForm] = Form.useForm();
 
-        // 如果是从库存趋势页面跳转过来的
-        if (params.source === 'inventory-trend') {
-          // 可以根据参数自动打开创建表单并预填充一些信息
-          message.info(`检测到库存增加事件：${params.type}，时间：${params.date}，数量：${params.amount}核`);
-
-          // 清除参数，避免重复处理
-          sessionStorage.removeItem('procurementParams');
-
-          // 可选：自动打开创建表单
-          // setCreateModalVisible(true);
+  // 模拟筹措计划数据
+  const [procurementPlans, setProcurementPlans] = useState([
+    {
+      id: '1',
+      resourceGapMax: 5000,
+      gapStartTime: '2024-12-25 09:00',
+      gapEndTime: '2024-12-28 18:00',
+      datacenter: 'BJ-DC1',
+      status: '筹备中',
+      initiator: 'zhangsan',
+      createTime: '2024-12-20 14:30',
+      measures: [
+        {
+          id: '1-1',
+          type: '私有云提拉',
+          name: '黑五活动资源紧急调配',
+          expectedTime: '2024-12-26 10:00',
+          expectedAmount: 3000,
+          actualTime: '',
+          actualAmount: 0,
+          status: '处理中'
+        },
+        {
+          id: '1-2',
+          type: '公有云采购',
+          name: '临时扩容补充',
+          expectedTime: '2024-12-27 15:00',
+          expectedAmount: 2000,
+          actualTime: '',
+          actualAmount: 0,
+          status: '处理中'
         }
-      } catch (error) {
-        console.error('解析跳转参数失败:', error);
-        sessionStorage.removeItem('procurementParams');
-      }
+      ]
+    },
+    {
+      id: '2',
+      resourceGapMax: 8000,
+      gapStartTime: '2025-01-15 08:00',
+      gapEndTime: '2025-01-20 20:00',
+      datacenter: 'SH-DC2',
+      status: '待筹备',
+      initiator: 'lisi',
+      createTime: '2024-12-18 16:45',
+      measures: [
+        {
+          id: '2-1',
+          type: '私有云采购',
+          name: '春节大促资源储备',
+          expectedTime: '2025-01-10 12:00',
+          expectedAmount: 5000,
+          actualTime: '',
+          actualAmount: 0,
+          status: '处理中'
+        },
+        {
+          id: '2-2',
+          type: 'paas借调',
+          name: '内部资源调配',
+          expectedTime: '2025-01-12 14:00',
+          expectedAmount: 3000,
+          actualTime: '',
+          actualAmount: 0,
+          status: '处理中'
+        }
+      ]
+    },
+    {
+      id: '3',
+      resourceGapMax: 3500,
+      gapStartTime: '2024-12-10 10:00',
+      gapEndTime: '2024-12-15 16:00',
+      datacenter: 'GZ-DC1',
+      status: '筹备完成',
+      initiator: 'wangwu',
+      createTime: '2024-12-05 11:20',
+      measures: [
+        {
+          id: '3-1',
+          type: '资源盘活',
+          name: '闲置资源重新分配',
+          expectedTime: '2024-12-08 09:00',
+          expectedAmount: 2000,
+          actualTime: '2024-12-08 10:30',
+          actualAmount: 2200,
+          status: '完成'
+        },
+        {
+          id: '3-2',
+          type: '私有云提拉',
+          name: '紧急资源调配',
+          expectedTime: '2024-12-09 14:00',
+          expectedAmount: 1500,
+          actualTime: '2024-12-09 13:45',
+          actualAmount: 1300,
+          status: '完成'
+        }
+      ]
     }
-  }, []);
+  ]);
 
-  // 根据时间点计算状态的函数
-  const calculateStatus = (timePoints) => {
-    const now = new Date(); // 当前精确时间
+  // 筹措类型选项
+  const measureTypes = [
+    { value: '私有云提拉', label: '私有云提拉', color: 'blue' },
+    { value: '私有云采购', label: '私有云采购', color: 'green' },
+    { value: '公有云采购', label: '公有云采购', color: 'orange' },
+    { value: 'paas借调', label: 'paas借调', color: 'purple' },
+    { value: '资源盘活', label: '资源盘活', color: 'cyan' }
+  ];
 
-    // 检查是否有任何时间点大于当前时间
-    const hasFutureTimePoint = timePoints.some(item => {
-      const timePointDate = new Date(item.timePoint);
-      return timePointDate > now;
-    });
+  // 计划状态选项
+  const planStatusOptions = [
+    { value: '待筹备', label: '待筹备', color: 'default' },
+    { value: '筹备中', label: '筹备中', color: 'processing' },
+    { value: '筹备完成', label: '筹备完成', color: 'success' },
+    { value: '已取消', label: '已取消', color: 'error' }
+  ];
 
-    return hasFutureTimePoint ? 'pending' : 'expired';
-  };
+  // 举措状态选项
+  const measureStatusOptions = [
+    { value: '处理中', label: '处理中', color: 'processing' },
+    { value: '完成', label: '完成', color: 'success' },
+    { value: '取消', label: '取消', color: 'error' }
+  ];
 
-  // 模拟资源筹措数据
-  const [procurementData, setProcurementData] = useState([
-    // 已过期的筹措记录
+  // 主表列配置
+  const mainColumns = [
     {
-      key: '1',
-      type: '私有云提拉',
-      responsible: '赵六',
-      description: '黑五活动资源筹措',
-      timePoints: [
-        { timePoint: '2024-12-15', amount: 2500 },
-        { timePoint: '2024-12-16', amount: 2000 }
-      ],
-      totalAmount: 4500
+      title: '资源缺口最大值',
+      dataIndex: 'resourceGapMax',
+      key: 'resourceGapMax',
+      width: 140,
+      render: (value) => <span style={{ fontWeight: 'bold', color: '#f5222d' }}>{value.toLocaleString()} 核</span>
     },
     {
-      key: '2',
-      type: '私有云到货',
-      responsible: '钱七',
-      description: '常规资源补充',
-      timePoints: [
-        { timePoint: '2024-12-10', amount: 2800 }
-      ],
-      totalAmount: 2800
-    },
-    {
-      key: '3',
-      type: '私有云借调',
-      responsible: '李四',
-      description: '双十一活动资源调配',
-      timePoints: [
-        { timePoint: '2024-11-28', amount: 1200 },
-        { timePoint: '2024-11-30', amount: 2000 }
-      ],
-      totalAmount: 3200
-    },
-    {
-      key: '4',
-      type: '私有云提拉',
-      responsible: '张三',
-      description: '年终大促资源筹措',
-      timePoints: [
-        { timePoint: '2024-11-18', amount: 2000 },
-        { timePoint: '2024-11-20', amount: 1500 },
-        { timePoint: '2024-11-22', amount: 1500 }
-      ],
-      totalAmount: 5000
-    },
-    {
-      key: '5',
-      type: '私有云借调',
-      responsible: '陈八',
-      description: '紧急需求资源调配',
-      timePoints: [
-        { timePoint: '2024-10-25', amount: 1800 }
-      ],
-      totalAmount: 1800
-    },
-    // 待验证的筹措记录（未来时间点）
-    {
-      key: '6',
-      type: '私有云到货',
-      responsible: '王五',
-      description: '春节前资源储备',
-      timePoints: [
-        { timePoint: '2025-01-05', amount: 3000 },
-        { timePoint: '2025-01-08', amount: 3000 }
-      ],
-      totalAmount: 6000
-    },
-    {
-      key: '7',
-      type: '私有云提拉',
-      responsible: '刘九',
-      description: '春节活动资源筹措',
-      timePoints: [
-        { timePoint: '2025-01-15', amount: 4000 },
-        { timePoint: '2025-01-20', amount: 2500 },
-        { timePoint: '2025-01-25', amount: 1500 }
-      ],
-      totalAmount: 8000
-    },
-    {
-      key: '8',
-      type: '私有云借调',
-      responsible: '周十',
-      description: '元宵节促销资源调配',
-      timePoints: [
-        { timePoint: '2025-02-10', amount: 2200 },
-        { timePoint: '2025-02-12', amount: 1800 }
-      ],
-      totalAmount: 4000
-    },
-    {
-      key: '9',
-      type: '私有云到货',
-      responsible: '吴十一',
-      description: 'Q1季度资源补充计划',
-      timePoints: [
-        { timePoint: '2025-02-15', amount: 5000 }
-      ],
-      totalAmount: 5000
-    },
-    {
-      key: '10',
-      type: '私有云提拉',
-      responsible: '郑十二',
-      description: '情人节活动资源筹措',
-      timePoints: [
-        { timePoint: '2025-02-12', amount: 1500 },
-        { timePoint: '2025-02-14', amount: 2500 }
-      ],
-      totalAmount: 4000
-    },
-    {
-      key: '11',
-      type: '私有云借调',
-      responsible: '孙十三',
-      description: '三月女神节资源调配',
-      timePoints: [
-        { timePoint: '2025-03-05', amount: 3500 },
-        { timePoint: '2025-03-08', amount: 2000 }
-      ],
-      totalAmount: 5500
-    },
-    {
-      key: '12',
-      type: '私有云到货',
-      responsible: '李十四',
-      description: '春季大促资源储备',
-      timePoints: [
-        { timePoint: '2025-03-15', amount: 4500 },
-        { timePoint: '2025-03-20', amount: 3000 },
-        { timePoint: '2025-03-25', amount: 2500 }
-      ],
-      totalAmount: 10000
-    }
-  ].map(item => ({
-    ...item,
-    status: calculateStatus(item.timePoints)
-  })));
-
-  const columns = [
-    {
-      title: '筹措类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 120,
-      render: (type) => {
-        const colorMap = {
-          '私有云提拉': 'blue',
-          '私有云到货': 'orange',
-          '私有云借调': 'purple'
-        };
-        return <Tag color={colorMap[type]}>{type}</Tag>;
-      }
-    },
-    {
-      title: '总筹措数量',
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      width: 120,
-      render: (amount) => <span style={{ fontWeight: 'bold' }}>{amount.toLocaleString()} 核</span>
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status) => {
-        const statusConfig = {
-          'expired': { color: 'green', text: '已过期' },
-          'pending': { color: 'orange', text: '待验证' }
-        };
-        const config = statusConfig[status] || { color: 'default', text: status };
-        return <Tag color={config.color}>{config.text}</Tag>;
-      }
-    },
-    {
-      title: '时间点详情',
-      dataIndex: 'timePoints',
-      key: 'timePoints',
-      width: 250,
-      render: (timePoints) => (
-        <div>
-          {timePoints.map((item, index) => (
-            <div key={index} style={{ fontSize: '12px', marginBottom: '2px' }}>
-              <span style={{ color: '#666' }}>{item.timePoint}</span>
-              <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-                {item.amount.toLocaleString()} 核
-              </span>
-            </div>
-          ))}
+      title: '缺口时间段',
+      key: 'gapTimeRange',
+      width: 200,
+      render: (_, record) => (
+        <div style={{ fontSize: '12px' }}>
+          <div>开始：{record.gapStartTime}</div>
+          <div>结束：{record.gapEndTime}</div>
         </div>
       )
     },
     {
-      title: '负责人',
-      dataIndex: 'responsible',
-      key: 'responsible',
+      title: '涉及机房',
+      dataIndex: 'datacenter',
+      key: 'datacenter',
+      width: 100,
+      render: (value) => <Tag color="blue">{value}</Tag>
+    },
+    {
+      title: '计划状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (status) => {
+        const config = planStatusOptions.find(item => item.value === status);
+        return <Tag color={config?.color}>{status}</Tag>;
+      }
+    },
+    {
+      title: '发起人',
+      dataIndex: 'initiator',
+      key: 'initiator',
       width: 80
     },
     {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-      ellipsis: true
+      title: '创建时间',
+      dataIndex: 'createTime',
+      key: 'createTime',
+      width: 140,
+      render: (time) => <span style={{ fontSize: '12px' }}>{time}</span>
     },
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 180,
       render: (_, record) => (
         <Space size="small">
-          <Button type="link" size="small" icon={<EyeOutlined />}>详情</Button>
-          {record.status === 'pending' && (
-            <Button
-              type="link"
-              size="small"
-              onClick={() => handleEditProcurement(record)}
-            >
-              修改
-            </Button>
-          )}
           <Button
             type="link"
             size="small"
-            danger
-            onClick={() => handleDeleteProcurement(record)}
+            icon={<EditOutlined />}
+            onClick={() => handleEditPlanStatus(record)}
           >
-            删除
+            修改状态
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={() => handleAddMeasure(record)}
+          >
+            添加举措
           </Button>
         </Space>
       )
     }
   ];
 
-  const handleCreateProcurement = () => {
-    setCreateModalVisible(true);
-    form.resetFields();
+  // 子表列配置
+  const subColumns = [
+    {
+      title: '筹措类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
+      render: (type) => {
+        const config = measureTypes.find(item => item.value === type);
+        return <Tag color={config?.color}>{type}</Tag>;
+      }
+    },
+    {
+      title: '举措名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: 200,
+      ellipsis: true
+    },
+    {
+      title: '预计到位时间',
+      dataIndex: 'expectedTime',
+      key: 'expectedTime',
+      width: 140,
+      render: (time) => <span style={{ fontSize: '12px' }}>{time}</span>
+    },
+    {
+      title: '预计量级',
+      dataIndex: 'expectedAmount',
+      key: 'expectedAmount',
+      width: 100,
+      render: (amount) => <span style={{ fontWeight: 'bold' }}>{amount.toLocaleString()} 核</span>
+    },
+    {
+      title: '实际到位时间',
+      dataIndex: 'actualTime',
+      key: 'actualTime',
+      width: 140,
+      render: (time) => (
+        <span style={{ fontSize: '12px', color: time ? '#52c41a' : '#999' }}>
+          {time || '未完成'}
+        </span>
+      )
+    },
+    {
+      title: '实际量级',
+      dataIndex: 'actualAmount',
+      key: 'actualAmount',
+      width: 100,
+      render: (amount) => (
+        <span style={{
+          fontWeight: 'bold',
+          color: amount > 0 ? '#52c41a' : '#999'
+        }}>
+          {amount > 0 ? `${amount.toLocaleString()} 核` : '未完成'}
+        </span>
+      )
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 80,
+      render: (status) => {
+        const config = measureStatusOptions.find(item => item.value === status);
+        return <Tag color={config?.color}>{status}</Tag>;
+      }
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 120,
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEditMeasure(record)}
+          >
+            修改信息
+          </Button>
+          <Popconfirm
+            title="确认删除"
+            description="确定要删除这条筹措举措吗？"
+            onConfirm={() => handleDeleteMeasure(record)}
+            okText="确认删除"
+            cancelText="取消"
+          >
+            <Button type="link" size="small" danger>删除</Button>
+          </Popconfirm>
+        </Space>
+      )
+    }
+  ];
+
+  // 展开行渲染
+  const expandedRowRender = (record) => {
+    return (
+      <Table
+        columns={subColumns}
+        dataSource={record.measures}
+        pagination={false}
+        size="small"
+        rowKey="id"
+        style={{ margin: '0 48px' }}
+      />
+    );
   };
 
-  const handleCreateSubmit = async () => {
+  // 处理展开/收起
+  const handleExpand = (expanded, record) => {
+    const keys = expanded
+      ? [...expandedRowKeys, record.id]
+      : expandedRowKeys.filter(key => key !== record.id);
+    setExpandedRowKeys(keys);
+  };
+
+  // 创建筹措计划
+  const handleCreatePlan = () => {
+    setCreatePlanModalVisible(true);
+    planForm.resetFields();
+  };
+
+  const handleCreatePlanSubmit = async () => {
     try {
-      const values = await form.validateFields();
+      const values = await planForm.validateFields();
 
-      // 处理时间点数据，格式化日期时间并计算总数量
-      const timePoints = values.timePoints.map(item => ({
-        timePoint: item.timePoint.format('YYYY-MM-DD HH:mm'),
-        amount: item.amount
-      }));
-
-      const totalAmount = timePoints.reduce((sum, item) => sum + item.amount, 0);
-
-      // 生成新的筹措记录，自动计算状态
-      const newProcurement = {
-        key: Date.now().toString(),
-        type: values.type,
-        responsible: values.responsible,
-        description: values.description || '',
-        timePoints: timePoints,
-        totalAmount: totalAmount,
-        status: calculateStatus(timePoints)
+      const newPlan = {
+        id: Date.now().toString(),
+        resourceGapMax: values.resourceGapMax,
+        gapStartTime: values.gapStartTime.format('YYYY-MM-DD HH:mm'),
+        gapEndTime: values.gapEndTime.format('YYYY-MM-DD HH:mm'),
+        datacenter: values.datacenter,
+        status: '待筹备',
+        initiator: values.initiator,
+        createTime: dayjs().format('YYYY-MM-DD HH:mm'),
+        measures: []
       };
 
-      // 添加到数据列表
-      setProcurementData(prev => [newProcurement, ...prev]);
-
-      message.success(`资源筹措记录创建成功！共筹措 ${totalAmount.toLocaleString()} 核资源`);
-      setCreateModalVisible(false);
-      form.resetFields();
+      setProcurementPlans(prev => [newPlan, ...prev]);
+      message.success('筹措计划创建成功！');
+      setCreatePlanModalVisible(false);
+      planForm.resetFields();
     } catch (error) {
       console.error('表单验证失败:', error);
     }
   };
 
-  const handleCreateCancel = () => {
-    setCreateModalVisible(false);
-    form.resetFields();
-  };
-
-  // 修改筹措记录
-  const handleEditProcurement = (record) => {
-    setEditingRecord(record);
-    setEditModalVisible(true);
-
-    // 填充表单数据，使用dayjs替代moment
-    const timePointsWithDayjs = record.timePoints.map(item => ({
-      timePoint: dayjs(item.timePoint, 'YYYY-MM-DD HH:mm'),
-      amount: item.amount
-    }));
-
-    editForm.setFieldsValue({
-      type: record.type,
-      responsible: record.responsible,
-      description: record.description,
-      timePoints: timePointsWithDayjs
+  // 修改计划状态
+  const handleEditPlanStatus = (record) => {
+    setEditingPlan(record);
+    setEditPlanModalVisible(true);
+    editPlanForm.setFieldsValue({
+      status: record.status
     });
   };
 
-  const handleEditSubmit = async () => {
+  const handleEditPlanStatusSubmit = async () => {
     try {
-      const values = await editForm.validateFields();
+      const values = await editPlanForm.validateFields();
 
-      // 处理时间点数据，格式化日期时间并计算总数量
-      const timePoints = values.timePoints.map(item => ({
-        timePoint: item.timePoint.format('YYYY-MM-DD HH:mm'),
-        amount: item.amount
-      }));
-
-      const totalAmount = timePoints.reduce((sum, item) => sum + item.amount, 0);
-
-      // 更新筹措记录
-      const updatedRecord = {
-        ...editingRecord,
-        type: values.type,
-        responsible: values.responsible,
-        description: values.description || '',
-        timePoints: timePoints,
-        totalAmount: totalAmount,
-        status: calculateStatus(timePoints)
-      };
-
-      // 更新数据列表
-      setProcurementData(prev =>
-        prev.map(item => item.key === editingRecord.key ? updatedRecord : item)
+      setProcurementPlans(prev =>
+        prev.map(plan =>
+          plan.id === editingPlan.id
+            ? { ...plan, status: values.status }
+            : plan
+        )
       );
 
-      message.success(`资源筹措记录修改成功！共筹措 ${totalAmount.toLocaleString()} 核资源`);
-      setEditModalVisible(false);
-      setEditingRecord(null);
-      editForm.resetFields();
+      message.success('计划状态修改成功！');
+      setEditPlanModalVisible(false);
+      setEditingPlan(null);
     } catch (error) {
       console.error('表单验证失败:', error);
     }
   };
 
-  const handleEditCancel = () => {
-    setEditModalVisible(false);
-    setEditingRecord(null);
-    editForm.resetFields();
+  // 添加筹措举措
+  const handleAddMeasure = (plan) => {
+    setCurrentPlanId(plan.id);
+    setAddMeasureModalVisible(true);
+    measureForm.resetFields();
   };
 
-  // 删除筹措记录
-  const handleDeleteProcurement = (record) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除这条筹措记录吗？\n类型：${record.type}\n负责人：${record.responsible}\n总数量：${record.totalAmount.toLocaleString()} 核`,
-      okText: '确认删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: () => {
-        setProcurementData(prev => prev.filter(item => item.key !== record.key));
-        message.success('筹措记录删除成功');
-      }
+  const handleAddMeasureSubmit = async () => {
+    try {
+      const values = await measureForm.validateFields();
+
+      const newMeasure = {
+        id: `${currentPlanId}-${Date.now()}`,
+        type: values.type,
+        name: values.name,
+        expectedTime: values.expectedTime.format('YYYY-MM-DD HH:mm'),
+        expectedAmount: values.expectedAmount,
+        actualTime: values.actualTime ? values.actualTime.format('YYYY-MM-DD HH:mm') : '',
+        actualAmount: values.actualAmount || 0,
+        status: values.status
+      };
+
+      setProcurementPlans(prev =>
+        prev.map(plan =>
+          plan.id === currentPlanId
+            ? { ...plan, measures: [...plan.measures, newMeasure] }
+            : plan
+        )
+      );
+
+      message.success('筹措举措添加成功！');
+      setAddMeasureModalVisible(false);
+      setCurrentPlanId(null);
+      measureForm.resetFields();
+    } catch (error) {
+      console.error('表单验证失败:', error);
+    }
+  };
+
+  // 修改筹措举措
+  const handleEditMeasure = (measure) => {
+    setEditingMeasure(measure);
+    setEditMeasureModalVisible(true);
+
+    editMeasureForm.setFieldsValue({
+      type: measure.type,
+      name: measure.name,
+      expectedTime: dayjs(measure.expectedTime, 'YYYY-MM-DD HH:mm'),
+      expectedAmount: measure.expectedAmount,
+      actualTime: measure.actualTime ? dayjs(measure.actualTime, 'YYYY-MM-DD HH:mm') : null,
+      actualAmount: measure.actualAmount,
+      status: measure.status
     });
+  };
+
+  const handleEditMeasureSubmit = async () => {
+    try {
+      const values = await editMeasureForm.validateFields();
+
+      setProcurementPlans(prev =>
+        prev.map(plan => ({
+          ...plan,
+          measures: plan.measures.map(measure =>
+            measure.id === editingMeasure.id
+              ? {
+                  ...measure,
+                  type: values.type,
+                  name: values.name,
+                  expectedTime: values.expectedTime.format('YYYY-MM-DD HH:mm'),
+                  expectedAmount: values.expectedAmount,
+                  actualTime: values.actualTime ? values.actualTime.format('YYYY-MM-DD HH:mm') : '',
+                  actualAmount: values.actualAmount || 0,
+                  status: values.status
+                }
+              : measure
+          )
+        }))
+      );
+
+      message.success('筹措举措修改成功！');
+      setEditMeasureModalVisible(false);
+      setEditingMeasure(null);
+    } catch (error) {
+      console.error('表单验证失败:', error);
+    }
+  };
+
+  // 删除筹措举措
+  const handleDeleteMeasure = (measure) => {
+    setProcurementPlans(prev =>
+      prev.map(plan => ({
+        ...plan,
+        measures: plan.measures.filter(m => m.id !== measure.id)
+      }))
+    );
+    message.success('筹措举措删除成功！');
   };
 
   return (
@@ -443,40 +538,36 @@ const ResourceProcurementPage = () => {
             <p style={{ margin: '4px 0 0 0', color: '#666' }}>
               记录和管理已完成的资源筹措数据，维护筹措历史记录
             </p>
-            <div style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
-              <span style={{ marginRight: '16px' }}>
-                <Tag color="green" size="small">已过期</Tag>
-                筹措时间点小于当前时间，资源已进入库存
-              </span>
-              <span>
-                <Tag color="orange" size="small">待验证</Tag>
-                筹措时间点大于当前时间，录入数据待未来交付
-              </span>
-            </div>
           </div>
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={handleCreateProcurement}
+            onClick={handleCreatePlan}
           >
-            新建筹措记录
+            添加筹措计划
           </Button>
         </div>
       </Card>
 
-      {/* 筹措列表 */}
-      <Card
-        title="资源筹措记录"
-        extra={
-          <Space>
-            <Tag color="orange">待验证: {procurementData.filter(item => item.status === 'pending').length}</Tag>
-            <Tag color="green">已过期: {procurementData.filter(item => item.status === 'expired').length}</Tag>
-          </Space>
-        }
-      >
+      {/* 筹措计划列表 */}
+      <Card title="筹措计划列表">
         <Table
-          columns={columns}
-          dataSource={procurementData}
+          columns={mainColumns}
+          dataSource={procurementPlans}
+          rowKey="id"
+          expandable={{
+            expandedRowRender,
+            expandedRowKeys,
+            onExpand: handleExpand,
+            expandIcon: ({ expanded, onExpand, record }) => (
+              <Button
+                type="text"
+                size="small"
+                icon={expanded ? <DownOutlined /> : <RightOutlined />}
+                onClick={e => onExpand(record, e)}
+              />
+            )
+          }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -487,186 +578,118 @@ const ResourceProcurementPage = () => {
         />
       </Card>
 
-      {/* 创建筹措Modal */}
+      {/* 创建筹措计划Modal */}
       <Modal
-        title="新建资源筹措记录"
-        open={createModalVisible}
-        onOk={handleCreateSubmit}
-        onCancel={handleCreateCancel}
+        title="添加筹措计划"
+        open={createPlanModalVisible}
+        onOk={handleCreatePlanSubmit}
+        onCancel={() => setCreatePlanModalVisible(false)}
         width={600}
         okText="创建"
         cancelText="取消"
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        <Form form={planForm} layout="vertical" style={{ marginTop: 16 }}>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="type"
-                label="筹措类型"
-                rules={[{ required: true, message: '请选择筹措类型' }]}
+                name="resourceGapMax"
+                label="资源缺口最大值（核）"
+                rules={[{ required: true, message: '请输入资源缺口最大值' }]}
               >
-                <Select placeholder="请选择筹措类型">
-                  <Option value="私有云提拉">私有云提拉</Option>
-                  <Option value="私有云到货">私有云到货</Option>
-                  <Option value="私有云借调">私有云借调</Option>
-                </Select>
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={1}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                name="responsible"
-                label="负责人"
-                rules={[{ required: true, message: '请输入负责人' }]}
+                name="datacenter"
+                label="涉及机房"
+                rules={[{ required: true, message: '请输入机房英文缩写' }]}
               >
-                <Input placeholder="请输入负责人姓名" />
+                <Input placeholder="如：BJ-DC1" />
               </Form.Item>
             </Col>
           </Row>
-
-          <Divider orientation="left">时间点和资源数量</Divider>
-
-          <Form.List
-            name="timePoints"
-            initialValue={[{ timePoint: null, amount: null }]}
-            rules={[
-              {
-                validator: async (_, timePoints) => {
-                  if (!timePoints || timePoints.length < 1) {
-                    return Promise.reject(new Error('至少需要添加一个时间点'));
-                  }
-                },
-              },
-            ]}
-          >
-            {(fields, { add, remove }, { errors }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Row key={key} gutter={16} style={{ marginBottom: 8 }}>
-                    <Col span={10}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'timePoint']}
-                        rules={[{ required: true, message: '请选择时间点' }]}
-                      >
-                         <DatePicker
-                           showTime={{ format: 'HH:mm' }}
-                           placeholder="选择时间点"
-                           format="YYYY-MM-DD HH:mm"
-                           style={{ width: '100%' }}
-                           disabledDate={(current) => {
-                             // 禁用今天及之前的日期
-                             return current && current <= dayjs().endOf('day');
-                           }}
-                           disabledTime={(current) => {
-                             const now = dayjs();
-                             const today = dayjs().startOf('day');
-                             const selectedDay = current ? current.startOf('day') : null;
-
-                             // 如果选择的是今天，禁用当前时间之前的时间
-                             if (selectedDay && selectedDay.isSame(today, 'day')) {
-                               return {
-                                 disabledHours: () => {
-                                   const hours = [];
-                                   for (let i = 0; i < now.hour(); i++) {
-                                     hours.push(i);
-                                   }
-                                   return hours;
-                                 },
-                                 disabledMinutes: (selectedHour) => {
-                                   if (selectedHour === now.hour()) {
-                                     const minutes = [];
-                                     for (let i = 0; i <= now.minute(); i++) {
-                                       minutes.push(i);
-                                     }
-                                     return minutes;
-                                   }
-                                   return [];
-                                 }
-                               };
-                             }
-                             return {};
-                           }}
-                         />
-                      </Form.Item>
-                    </Col>
-                    <Col span={10}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'amount']}
-                        rules={[
-                          { required: true, message: '请输入资源数量' },
-                          { type: 'number', min: 1, message: '资源数量必须大于0' }
-                        ]}
-                      >
-                        <InputNumber
-                          placeholder="资源数量（核）"
-                          style={{ width: '100%' }}
-                          min={1}
-                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      {fields.length > 1 && (
-                        <Button
-                          type="text"
-                          icon={<MinusCircleOutlined />}
-                          onClick={() => remove(name)}
-                          style={{ marginTop: 4 }}
-                        />
-                      )}
-                    </Col>
-                  </Row>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    添加时间点
-                  </Button>
-                  <Form.ErrorList errors={errors} />
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
-
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="gapStartTime"
+                label="资源缺口开始时间"
+                rules={[{ required: true, message: '请选择开始时间' }]}
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="gapEndTime"
+                label="资源缺口结束时间"
+                rules={[{ required: true, message: '请选择结束时间' }]}
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
-            name="description"
-            label="描述"
+            name="initiator"
+            label="发起人（MIS）"
+            rules={[{ required: true, message: '请输入发起人MIS' }]}
           >
-            <TextArea
-              placeholder="请输入筹措描述（可选）"
-              rows={3}
-              maxLength={200}
-              showCount
-            />
+            <Input placeholder="请输入MIS账号" />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* 修改筹措Modal */}
+      {/* 修改计划状态Modal */}
       <Modal
-        title="修改资源筹措记录"
-        open={editModalVisible}
-        onOk={handleEditSubmit}
-        onCancel={handleEditCancel}
-        width={600}
-        okText="保存修改"
+        title="修改计划状态"
+        open={editPlanModalVisible}
+        onOk={handleEditPlanStatusSubmit}
+        onCancel={() => setEditPlanModalVisible(false)}
+        width={400}
+        okText="保存"
         cancelText="取消"
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        <Form form={editPlanForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="status"
+            label="计划状态"
+            rules={[{ required: true, message: '请选择计划状态' }]}
+          >
+            <Select>
+              {planStatusOptions.map(option => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 添加筹措举措Modal */}
+      <Modal
+        title="添加筹措举措"
+        open={addMeasureModalVisible}
+        onOk={handleAddMeasureSubmit}
+        onCancel={() => setAddMeasureModalVisible(false)}
+        width={600}
+        okText="添加"
+        cancelText="取消"
+      >
+        <Form form={measureForm} layout="vertical" style={{ marginTop: 16 }}>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -674,145 +697,210 @@ const ResourceProcurementPage = () => {
                 label="筹措类型"
                 rules={[{ required: true, message: '请选择筹措类型' }]}
               >
-                <Select placeholder="请选择筹措类型">
-                  <Option value="私有云提拉">私有云提拉</Option>
-                  <Option value="私有云到货">私有云到货</Option>
-                  <Option value="私有云借调">私有云借调</Option>
+                <Select>
+                  {measureTypes.map(type => (
+                    <Option key={type.value} value={type.value}>
+                      {type.label}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                name="responsible"
-                label="负责人"
-                rules={[{ required: true, message: '请输入负责人' }]}
+                name="status"
+                label="状态"
+                rules={[{ required: true, message: '请选择状态' }]}
+                initialValue="处理中"
               >
-                <Input placeholder="请输入负责人姓名" />
+                <Select>
+                  {measureStatusOptions.map(status => (
+                    <Option key={status.value} value={status.value}>
+                      {status.label}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
-
-          <Divider orientation="left">时间点和资源数量</Divider>
-
-          <Form.List
-            name="timePoints"
+          <Form.Item
+            name="name"
+            label="筹备举措名称"
             rules={[
-              {
-                validator: async (_, timePoints) => {
-                  if (!timePoints || timePoints.length < 1) {
-                    return Promise.reject(new Error('至少需要添加一个时间点'));
-                  }
-                },
-              },
+              { required: true, message: '请输入举措名称' },
+              { max: 20, message: '名称不能超过20个字符' }
             ]}
           >
-            {(fields, { add, remove }, { errors }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Row key={key} gutter={16} style={{ marginBottom: 8 }}>
-                    <Col span={10}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'timePoint']}
-                        rules={[{ required: true, message: '请选择时间点' }]}
-                      >
-                         <DatePicker
-                           showTime={{ format: 'HH:mm' }}
-                           placeholder="选择时间点"
-                           format="YYYY-MM-DD HH:mm"
-                           style={{ width: '100%' }}
-                           disabledDate={(current) => {
-                             // 禁用今天及之前的日期
-                             return current && current <= dayjs().endOf('day');
-                           }}
-                           disabledTime={(current) => {
-                             const now = dayjs();
-                             const today = dayjs().startOf('day');
-                             const selectedDay = current ? current.startOf('day') : null;
-
-                             // 如果选择的是今天，禁用当前时间之前的时间
-                             if (selectedDay && selectedDay.isSame(today, 'day')) {
-                               return {
-                                 disabledHours: () => {
-                                   const hours = [];
-                                   for (let i = 0; i < now.hour(); i++) {
-                                     hours.push(i);
-                                   }
-                                   return hours;
-                                 },
-                                 disabledMinutes: (selectedHour) => {
-                                   if (selectedHour === now.hour()) {
-                                     const minutes = [];
-                                     for (let i = 0; i <= now.minute(); i++) {
-                                       minutes.push(i);
-                                     }
-                                     return minutes;
-                                   }
-                                   return [];
-                                 }
-                               };
-                             }
-                             return {};
-                           }}
-                         />
-                      </Form.Item>
-                    </Col>
-                    <Col span={10}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'amount']}
-                        rules={[
-                          { required: true, message: '请输入资源数量' },
-                          { type: 'number', min: 1, message: '资源数量必须大于0' }
-                        ]}
-                      >
-                        <InputNumber
-                          placeholder="资源数量（核）"
-                          style={{ width: '100%' }}
-                          min={1}
-                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      {fields.length > 1 && (
-                        <Button
-                          type="text"
-                          icon={<MinusCircleOutlined />}
-                          onClick={() => remove(name)}
-                          style={{ marginTop: 4 }}
-                        />
-                      )}
-                    </Col>
-                  </Row>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    添加时间点
-                  </Button>
-                  <Form.ErrorList errors={errors} />
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
-
-          <Form.Item
-            name="description"
-            label="描述"
-          >
-            <TextArea
-              placeholder="请输入筹措描述（可选）"
-              rows={3}
-              maxLength={200}
-              showCount
-            />
+            <Input placeholder="请输入举措名称（不超过20字符）" maxLength={20} showCount />
           </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="expectedTime"
+                label="预计资源到位时间"
+                rules={[{ required: true, message: '请选择预计到位时间' }]}
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="expectedAmount"
+                label="预计资源筹备量级（核）"
+                rules={[{ required: true, message: '请输入预计筹备量级' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={1}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="actualTime"
+                label="实际资源到位时间"
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="actualAmount"
+                label="实际资源筹备量级（核）"
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+
+      {/* 修改筹措举措Modal */}
+      <Modal
+        title="修改筹措举措信息"
+        open={editMeasureModalVisible}
+        onOk={handleEditMeasureSubmit}
+        onCancel={() => setEditMeasureModalVisible(false)}
+        width={600}
+        okText="保存修改"
+        cancelText="取消"
+      >
+        <Form form={editMeasureForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="type"
+                label="筹措类型"
+                rules={[{ required: true, message: '请选择筹措类型' }]}
+              >
+                <Select>
+                  {measureTypes.map(type => (
+                    <Option key={type.value} value={type.value}>
+                      {type.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="status"
+                label="状态"
+                rules={[{ required: true, message: '请选择状态' }]}
+              >
+                <Select>
+                  {measureStatusOptions.map(status => (
+                    <Option key={status.value} value={status.value}>
+                      {status.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item
+            name="name"
+            label="筹备举措名称"
+            rules={[
+              { required: true, message: '请输入举措名称' },
+              { max: 20, message: '名称不能超过20个字符' }
+            ]}
+          >
+            <Input placeholder="请输入举措名称（不超过20字符）" maxLength={20} showCount />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="expectedTime"
+                label="预计资源到位时间"
+                rules={[{ required: true, message: '请选择预计到位时间' }]}
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="expectedAmount"
+                label="预计资源筹备量级（核）"
+                rules={[{ required: true, message: '请输入预计筹备量级' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={1}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="actualTime"
+                label="实际资源到位时间"
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="actualAmount"
+                label="实际资源筹备量级（核）"
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>
