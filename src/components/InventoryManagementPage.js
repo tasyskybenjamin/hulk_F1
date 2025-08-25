@@ -1593,7 +1593,28 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
               key: 'detail',
               label: '库存明细',
               children: (
-                <Table
+                <div>
+                  {/* 库存明细汇总统计 */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                    gap: '24px',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}>
+                    <span style={{ color: '#1890ff' }}>
+                      总库存 ∑ {(11750).toLocaleString()} 核
+                    </span>
+                    <span style={{ color: '#f5222d' }}>
+                      已出库 ∑ {(1750).toLocaleString()} 核
+                    </span>
+                    <span style={{ color: '#52c41a' }}>
+                      可用库存 ∑ {(10000).toLocaleString()} 核
+                    </span>
+                  </div>
+                  <Table
                   columns={[
                     {
                       title: '集群组',
@@ -1618,6 +1639,30 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       dataIndex: 'caller',
                       key: 'caller',
                       width: 120
+                    },
+                    {
+                      title: '库存用途',
+                      dataIndex: 'inventoryUsage',
+                      key: 'inventoryUsage',
+                      width: 100,
+                      filters: [
+                        { text: '业务', value: '业务' },
+                        { text: '平台', value: '平台' },
+                        { text: '运维', value: '运维' },
+                        { text: '自用', value: '自用' },
+                        { text: '紧急资源', value: '紧急资源' }
+                      ],
+                      onFilter: (value, record) => record.inventoryUsage === value,
+                      render: (value) => {
+                        const colorMap = {
+                          '业务': '#1890ff',
+                          '平台': '#52c41a',
+                          '运维': '#faad14',
+                          '自用': '#722ed1',
+                          '紧急资源': '#f5222d'
+                        };
+                        return <span style={{ color: colorMap[value] || '#666', fontWeight: 'bold' }}>{value}</span>;
+                      }
                     },
                     {
                       title: '地域',
@@ -1652,11 +1697,20 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       onFilter: (value, record) => record.productType === value
                     },
                     {
+                      title: '已出库数量（核）',
+                      dataIndex: 'outboundInventory',
+                      key: 'outboundInventory',
+                      width: 150,
+                      render: (value) => <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{value.toLocaleString()}</span>,
+                      sorter: (a, b) => a.outboundInventory - b.outboundInventory,
+                      sortDirections: ['descend', 'ascend']
+                    },
+                    {
                       title: '可用库存数量（核）',
                       dataIndex: 'availableInventory',
                       key: 'availableInventory',
                       width: 150,
-                      render: (value) => <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{value}</span>,
+                      render: (value) => <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{value.toLocaleString()}</span>,
                       sorter: (a, b) => a.availableInventory - b.availableInventory,
                       sortDirections: ['descend', 'ascend'],
                       defaultSortOrder: 'descend'
@@ -1668,9 +1722,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-general',
                       specialZone: 'default',
                       caller: 'avatar',
+                      inventoryUsage: '业务',
                       region: '北京',
                       datacenter: '北京-DC1',
                       productType: '通用',
+                      outboundInventory: 2800,
                       availableInventory: 1800
                     },
                     {
@@ -1678,9 +1734,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-general',
                       specialZone: 'jinrong_hulk',
                       caller: 'avatarjinrong',
+                      inventoryUsage: '业务',
                       region: '北京',
                       datacenter: '北京-DC1',
                       productType: '高性能',
+                      outboundInventory: 1200,
                       availableInventory: 800
                     },
                     {
@@ -1688,9 +1746,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-general',
                       specialZone: 'default',
                       caller: 'policy',
+                      inventoryUsage: '平台',
                       region: '上海',
                       datacenter: '上海-DC1',
                       productType: '通用',
+                      outboundInventory: 1800,
                       availableInventory: 1200
                     },
                     {
@@ -1698,9 +1758,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-arm',
                       specialZone: 'default',
                       caller: 'hulk_arm',
+                      inventoryUsage: '自用',
                       region: '怀来',
                       datacenter: '怀来-DC1',
                       productType: '经济',
+                      outboundInventory: 1500,
                       availableInventory: 1000
                     },
                     {
@@ -1708,9 +1770,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'txserverless',
                       specialZone: 'default',
                       caller: 'policy_txserverless',
+                      inventoryUsage: '平台',
                       region: '广州',
                       datacenter: '广州-DC1',
                       productType: '通用',
+                      outboundInventory: 930,
                       availableInventory: 620
                     },
                     {
@@ -1718,9 +1782,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-general',
                       specialZone: 'hulk_holiday',
                       caller: 'holiday',
+                      inventoryUsage: '业务',
                       region: '北京',
                       datacenter: '北京-DC2',
                       productType: '通用',
+                      outboundInventory: 1400,
                       availableInventory: 950
                     },
                     {
@@ -1728,9 +1794,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-general',
                       specialZone: 'huidu_hulk',
                       caller: 'migration',
+                      inventoryUsage: '运维',
                       region: '上海',
                       datacenter: '上海-DC2',
                       productType: '高性能',
+                      outboundInventory: 1100,
                       availableInventory: 750
                     },
                     {
@@ -1738,9 +1806,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       clusterGroup: 'hulk-arm',
                       specialZone: 'default',
                       caller: 'hulk_arm_admin',
+                      inventoryUsage: '自用',
                       region: '怀来',
                       datacenter: '怀来-DC2',
                       productType: '经济',
+                      outboundInventory: 1020,
                       availableInventory: 680
                     }
                   ]}
@@ -1753,6 +1823,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                     showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
                   }}
                 />
+                </div>
               )
             }
           ]}
