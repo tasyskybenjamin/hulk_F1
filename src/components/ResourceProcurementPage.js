@@ -68,21 +68,37 @@ const ResourceProcurementPage = () => {
           id: '1-1',
           type: '私有云提拉',
           name: '黑五活动资源紧急调配',
-          expectedTime: '2024-12-26 10:00',
-          expectedAmount: 3000,
-          actualTime: '',
-          actualAmount: 0,
-          status: '处理中'
+          timePoints: [
+            {
+              expectedTime: '2024-12-26 10:00',
+              expectedAmount: 2000,
+              actualTime: '',
+              actualAmount: 0
+            },
+            {
+              expectedTime: '2024-12-26 18:00',
+              expectedAmount: 1000,
+              actualTime: '',
+              actualAmount: 0
+            }
+          ],
+          status: '处理中',
+          description: '针对黑五活动期间的流量高峰，紧急调配私有云资源以确保服务稳定性'
         },
         {
           id: '1-2',
           type: '公有云采购',
           name: '临时扩容补充',
-          expectedTime: '2024-12-27 15:00',
-          expectedAmount: 2000,
-          actualTime: '',
-          actualAmount: 0,
-          status: '处理中'
+          timePoints: [
+            {
+              expectedTime: '2024-12-27 15:00',
+              expectedAmount: 2000,
+              actualTime: '',
+              actualAmount: 0
+            }
+          ],
+          status: '处理中',
+          description: '通过公有云采购补充临时扩容需求，应对活动期间的资源不足'
         }
       ]
     },
@@ -98,23 +114,33 @@ const ResourceProcurementPage = () => {
       measures: [
         {
           id: '2-1',
-          type: '私有云采购',
+          type: '私有云到货',
           name: '春节大促资源储备',
-          expectedTime: '2025-01-10 12:00',
-          expectedAmount: 5000,
-          actualTime: '',
-          actualAmount: 0,
-          status: '处理中'
+          timePoints: [
+            {
+              expectedTime: '2025-01-10 12:00',
+              expectedAmount: 5000,
+              actualTime: '',
+              actualAmount: 0
+            }
+          ],
+          status: '处理中',
+          description: '为春节大促活动提前储备私有云资源，确保活动期间服务稳定'
         },
         {
           id: '2-2',
-          type: 'paas借调',
+          type: 'PaaS借调',
           name: '内部资源调配',
-          expectedTime: '2025-01-12 14:00',
-          expectedAmount: 3000,
-          actualTime: '',
-          actualAmount: 0,
-          status: '处理中'
+          timePoints: [
+            {
+              expectedTime: '2025-01-12 14:00',
+              expectedAmount: 3000,
+              actualTime: '',
+              actualAmount: 0
+            }
+          ],
+          status: '处理中',
+          description: '通过PaaS平台内部资源调配，优化资源利用率'
         }
       ]
     },
@@ -132,21 +158,31 @@ const ResourceProcurementPage = () => {
           id: '3-1',
           type: '资源盘活',
           name: '闲置资源重新分配',
-          expectedTime: '2024-12-08 09:00',
-          expectedAmount: 2000,
-          actualTime: '2024-12-08 10:30',
-          actualAmount: 2200,
-          status: '完成'
+          timePoints: [
+            {
+              expectedTime: '2024-12-08 09:00',
+              expectedAmount: 2000,
+              actualTime: '2024-12-08 10:30',
+              actualAmount: 2200
+            }
+          ],
+          status: '完成',
+          description: '通过盘活闲置资源，重新分配给有需求的业务线，提高资源利用率'
         },
         {
           id: '3-2',
           type: '私有云提拉',
           name: '紧急资源调配',
-          expectedTime: '2024-12-09 14:00',
-          expectedAmount: 1500,
-          actualTime: '2024-12-09 13:45',
-          actualAmount: 1300,
-          status: '完成'
+          timePoints: [
+            {
+              expectedTime: '2024-12-09 14:00',
+              expectedAmount: 1500,
+              actualTime: '2024-12-09 13:45',
+              actualAmount: 1300
+            }
+          ],
+          status: '完成',
+          description: '紧急调配私有云资源，应对突发的业务需求增长'
         }
       ]
     }
@@ -155,9 +191,10 @@ const ResourceProcurementPage = () => {
   // 筹措类型选项
   const measureTypes = [
     { value: '私有云提拉', label: '私有云提拉', color: 'blue' },
-    { value: '私有云采购', label: '私有云采购', color: 'green' },
+    { value: '私有云到货', label: '私有云到货', color: 'green' },
+    { value: '私有云借调', label: '私有云借调', color: 'purple' },
     { value: '公有云采购', label: '公有云采购', color: 'orange' },
-    { value: 'paas借调', label: 'paas借调', color: 'purple' },
+    { value: 'PaaS借调', label: 'PaaS借调', color: 'geekblue' },
     { value: '资源盘活', label: '资源盘活', color: 'cyan' }
   ];
 
@@ -300,42 +337,63 @@ const ResourceProcurementPage = () => {
       ellipsis: true
     },
     {
-      title: '预计到位时间',
-      dataIndex: 'expectedTime',
-      key: 'expectedTime',
-      width: 140,
-      render: (time) => <span style={{ fontSize: '12px' }}>{time}</span>
-    },
-    {
-      title: '预计量级',
-      dataIndex: 'expectedAmount',
-      key: 'expectedAmount',
-      width: 100,
-      render: (amount) => <span style={{ fontWeight: 'bold' }}>{amount.toLocaleString()} 核</span>
-    },
-    {
-      title: '实际到位时间',
-      dataIndex: 'actualTime',
-      key: 'actualTime',
-      width: 140,
-      render: (time) => (
-        <span style={{ fontSize: '12px', color: time ? '#52c41a' : '#999' }}>
-          {time || '未完成'}
-        </span>
+      title: '时间点详情',
+      dataIndex: 'timePoints',
+      key: 'timePoints',
+      width: 300,
+      render: (timePoints) => (
+        <div>
+          {timePoints.map((point, index) => (
+            <div key={index} style={{
+              fontSize: '12px',
+              marginBottom: index < timePoints.length - 1 ? '8px' : '0',
+              padding: '4px 8px',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '4px',
+              border: '1px solid #d9d9d9'
+            }}>
+              <div style={{ marginBottom: '2px' }}>
+                <span style={{ color: '#666', fontWeight: 'bold' }}>预计：</span>
+                <span style={{ marginLeft: '4px' }}>{point.expectedTime}</span>
+                <span style={{ marginLeft: '8px', fontWeight: 'bold', color: '#1890ff' }}>
+                  {point.expectedAmount.toLocaleString()} 核
+                </span>
+              </div>
+              <div>
+                <span style={{ color: '#666', fontWeight: 'bold' }}>实际：</span>
+                <span style={{
+                  marginLeft: '4px',
+                  color: point.actualTime ? '#52c41a' : '#999'
+                }}>
+                  {point.actualTime || '未完成'}
+                </span>
+                <span style={{
+                  marginLeft: '8px',
+                  fontWeight: 'bold',
+                  color: point.actualAmount > 0 ? '#52c41a' : '#999'
+                }}>
+                  {point.actualAmount > 0 ? `${point.actualAmount.toLocaleString()} 核` : '未完成'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       )
     },
     {
-      title: '实际量级',
-      dataIndex: 'actualAmount',
-      key: 'actualAmount',
-      width: 100,
-      render: (amount) => (
-        <span style={{
-          fontWeight: 'bold',
-          color: amount > 0 ? '#52c41a' : '#999'
-        }}>
-          {amount > 0 ? `${amount.toLocaleString()} 核` : '未完成'}
-        </span>
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+      width: 200,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (description) => (
+        <Tooltip placement="topLeft" title={description}>
+          <span style={{ fontSize: '12px', color: '#666' }}>
+            {description}
+          </span>
+        </Tooltip>
       )
     },
     {
@@ -436,10 +494,14 @@ const ResourceProcurementPage = () => {
   // 获取现有筹措举措数据
   const getExistingMeasures = (startTime, endTime) => {
     const allMeasures = procurementPlans.flatMap(plan =>
-      plan.measures.map(measure => ({
-        ...measure,
-        datacenter: plan.datacenter
-      }))
+      plan.measures.flatMap(measure =>
+        measure.timePoints.map(timePoint => ({
+          ...measure,
+          datacenter: plan.datacenter,
+          expectedTime: timePoint.expectedTime,
+          expectedAmount: timePoint.expectedAmount
+        }))
+      )
     );
 
     return allMeasures.filter(measure => {
@@ -613,16 +675,21 @@ const ResourceProcurementPage = () => {
     try {
       const values = await measureForm.validateFields();
 
-      const newMeasure = {
-        id: `${currentPlanId}-${Date.now()}`,
-        type: values.type,
-        name: values.name,
-        expectedTime: values.expectedTime.format('YYYY-MM-DD HH:mm'),
-        expectedAmount: values.expectedAmount,
-        actualTime: values.actualTime ? values.actualTime.format('YYYY-MM-DD HH:mm') : '',
-        actualAmount: values.actualAmount || 0,
-        status: values.status
-      };
+       const newMeasure = {
+         id: `${currentPlanId}-${Date.now()}`,
+         type: values.type,
+         name: values.name,
+         timePoints: [
+           {
+             expectedTime: values.expectedTime.format('YYYY-MM-DD HH:mm'),
+             expectedAmount: values.expectedAmount,
+             actualTime: values.actualTime ? values.actualTime.format('YYYY-MM-DD HH:mm') : '',
+             actualAmount: values.actualAmount || 0
+           }
+         ],
+         status: values.status,
+         description: values.description
+       };
 
       setProcurementPlans(prev =>
         prev.map(plan =>
@@ -646,40 +713,46 @@ const ResourceProcurementPage = () => {
     setEditingMeasure(measure);
     setEditMeasureModalVisible(true);
 
-    editMeasureForm.setFieldsValue({
-      type: measure.type,
-      name: measure.name,
-      expectedTime: dayjs(measure.expectedTime, 'YYYY-MM-DD HH:mm'),
-      expectedAmount: measure.expectedAmount,
-      actualTime: measure.actualTime ? dayjs(measure.actualTime, 'YYYY-MM-DD HH:mm') : null,
-      actualAmount: measure.actualAmount,
-      status: measure.status
-    });
+     editMeasureForm.setFieldsValue({
+       type: measure.type,
+       name: measure.name,
+       expectedTime: dayjs(measure.timePoints[0].expectedTime, 'YYYY-MM-DD HH:mm'),
+       expectedAmount: measure.timePoints[0].expectedAmount,
+       actualTime: measure.timePoints[0].actualTime ? dayjs(measure.timePoints[0].actualTime, 'YYYY-MM-DD HH:mm') : null,
+       actualAmount: measure.timePoints[0].actualAmount,
+       status: measure.status,
+       description: measure.description
+     });
   };
 
   const handleEditMeasureSubmit = async () => {
     try {
       const values = await editMeasureForm.validateFields();
 
-      setProcurementPlans(prev =>
-        prev.map(plan => ({
-          ...plan,
-          measures: plan.measures.map(measure =>
-            measure.id === editingMeasure.id
-              ? {
-                  ...measure,
-                  type: values.type,
-                  name: values.name,
-                  expectedTime: values.expectedTime.format('YYYY-MM-DD HH:mm'),
-                  expectedAmount: values.expectedAmount,
-                  actualTime: values.actualTime ? values.actualTime.format('YYYY-MM-DD HH:mm') : '',
-                  actualAmount: values.actualAmount || 0,
-                  status: values.status
-                }
-              : measure
-          )
-        }))
-      );
+       setProcurementPlans(prev =>
+         prev.map(plan => ({
+           ...plan,
+           measures: plan.measures.map(measure =>
+             measure.id === editingMeasure.id
+               ? {
+                   ...measure,
+                   type: values.type,
+                   name: values.name,
+                   timePoints: [
+                     {
+                       expectedTime: values.expectedTime.format('YYYY-MM-DD HH:mm'),
+                       expectedAmount: values.expectedAmount,
+                       actualTime: values.actualTime ? values.actualTime.format('YYYY-MM-DD HH:mm') : '',
+                       actualAmount: values.actualAmount || 0
+                     }
+                   ],
+                   status: values.status,
+                   description: values.description
+                 }
+               : measure
+           )
+         }))
+       );
 
       message.success('筹措举措修改成功！');
       setEditMeasureModalVisible(false);
@@ -995,12 +1068,27 @@ const ResourceProcurementPage = () => {
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
                 />
               </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
+             </Col>
+           </Row>
+           <Form.Item
+             name="description"
+             label="描述"
+             rules={[
+               { required: true, message: '请输入筹措描述' },
+               { max: 200, message: '描述不能超过200个字符' }
+             ]}
+           >
+             <TextArea
+               placeholder="请输入筹措描述，介绍筹措背景与目的等（不超过200字符）"
+               rows={3}
+               maxLength={200}
+               showCount
+             />
+           </Form.Item>
+         </Form>
+       </Modal>
 
-      {/* 修改筹措举措Modal */}
+       {/* 修改筹措举措Modal */}
       <Modal
         title="修改筹措举措信息"
         open={editMeasureModalVisible}
@@ -1107,12 +1195,27 @@ const ResourceProcurementPage = () => {
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
                 />
               </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
-    </div>
-  );
-};
+             </Col>
+           </Row>
+           <Form.Item
+             name="description"
+             label="描述"
+             rules={[
+               { required: true, message: '请输入筹措描述' },
+               { max: 200, message: '描述不能超过200个字符' }
+             ]}
+           >
+             <TextArea
+               placeholder="请输入筹措描述，介绍筹措背景与目的等（不超过200字符）"
+               rows={3}
+               maxLength={200}
+               showCount
+             />
+           </Form.Item>
+         </Form>
+       </Modal>
+     </div>
+   );
+ };
 
-export default ResourceProcurementPage;
+ export default ResourceProcurementPage;
