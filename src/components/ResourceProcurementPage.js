@@ -49,6 +49,9 @@ const ResourceProcurementPage = () => {
   const [measureForm] = Form.useForm();
   const [editMeasureForm] = Form.useForm();
 
+  // 添加状态来跟踪当前计算结果
+  const [currentCalculation, setCurrentCalculation] = useState(null);
+
   // 模拟筹措计划数据
   const [procurementPlans, setProcurementPlans] = useState([
     {
@@ -504,10 +507,27 @@ const ResourceProcurementPage = () => {
     };
   };
 
+  // 处理时间选择变化，实时计算资源缺口
+  const handleTimeChange = () => {
+    const startTime = planForm.getFieldValue('gapStartTime');
+    const endTime = planForm.getFieldValue('gapEndTime');
+
+    if (startTime && endTime) {
+      const startTimeStr = startTime.format('YYYY-MM-DD HH:mm');
+      const endTimeStr = endTime.format('YYYY-MM-DD HH:mm');
+
+      const calculation = calculateResourceGap(startTimeStr, endTimeStr);
+      setCurrentCalculation(calculation);
+    } else {
+      setCurrentCalculation(null);
+    }
+  };
+
   // 创建筹措计划
   const handleCreatePlan = () => {
     setCreatePlanModalVisible(true);
     planForm.resetFields();
+    setCurrentCalculation(null);
   };
 
   const handleCreatePlanSubmit = async () => {
@@ -773,6 +793,7 @@ const ResourceProcurementPage = () => {
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
                   placeholder="选择开始时间"
+                  onChange={handleTimeChange}
                 />
               </Form.Item>
             </Col>
@@ -787,10 +808,55 @@ const ResourceProcurementPage = () => {
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
                   placeholder="选择结束时间"
+                  onChange={handleTimeChange}
                 />
               </Form.Item>
             </Col>
           </Row>
+
+          {/* 实时计算结果显示 */}
+          {currentCalculation && (
+            <div style={{
+              backgroundColor: currentCalculation.resourceGapMax > 0 ? '#fff2e8' : '#f6ffed',
+              border: `1px solid ${currentCalculation.resourceGapMax > 0 ? '#ffbb96' : '#b7eb8f'}`,
+              borderRadius: '6px',
+              padding: '16px',
+              marginTop: '16px'
+            }}>
+              <div style={{
+                fontSize: '14px',
+                color: currentCalculation.resourceGapMax > 0 ? '#fa8c16' : '#52c41a',
+                marginBottom: '8px',
+                fontWeight: 'bold'
+              }}>
+                📊 实时计算结果
+              </div>
+              {currentCalculation.resourceGapMax > 0 ? (
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#f5222d', marginBottom: '8px' }}>
+                    资源缺口最大值：{currentCalculation.resourceGapMax.toLocaleString()} 核
+                  </div>
+                  <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+                    涉及机房：{currentCalculation.involvedDatacenters.map(dc => (
+                      <Tag key={dc} color="blue" style={{ marginRight: '4px' }}>{dc}</Tag>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    各机房缺口详情：
+                    {Object.entries(currentCalculation.datacenterGaps).map(([dc, gap]) => (
+                      <span key={dc} style={{ marginRight: '12px' }}>
+                        {dc}: {gap.toLocaleString()} 核
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: '14px', color: '#52c41a' }}>
+                  ✅ 该时间段内无资源缺口，无需创建筹措计划
+                </div>
+              )}
+            </div>
+          )}
         </Form>
       </Modal>
 
