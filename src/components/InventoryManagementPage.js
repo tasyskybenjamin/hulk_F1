@@ -68,7 +68,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     topDatacenters: [],
     topZones: []
   });
-用户  // 库存用途选项
+  // 库存用途选项
   const inventoryUsageOptions = [
     {
       value: 'business',
@@ -1466,7 +1466,27 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
                   {/* 库存变化趋势 */}
                   <Card
-                    title="库存变化趋势"
+                    title={
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>库存变化趋势</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: '#666' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ width: '20px', height: '2px', backgroundColor: '#1890ff', borderRadius: '1px' }}></div>
+                            实线：历史数据
+                          </span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{
+                              width: '20px',
+                              height: '2px',
+                              backgroundColor: '#1890ff',
+                              borderRadius: '1px',
+                              backgroundImage: 'repeating-linear-gradient(to right, #1890ff 0px, #1890ff 3px, transparent 3px, transparent 6px)'
+                            }}></div>
+                            虚线：预测数据，参考需求变化趋势
+                          </span>
+                        </div>
+                      </div>
+                    }
                     className="trend-card"
                   >
                     <Tabs
