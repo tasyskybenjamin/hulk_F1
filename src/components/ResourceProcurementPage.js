@@ -532,7 +532,7 @@ const ResourceProcurementPage = () => {
         gapEndTime: endTime,
         datacenter: calculation.involvedDatacenters,
         status: '待完善',
-        initiator: values.initiator,
+        initiator: 'system',
         createTime: dayjs().format('YYYY-MM-DD HH:mm'),
         measures: [],
         datacenterGaps: calculation.datacenterGaps // 保存各机房的缺口详情
@@ -791,13 +791,6 @@ const ResourceProcurementPage = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item
-            name="initiator"
-            label="发起人（MIS）"
-            rules={[{ required: true, message: '请输入发起人MIS' }]}
-          >
-            <Input placeholder="请输入MIS账号" />
-          </Form.Item>
         </Form>
       </Modal>
 
