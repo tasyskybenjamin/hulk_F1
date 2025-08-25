@@ -394,6 +394,116 @@ const ResourceProcurementPage = () => {
     setExpandedRowKeys(keys);
   };
 
+  // 模拟需求数据API
+  const getDemandData = (startTime, endTime) => {
+    // 模拟根据时间范围获取需求数据
+    const mockDemandData = [
+      { time: '2024-12-25 09:00', datacenter: 'BJ-DC1', demand: 2000 },
+      { time: '2024-12-25 12:00', datacenter: 'BJ-DC2', demand: 1500 },
+      { time: '2024-12-26 10:00', datacenter: 'BJ-DC1', demand: 3000 },
+      { time: '2024-12-27 15:00', datacenter: 'SH-DC1', demand: 2500 },
+      { time: '2025-01-15 08:00', datacenter: 'SH-DC2', demand: 4000 },
+      { time: '2025-01-16 14:00', datacenter: 'GZ-DC1', demand: 1800 }
+    ];
+
+    return mockDemandData.filter(item => {
+      const itemTime = dayjs(item.time);
+      return itemTime.isAfter(dayjs(startTime)) && itemTime.isBefore(dayjs(endTime));
+    });
+  };
+
+  // 模拟库存数据API
+  const getInventoryData = (startTime, endTime) => {
+    // 模拟根据时间范围获取库存数据
+    const mockInventoryData = [
+      { time: '2024-12-25 09:00', datacenter: 'BJ-DC1', inventory: 800 },
+      { time: '2024-12-25 12:00', datacenter: 'BJ-DC2', inventory: 600 },
+      { time: '2024-12-26 10:00', datacenter: 'BJ-DC1', inventory: 1200 },
+      { time: '2024-12-27 15:00', datacenter: 'SH-DC1', inventory: 1000 },
+      { time: '2025-01-15 08:00', datacenter: 'SH-DC2', inventory: 1500 },
+      { time: '2025-01-16 14:00', datacenter: 'GZ-DC1', inventory: 900 }
+    ];
+
+    return mockInventoryData.filter(item => {
+      const itemTime = dayjs(item.time);
+      return itemTime.isAfter(dayjs(startTime)) && itemTime.isBefore(dayjs(endTime));
+    });
+  };
+
+  // 获取现有筹措举措数据
+  const getExistingMeasures = (startTime, endTime) => {
+    const allMeasures = procurementPlans.flatMap(plan =>
+      plan.measures.map(measure => ({
+        ...measure,
+        datacenter: plan.datacenter
+      }))
+    );
+
+    return allMeasures.filter(measure => {
+      const measureTime = dayjs(measure.expectedTime);
+      return measureTime.isAfter(dayjs(startTime)) && measureTime.isBefore(dayjs(endTime));
+    });
+  };
+
+  // 自动计算资源缺口和涉及机房
+  const calculateResourceGap = (startTime, endTime) => {
+    const demandData = getDemandData(startTime, endTime);
+    const inventoryData = getInventoryData(startTime, endTime);
+    const existingMeasures = getExistingMeasures(startTime, endTime);
+
+    // 按机房分组计算
+    const datacenterStats = {};
+
+    // 统计需求量
+    demandData.forEach(item => {
+      if (!datacenterStats[item.datacenter]) {
+        datacenterStats[item.datacenter] = { demand: 0, inventory: 0, measures: 0 };
+      }
+      datacenterStats[item.datacenter].demand += item.demand;
+    });
+
+    // 统计库存量
+    inventoryData.forEach(item => {
+      if (!datacenterStats[item.datacenter]) {
+        datacenterStats[item.datacenter] = { demand: 0, inventory: 0, measures: 0 };
+      }
+      datacenterStats[item.datacenter].inventory += item.inventory;
+    });
+
+    // 统计现有筹措举措
+    existingMeasures.forEach(measure => {
+      const datacenters = Array.isArray(measure.datacenter) ? measure.datacenter : [measure.datacenter];
+      datacenters.forEach(dc => {
+        if (!datacenterStats[dc]) {
+          datacenterStats[dc] = { demand: 0, inventory: 0, measures: 0 };
+        }
+        datacenterStats[dc].measures += measure.expectedAmount;
+      });
+    });
+
+    // 计算各机房缺口
+    const gaps = {};
+    let maxGap = 0;
+    const involvedDatacenters = [];
+
+    Object.keys(datacenterStats).forEach(datacenter => {
+      const stats = datacenterStats[datacenter];
+      const gap = stats.demand - stats.inventory - stats.measures;
+
+      if (gap > 0) {
+        gaps[datacenter] = gap;
+        maxGap += gap;
+        involvedDatacenters.push(datacenter);
+      }
+    });
+
+    return {
+      resourceGapMax: maxGap,
+      involvedDatacenters: involvedDatacenters,
+      datacenterGaps: gaps
+    };
+  };
+
   // 创建筹措计划
   const handleCreatePlan = () => {
     setCreatePlanModalVisible(true);
@@ -404,20 +514,38 @@ const ResourceProcurementPage = () => {
     try {
       const values = await planForm.validateFields();
 
+      const startTime = values.gapStartTime.format('YYYY-MM-DD HH:mm');
+      const endTime = values.gapEndTime.format('YYYY-MM-DD HH:mm');
+
+      // 自动计算资源缺口和涉及机房
+      const calculation = calculateResourceGap(startTime, endTime);
+
+      if (calculation.resourceGapMax <= 0) {
+        message.warning('该时间段内无资源缺口，无需创建筹措计划！');
+        return;
+      }
+
       const newPlan = {
         id: Date.now().toString(),
-        resourceGapMax: values.resourceGapMax,
-        gapStartTime: values.gapStartTime.format('YYYY-MM-DD HH:mm'),
-        gapEndTime: values.gapEndTime.format('YYYY-MM-DD HH:mm'),
-        datacenter: values.datacenter,
-        status: '待筹备',
+        resourceGapMax: calculation.resourceGapMax,
+        gapStartTime: startTime,
+        gapEndTime: endTime,
+        datacenter: calculation.involvedDatacenters,
+        status: '待完善',
         initiator: values.initiator,
         createTime: dayjs().format('YYYY-MM-DD HH:mm'),
-        measures: []
+        measures: [],
+        datacenterGaps: calculation.datacenterGaps // 保存各机房的缺口详情
       };
 
       setProcurementPlans(prev => [newPlan, ...prev]);
-      message.success('筹措计划创建成功！');
+
+      message.success(
+        `筹措计划创建成功！\n` +
+        `资源缺口最大值：${calculation.resourceGapMax.toLocaleString()} 核\n` +
+        `涉及机房：${calculation.involvedDatacenters.join(', ')}`
+      );
+
       setCreatePlanModalVisible(false);
       planForm.resetFields();
     } catch (error) {
@@ -616,44 +744,23 @@ const ResourceProcurementPage = () => {
         cancelText="取消"
       >
         <Form form={planForm} layout="vertical" style={{ marginTop: 16 }}>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="resourceGapMax"
-                label="资源缺口最大值（核）"
-                rules={[{ required: true, message: '请输入资源缺口最大值' }]}
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={1}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="datacenter"
-                label="涉及机房"
-                rules={[{ required: true, message: '请选择涉及机房' }]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder="请选择机房（支持多选）"
-                  showSearch
-                  maxTagCount="responsive"
-                  allowClear
-                >
-                  {datacenterOptions.map(option => (
-                    <Option key={option.value} value={option.value}>
-                      <span>{option.label}</span>
-                      <span style={{ color: '#999', marginLeft: '8px' }}>({option.region})</span>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+          <div style={{
+            backgroundColor: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: '6px',
+            padding: '12px',
+            marginBottom: '16px'
+          }}>
+            <div style={{ fontSize: '14px', color: '#52c41a', marginBottom: '4px' }}>
+              📊 自动计算说明
+            </div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              • 资源缺口最大值 = 时间范围内全部需求量 - 全部库存量 - 现有筹措举措预计量级<br/>
+              • 涉及机房将根据计算结果自动确定（英文缩写）<br/>
+              • 计划状态默认为"待完善"
+            </div>
+          </div>
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -665,6 +772,7 @@ const ResourceProcurementPage = () => {
                   showTime={{ format: 'HH:mm' }}
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
+                  placeholder="选择开始时间"
                 />
               </Form.Item>
             </Col>
@@ -678,6 +786,7 @@ const ResourceProcurementPage = () => {
                   showTime={{ format: 'HH:mm' }}
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: '100%' }}
+                  placeholder="选择结束时间"
                 />
               </Form.Item>
             </Col>
