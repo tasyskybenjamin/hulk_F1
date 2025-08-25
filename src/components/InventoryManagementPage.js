@@ -61,6 +61,13 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
   const [distributionBy, setDistributionBy] = useState('region');
   const [activeTab, setActiveTab] = useState('available');
   const [showDatacenterDetails, setShowDatacenterDetails] = useState(false);
+  const [inventoryType, setInventoryType] = useState('all'); // 库存类型：all, outbound, available
+  const [insightData, setInsightData] = useState({
+    topRegion: { name: '', percentage: 0, trend: 0 },
+    topUsages: [],
+    topDatacenters: [],
+    topZones: []
+  });
   // 库存用途选项
   const inventoryUsageOptions = [
     {
@@ -286,7 +293,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
         ],
         scenario: [
           { name: '业务', value: 9500, percentage: 60.6, available: 5200, reserved: 2000, safety: 1000, emergency: 200, operation: 100 },
-          { name: '自运营', value: 3200, percentage: 20.4, available: 1800, reserved: 800, safety: 300, emergency: 200, operation: 100 },
+          { name: '自用', value: 3200, percentage: 20.4, available: 1800, reserved: 800, safety: 300, emergency: 200, operation: 100 },
           { name: '运维', value: 1500, percentage: 9.6, available: 800, reserved: 300, safety: 200, emergency: 150, operation: 50 },
           { name: '紧急资源', value: 980, percentage: 6.2, available: 420, reserved: 100, safety: 60, emergency: 50, operation: 0 },
           { name: '平台', value: 500, percentage: 3.2, available: 200, reserved: 0, safety: 0, emergency: 0, operation: 0 }
@@ -300,13 +307,62 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
         ]
       };
 
-      // 根据分布维度和机房详情开关来设置数据
+      // 根据分布维度、机房详情开关和库存类型来设置数据
       let currentData;
       if (distributionBy === 'region') {
         currentData = showDatacenterDetails ? mockDistributionData.datacenter : mockDistributionData.region;
+      } else if (distributionBy === 'scenario') {
+        currentData = mockDistributionData.scenario;
+      } else if (distributionBy === 'cluster') {
+        // 集群组/专区/调用方数据
+        currentData = [
+          { name: 'hulk-general/default', value: 12500, percentage: 65.8, available: 6800, outbound: 4200, reserved: 1500 },
+          { name: 'hulk-general/hulk_pool_buffer', value: 2890, percentage: 15.2, available: 1600, outbound: 900, reserved: 390 },
+          { name: 'hulk-general/hulk_holiday', value: 1615, percentage: 8.5, available: 900, outbound: 500, reserved: 215 },
+          { name: 'hulk-general/jinrong_hulk', value: 1197, percentage: 6.3, available: 650, outbound: 400, reserved: 147 },
+          { name: 'hulk-arm/default', value: 798, percentage: 4.2, available: 450, outbound: 250, reserved: 98 }
+        ];
       } else {
-        currentData = mockDistributionData[distributionBy] || mockDistributionData.region;
+        currentData = mockDistributionData.region;
       }
+
+      // 根据库存类型筛选数据
+      if (inventoryType !== 'all') {
+        currentData = currentData.map(item => {
+          let value, percentage;
+          switch (inventoryType) {
+            case 'available':
+              value = item.available || Math.floor(item.value * 0.55);
+              break;
+            case 'outbound':
+              value = item.outbound || Math.floor(item.value * 0.35);
+              break;
+            default:
+              value = item.value;
+          }
+
+          // 重新计算百分比
+          const total = currentData.reduce((sum, d) => {
+            switch (inventoryType) {
+              case 'available':
+                return sum + (d.available || Math.floor(d.value * 0.55));
+              case 'outbound':
+                return sum + (d.outbound || Math.floor(d.value * 0.35));
+              default:
+                return sum + d.value;
+            }
+          }, 0);
+
+          percentage = ((value / total) * 100).toFixed(1);
+
+          return {
+            ...item,
+            value,
+            percentage: parseFloat(percentage)
+          };
+        });
+      }
+
       setDistributionData(currentData);
 
       // 模拟趋势数据
@@ -381,6 +437,92 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
         datasets: inventoryLines
       });
 
+      // 计算库存洞察数据（基于时间范围和筛选条件）
+      const calculateInsightData = () => {
+        // 基于时间范围计算库存数据
+        const dateRange = filterParams.dateRange || filters.dateRange;
+        const startDate = dateRange[0];
+        const endDate = dateRange[1];
+
+        // 模拟基于时间范围的数据变化
+        const timeRangeMultiplier = dayjs(endDate).diff(dayjs(startDate), 'day') / 30; // 以30天为基准
+
+        // 1. 热门地域 - Top1 全部库存的地域（基于时间范围内的累计库存）
+        const regionData = mockDistributionData.region.map(region => ({
+          ...region,
+          value: Math.round(region.value * timeRangeMultiplier),
+          percentage: region.percentage
+        })).sort((a, b) => b.value - a.value);
+
+        const topRegion = regionData[0];
+        const totalRegionInventory = regionData.reduce((sum, item) => sum + item.value, 0);
+
+        // 2. 热门用途 - Top2 库存量用途（基于时间范围内的使用情况）
+        const usageData = mockDistributionData.scenario.map(scenario => ({
+          ...scenario,
+          value: Math.round(scenario.value * timeRangeMultiplier),
+          percentage: scenario.percentage
+        })).sort((a, b) => b.value - a.value);
+
+        const topUsages = usageData.slice(0, 2);
+
+        // 3. Top5 机房（基于时间范围内的库存分布）
+        const datacenterData = mockDistributionData.datacenter.map(dc => ({
+          ...dc,
+          value: Math.round(dc.value * timeRangeMultiplier),
+          percentage: dc.percentage
+        })).sort((a, b) => b.value - a.value);
+
+        const topDatacenters = datacenterData.slice(0, 5);
+
+        // 4. Top5 专区（基于集群组/专区在时间范围内的使用情况）
+        const zoneData = [
+          { name: 'default', value: Math.round(12500 * timeRangeMultiplier), percentage: 65.8 },
+          { name: 'hulk_pool_buffer', value: Math.round(2890 * timeRangeMultiplier), percentage: 15.2 },
+          { name: 'hulk_holiday', value: Math.round(1615 * timeRangeMultiplier), percentage: 8.5 },
+          { name: 'jinrong_hulk', value: Math.round(1197 * timeRangeMultiplier), percentage: 6.3 },
+          { name: 'huidu_hulk', value: Math.round(798 * timeRangeMultiplier), percentage: 4.2 }
+        ].sort((a, b) => b.value - a.value);
+
+        const topZones = zoneData.slice(0, 5);
+
+        // 计算趋势（基于时间范围长度）
+        const trendFactor = timeRangeMultiplier > 1 ? 1 : -1;
+        const trendValue = Math.floor(Math.random() * 5) + 1;
+
+        return {
+          topRegion: {
+            name: topRegion.name,
+            percentage: topRegion.percentage,
+            trend: trendFactor * trendValue,
+            timeRange: `${dayjs(startDate).format('YYYY-MM-DD')} 至 ${dayjs(endDate).format('YYYY-MM-DD')}`
+          },
+          topUsages: topUsages.map(usage => ({
+            name: usage.name,
+            percentage: usage.percentage,
+            value: usage.value,
+            timeRange: `${dayjs(startDate).format('YYYY-MM-DD')} 至 ${dayjs(endDate).format('YYYY-MM-DD')}`
+          })),
+          topDatacenters: topDatacenters.map((dc, index) => ({
+            rank: index + 1,
+            name: dc.name,
+            percentage: dc.percentage,
+            value: dc.value,
+            region: dc.region,
+            timeRange: `${dayjs(startDate).format('YYYY-MM-DD')} 至 ${dayjs(endDate).format('YYYY-MM-DD')}`
+          })),
+          topZones: topZones.map((zone, index) => ({
+            rank: index + 1,
+            name: zone.name,
+            percentage: zone.percentage,
+            value: zone.value,
+            timeRange: `${dayjs(startDate).format('YYYY-MM-DD')} 至 ${dayjs(endDate).format('YYYY-MM-DD')}`
+          }))
+        };
+      };
+
+      setInsightData(calculateInsightData());
+
     } catch (error) {
       console.error('获取库存数据失败:', error);
     } finally {
@@ -390,7 +532,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
   useEffect(() => {
     fetchInventoryData(filters);
-  }, [filters, distributionBy, showDatacenterDetails]);
+  }, [filters, distributionBy, showDatacenterDetails, inventoryType]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
@@ -430,25 +572,40 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
   // 库存分布图表配置
   const getDistributionChartOption = () => {
+    const getInventoryTypeLabel = () => {
+      switch (inventoryType) {
+        case 'available': return '可用库存';
+        case 'outbound': return '已出库';
+        default: return '全部库存';
+      }
+    };
+
     if (distributionBy === 'region') {
+      // 地域/机房使用饼环图
       return {
         title: {
-          text: showDatacenterDetails ? '库存分布（按机房）' : '库存分布（按地域）',
-          left: 'center'
+          text: `${getInventoryTypeLabel()}分布（按${showDatacenterDetails ? '机房' : '地域'}）`,
+          left: 'center',
+          textStyle: {
+            fontSize: 16,
+            fontWeight: 'normal'
+          }
         },
         tooltip: {
           trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
+          formatter: '{a} <br/>{b}: {c} 核 ({d}%)'
         },
         legend: {
           orient: 'vertical',
-          left: 'left'
+          left: 'left',
+          top: 'middle'
         },
         series: [
           {
             name: '库存分布',
             type: 'pie',
-            radius: '50%',
+            radius: ['40%', '70%'], // 饼环图
+            center: ['60%', '50%'],
             data: distributionData.map(item => ({
               value: item.value,
               name: item.name
@@ -459,40 +616,285 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                 shadowOffsetX: 0,
                 shadowColor: 'rgba(0, 0, 0, 0.5)'
               }
+            },
+            label: {
+              show: true,
+              formatter: '{b}\n{d}%'
+            },
+            labelLine: {
+              show: true
             }
           }
         ]
       };
     } else {
-      return {
-        title: {
-          text: '库存分布（按分类）',
-          left: 'center'
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
+      // 用途和集群组/专区使用柱状图
+      const chartTitle = distributionBy === 'scenario'
+        ? `${getInventoryTypeLabel()}分布（按用途）`
+        : `${getInventoryTypeLabel()}分布（按集群组/专区）`;
+
+      // 集群组/专区使用treemap图表
+      if (distributionBy === 'cluster') {
+        // 根据库存类型调整数据
+        const getClusterValue = (baseValue, type) => {
+          switch (type) {
+            case 'available':
+              return Math.floor(baseValue * 0.55);
+            case 'outbound':
+              return Math.floor(baseValue * 0.35);
+            default:
+              return baseValue;
           }
-        },
-        xAxis: {
-          type: 'category',
-          data: distributionData.map(item => item.name)
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            name: '库存量',
-            type: 'bar',
-            data: distributionData.map(item => item.value),
-            itemStyle: {
-              color: '#1890ff'
+        };
+
+        // 构建树状数据结构
+        const treeData = {
+          name: '集群组分布',
+          children: [
+            {
+              name: 'hulk-general',
+              value: getClusterValue(18000, inventoryType),
+              children: [
+                {
+                  name: 'default',
+                  value: getClusterValue(12500, inventoryType),
+                  children: [
+                    { name: 'avatar', value: getClusterValue(4500, inventoryType) },
+                    { name: 'unit_4', value: getClusterValue(2800, inventoryType) },
+                    { name: 'avatar_reserved', value: getClusterValue(2200, inventoryType) },
+                    { name: 'migration', value: getClusterValue(1500, inventoryType) },
+                    { name: 'holiday', value: getClusterValue(800, inventoryType) },
+                    { name: 'policy', value: getClusterValue(700, inventoryType) }
+                  ]
+                },
+                {
+                  name: 'hulk_pool_buffer',
+                  value: getClusterValue(2890, inventoryType),
+                  children: [
+                    { name: 'buffer', value: getClusterValue(1890, inventoryType) },
+                    { name: 'hulk_overassign', value: getClusterValue(1000, inventoryType) }
+                  ]
+                },
+                {
+                  name: 'hulk_holiday',
+                  value: getClusterValue(1615, inventoryType),
+                  children: [
+                    { name: 'hulk_holiday_admin', value: getClusterValue(800, inventoryType) },
+                    { name: 'migrate_hulk_holiday', value: getClusterValue(515, inventoryType) },
+                    { name: 'hulk_holiday', value: getClusterValue(300, inventoryType) }
+                  ]
+                },
+                {
+                  name: 'jinrong_hulk',
+                  value: getClusterValue(1197, inventoryType),
+                  children: [
+                    { name: 'jinrong', value: getClusterValue(500, inventoryType) },
+                    { name: 'avatarjinrong', value: getClusterValue(397, inventoryType) },
+                    { name: 'migrationjinrong', value: getClusterValue(200, inventoryType) },
+                    { name: 'policy_jinrong_hulk', value: getClusterValue(100, inventoryType) }
+                  ]
+                }
+              ]
+            },
+            {
+              name: 'hulk-arm',
+              value: getClusterValue(798, inventoryType),
+              children: [
+                {
+                  name: 'default',
+                  value: getClusterValue(798, inventoryType),
+                  children: [
+                    { name: 'hulk_arm_admin', value: getClusterValue(400, inventoryType) },
+                    { name: 'hulk_arm', value: getClusterValue(298, inventoryType) },
+                    { name: 'migrate_hulk_arm', value: getClusterValue(100, inventoryType) }
+                  ]
+                }
+              ]
+            },
+            {
+              name: 'txserverless',
+              value: getClusterValue(620, inventoryType),
+              children: [
+                {
+                  name: 'default',
+                  value: getClusterValue(620, inventoryType),
+                  children: [
+                    { name: 'policy_campaign_tx', value: getClusterValue(300, inventoryType) },
+                    { name: 'policy_txserverless', value: getClusterValue(220, inventoryType) },
+                    { name: 'txserverless_migration', value: getClusterValue(100, inventoryType) }
+                  ]
+                }
+              ]
             }
-          }
-        ]
-      };
+          ]
+        };
+
+        return {
+          title: {
+            text: `${getInventoryTypeLabel()}分布（按集群组/专区/调用方）`,
+            left: 'center',
+            textStyle: {
+              fontSize: 16,
+              fontWeight: 'normal'
+            }
+          },
+          tooltip: {
+            trigger: 'item',
+            formatter: function (info) {
+              const value = info.value;
+              const treePathInfo = info.treePathInfo;
+              const treePath = [];
+
+              for (let i = 1; i < treePathInfo.length; i++) {
+                treePath.push(treePathInfo[i].name);
+              }
+
+              return [
+                '<div class="tooltip-title">' + treePath.join(' > ') + '</div>',
+                '库存量: ' + value.toLocaleString() + ' 核',
+              ].join('');
+            }
+          },
+          series: [
+            {
+              name: '集群组分布',
+              type: 'treemap',
+              visibleMin: 100,
+              leafDepth: 2,
+              roam: false,
+              nodeClick: 'zoomToNode',
+              data: treeData.children,
+              breadcrumb: {
+                show: true,
+                height: 22,
+                left: 'center',
+                top: 'bottom',
+                emptyItemWidth: 25,
+                itemStyle: {
+                  color: 'rgba(0,0,0,0.7)',
+                  borderColor: 'rgba(255,255,255,0.7)',
+                  borderWidth: 1,
+                  shadowColor: 'rgba(150,150,150,1)',
+                  shadowBlur: 3,
+                  shadowOffsetX: 0,
+                  shadowOffsetY: 0,
+                  textStyle: {
+                    color: '#fff'
+                  }
+                },
+                emphasis: {
+                  itemStyle: {
+                    color: 'rgba(0,0,0,0.9)'
+                  }
+                }
+              },
+              levels: [
+                {
+                  // 集群组级别 - 使用不同颜色区分
+                  itemStyle: {
+                    borderColor: '#777',
+                    borderWidth: 4,
+                    gapWidth: 4
+                  },
+                  upperLabel: {
+                    show: true,
+                    height: 30,
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    color: '#fff'
+                  }
+                },
+                {
+                  // 专区级别 - 使用颜色深浅区分
+                  colorSaturation: [0.3, 0.6],
+                  itemStyle: {
+                    borderColorSaturation: 0.7,
+                    gapWidth: 2,
+                    borderWidth: 2
+                  },
+                  emphasis: {
+                    itemStyle: {
+                      borderColor: '#ddd'
+                    }
+                  }
+                },
+                {
+                  // 调用方级别 - 支持下钻
+                  colorSaturation: [0.3, 0.5],
+                  itemStyle: {
+                    borderColorSaturation: 0.6,
+                    gapWidth: 1,
+                    borderWidth: 1
+                  }
+                },
+                {
+                  // 第四级别
+                  colorSaturation: [0.3, 0.5]
+                }
+              ]
+            }
+          ]
+        };
+      } else {
+        // 用途使用柱状图
+        return {
+          title: {
+            text: chartTitle,
+            left: 'center',
+            textStyle: {
+              fontSize: 16,
+              fontWeight: 'normal'
+            }
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'shadow'
+            },
+            formatter: '{a} <br/>{b}: {c} 核'
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'category',
+            data: distributionData.map(item => item.name),
+            axisLabel: {
+              rotate: 0,
+              interval: 0
+            }
+          },
+          yAxis: {
+            type: 'value',
+            name: '库存量（核）',
+            nameLocation: 'middle',
+            nameGap: 50
+          },
+          series: [
+            {
+              name: '库存量',
+              type: 'bar',
+              data: distributionData.map(item => ({
+                value: item.value,
+                itemStyle: {
+                  color: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1'][distributionData.indexOf(item) % 5]
+                }
+              })),
+              barWidth: '60%',
+              emphasis: {
+                itemStyle: {
+                  shadowBlur: 10,
+                  shadowOffsetX: 0,
+                  shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+              }
+            }
+          ]
+        };
+      }
     }
   };
 
@@ -890,39 +1292,46 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                         <Row gutter={[16, 16]}>
                           <Col xs={24} sm={12} md={6}>
                             <div className="insight-item">
-                              <div className="insight-label">热点地域</div>
-                              <div className="insight-value">北京 (89.5%)</div>
-                              <div className="insight-trend">↗ +2.3%</div>
-                            </div>
-                          </Col>
-                          <Col xs={24} sm={12} md={6}>
-                            <div className="insight-item">
-                              <div className="insight-label">主要用途</div>
-                              <div className="insight-value">已出库 (89.5%)</div>
-                              <div className="insight-value">可用库存 (7.7%)</div>
-                            </div>
-                          </Col>
-                          <Col xs={24} sm={12} md={6}>
-                            <div className="insight-item">
-                              <div className="insight-label">Top 5 集群组</div>
-                              <div className="insight-list">
-                                <div className="insight-list-item">1. hulk-general (85%)</div>
-                                <div className="insight-list-item">2. hulk-arm (10%)</div>
-                                <div className="insight-list-item">3. txserverless (5%)</div>
-                                <div className="insight-list-item">4. 其他集群 (0%)</div>
-                                <div className="insight-list-item">5. 预留扩展 (0%)</div>
+                              <div className="insight-label">热门地域 (Top1)</div>
+                              <div className="insight-value">
+                                {insightData.topRegion.name} ({insightData.topRegion.percentage}%)
+                              </div>
+                              <div className={`insight-trend ${insightData.topRegion.trend >= 0 ? 'positive' : 'negative'}`}>
+                                {insightData.topRegion.trend >= 0 ? '↗' : '↘'} {Math.abs(insightData.topRegion.trend)}%
                               </div>
                             </div>
                           </Col>
                           <Col xs={24} sm={12} md={6}>
                             <div className="insight-item">
-                              <div className="insight-label">Top 5 调用方</div>
+                              <div className="insight-label">热门用途 (Top2)</div>
+                              {insightData.topUsages.map((usage, index) => (
+                                <div key={usage.name} className="insight-value">
+                                  {index + 1}. {usage.name} ({usage.percentage}%)
+                                </div>
+                              ))}
+                            </div>
+                          </Col>
+                          <Col xs={24} sm={12} md={6}>
+                            <div className="insight-item">
+                              <div className="insight-label">Top 5 机房</div>
                               <div className="insight-list">
-                                <div className="insight-list-item">1. avatar (35%)</div>
-                                <div className="insight-list-item">2. policy (25%)</div>
-                                <div className="insight-list-item">3. unit_4 (15%)</div>
-                                <div className="insight-list-item">4. holiday (12%)</div>
-                                <div className="insight-list-item">5. maoyan (8%)</div>
+                                {insightData.topDatacenters.map((dc) => (
+                                  <div key={dc.name} className="insight-list-item">
+                                    {dc.rank}. {dc.name} ({dc.percentage}%)
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </Col>
+                          <Col xs={24} sm={12} md={6}>
+                            <div className="insight-item">
+                              <div className="insight-label">Top 5 专区</div>
+                              <div className="insight-list">
+                                {insightData.topZones.map((zone) => (
+                                  <div key={zone.name} className="insight-list-item">
+                                    {zone.rank}. {zone.name} ({zone.percentage}%)
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           </Col>
@@ -937,6 +1346,27 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>库存分布</span>
                         <Space>
+                          <span style={{ fontSize: '12px', color: '#666' }}>重点关注：</span>
+                          <Button.Group size="small">
+                            <Button
+                              type={inventoryType === 'all' ? 'primary' : 'default'}
+                              onClick={() => setInventoryType('all')}
+                            >
+                              全部
+                            </Button>
+                            <Button
+                              type={inventoryType === 'available' ? 'primary' : 'default'}
+                              onClick={() => setInventoryType('available')}
+                            >
+                              可用
+                            </Button>
+                            <Button
+                              type={inventoryType === 'outbound' ? 'primary' : 'default'}
+                              onClick={() => setInventoryType('outbound')}
+                            >
+                              已出库
+                            </Button>
+                          </Button.Group>
                           <span style={{ fontSize: '12px', color: '#666' }}>分布维度：</span>
                           <Button.Group size="small">
                             <Button
@@ -949,7 +1379,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                               type={distributionBy === 'scenario' ? 'primary' : 'default'}
                               onClick={() => setDistributionBy('scenario')}
                             >
-                              场景
+                              用途
                             </Button>
                             <Button
                               type={distributionBy === 'cluster' ? 'primary' : 'default'}
@@ -991,12 +1421,12 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                             title: distributionBy === 'region'
                               ? (showDatacenterDetails ? '机房' : '地域')
                               : distributionBy === 'scenario'
-                                ? '场景'
-                                : '分类',
+                                ? '用途'
+                                : '集群组/专区',
                             dataIndex: 'name',
                             key: 'name'
                           },
-                          { title: '库存量', dataIndex: 'value', key: 'value', render: (value) => `${value} 核` },
+                          { title: '库存量', dataIndex: 'value', key: 'value', render: (value) => `${value.toLocaleString()} 核` },
                           { title: '占比', dataIndex: 'percentage', key: 'percentage', render: (value) => `${value}%` }
                         ]}
                         dataSource={distributionData}
