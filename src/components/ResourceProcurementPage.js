@@ -173,6 +173,21 @@ const ResourceProcurementPage = () => {
     { value: '取消', label: '取消', color: 'error' }
   ];
 
+  // 机房选项
+  const datacenterOptions = [
+    { value: 'BJ-DC1', label: 'BJ-DC1', region: '北京' },
+    { value: 'BJ-DC2', label: 'BJ-DC2', region: '北京' },
+    { value: 'BJ-DC3', label: 'BJ-DC3', region: '北京' },
+    { value: 'SH-DC1', label: 'SH-DC1', region: '上海' },
+    { value: 'SH-DC2', label: 'SH-DC2', region: '上海' },
+    { value: 'GZ-DC1', label: 'GZ-DC1', region: '广州' },
+    { value: 'GZ-DC2', label: 'GZ-DC2', region: '广州' },
+    { value: 'SZ-DC1', label: 'SZ-DC1', region: '深圳' },
+    { value: 'HL-DC1', label: 'HL-DC1', region: '怀来' },
+    { value: 'HL-DC2', label: 'HL-DC2', region: '怀来' },
+    { value: 'OTHER', label: '其他', region: '其他' }
+  ];
+
   // 主表列配置
   const mainColumns = [
     {
@@ -608,9 +623,16 @@ const ResourceProcurementPage = () => {
               <Form.Item
                 name="datacenter"
                 label="涉及机房"
-                rules={[{ required: true, message: '请输入机房英文缩写' }]}
+                rules={[{ required: true, message: '请选择涉及机房' }]}
               >
-                <Input placeholder="如：BJ-DC1" />
+                <Select placeholder="请选择机房" showSearch>
+                  {datacenterOptions.map(option => (
+                    <Option key={option.value} value={option.value}>
+                      <span>{option.label}</span>
+                      <span style={{ color: '#999', marginLeft: '8px' }}>({option.region})</span>
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
