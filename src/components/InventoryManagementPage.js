@@ -68,7 +68,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     topDatacenters: [],
     topZones: []
   });
-  // 库存用途选项
+用户  // 库存用途选项
   const inventoryUsageOptions = [
     {
       value: 'business',
@@ -1525,6 +1525,21 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                             <div style={{ height: '400px' }}>
                               <ReactECharts
                                 option={getTrendChartOption('emergency')}
+                                style={{ height: '100%' }}
+                                onEvents={{
+                                  'click': handleEventClick
+                                }}
+                              />
+                            </div>
+                          )
+                        },
+                        {
+                          key: 'operation',
+                          label: '运维资源',
+                          children: (
+                            <div style={{ height: '400px' }}>
+                              <ReactECharts
+                                option={getTrendChartOption('operation')}
                                 style={{ height: '100%' }}
                                 onEvents={{
                                   'click': handleEventClick
