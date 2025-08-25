@@ -56,7 +56,7 @@ const ResourceProcurementPage = () => {
       resourceGapMax: 5000,
       gapStartTime: '2024-12-25 09:00',
       gapEndTime: '2024-12-28 18:00',
-      datacenter: 'BJ-DC1',
+      datacenter: ['BJ-DC1', 'BJ-DC2'],
       status: '筹备中',
       initiator: 'zhangsan',
       createTime: '2024-12-20 14:30',
@@ -88,7 +88,7 @@ const ResourceProcurementPage = () => {
       resourceGapMax: 8000,
       gapStartTime: '2025-01-15 08:00',
       gapEndTime: '2025-01-20 20:00',
-      datacenter: 'SH-DC2',
+      datacenter: ['SH-DC2'],
       status: '待筹备',
       initiator: 'lisi',
       createTime: '2024-12-18 16:45',
@@ -120,7 +120,7 @@ const ResourceProcurementPage = () => {
       resourceGapMax: 3500,
       gapStartTime: '2024-12-10 10:00',
       gapEndTime: '2024-12-15 16:00',
-      datacenter: 'GZ-DC1',
+      datacenter: ['GZ-DC1'],
       status: '筹备完成',
       initiator: 'wangwu',
       createTime: '2024-12-05 11:20',
@@ -212,8 +212,20 @@ const ResourceProcurementPage = () => {
       title: '涉及机房',
       dataIndex: 'datacenter',
       key: 'datacenter',
-      width: 100,
-      render: (value) => <Tag color="blue">{value}</Tag>
+      width: 120,
+      render: (value) => (
+        <div>
+          {Array.isArray(value) ? (
+            value.map((dc, index) => (
+              <Tag key={index} color="blue" style={{ marginBottom: '2px' }}>
+                {dc}
+              </Tag>
+            ))
+          ) : (
+            <Tag color="blue">{value}</Tag>
+          )}
+        </div>
+      )
     },
     {
       title: '计划状态',
@@ -625,7 +637,13 @@ const ResourceProcurementPage = () => {
                 label="涉及机房"
                 rules={[{ required: true, message: '请选择涉及机房' }]}
               >
-                <Select placeholder="请选择机房" showSearch>
+                <Select
+                  mode="multiple"
+                  placeholder="请选择机房（支持多选）"
+                  showSearch
+                  maxTagCount="responsive"
+                  allowClear
+                >
                   {datacenterOptions.map(option => (
                     <Option key={option.value} value={option.value}>
                       <span>{option.label}</span>
