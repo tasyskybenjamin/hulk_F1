@@ -420,50 +420,6 @@ const DemandManagementPage = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title={
-                <span>
-                  需求满足率
-                  <Tooltip title="需求满足率 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
-                </span>
-              }
-              value={(((summaryData.confirmedPending + summaryData.delivered + summaryData.recycled) / summaryData.totalDemand) * 100).toFixed(1)}
-              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
-              suffix="%"
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title={
-                <span>
-                  平均交付时长
-                  <Tooltip title="从需求提交到完成交付的平均用时">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
-                </span>
-              }
-              value="2.3"
-              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
-              suffix="天"
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title="SLA达成率"
-              value="100"
-              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
-              suffix="%"
-            />
-          </Card>
-        </Col>
       </Row>
 
       {/* 需求状态分布 */}
