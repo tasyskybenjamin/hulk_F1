@@ -425,8 +425,8 @@ const DemandManagementPage = () => {
             <Statistic
               title={
                 <span>
-                  需求满足率
-                  <Tooltip title="需求满足率 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
+                  明确需求占比
+                  <Tooltip title="明确需求占比 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
                     <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
                   </Tooltip>
                 </span>
