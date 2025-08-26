@@ -423,33 +423,52 @@ const DemandManagementPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="summary-card">
             <Statistic
-              title="待评估需求"
-              value={summaryData.pendingEvaluation}
-              valueStyle={{ color: '#faad14', fontSize: '28px' }}
-              suffix="核"
-              formatter={(value) => value.toLocaleString()}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title="确认待交付"
-              value={summaryData.confirmedPending}
-              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
-              suffix="核"
-              formatter={(value) => value.toLocaleString()}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title="已交付"
-              value={summaryData.delivered}
+              title={
+                <span>
+                  需求满足率
+                  <Tooltip title="需求满足率 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
+              value={(((summaryData.confirmedPending + summaryData.delivered + summaryData.recycled) / summaryData.totalDemand) * 100).toFixed(1)}
               valueStyle={{ color: '#52c41a', fontSize: '28px' }}
+              suffix="%"
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title={
+                <span>
+                  本月新增需求
+                  <Tooltip title="本月新增的需求量">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
+              value={285000}
+              valueStyle={{ color: '#722ed1', fontSize: '28px' }}
               suffix="核"
               formatter={(value) => value.toLocaleString()}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title={
+                <span>
+                  平均交付时长
+                  <Tooltip title="从需求提交到完成交付的平均用时">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
+              value="2.3"
+              valueStyle={{ color: '#13c2c2', fontSize: '28px' }}
+              suffix="天"
             />
           </Card>
         </Col>
