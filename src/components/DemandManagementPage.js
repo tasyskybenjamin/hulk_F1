@@ -408,96 +408,204 @@ const DemandManagementPage = () => {
   const renderOverviewContent = () => (
     <div>
       {/* 核心指标卡片 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title="总需求"
-              value={summaryData.totalDemand}
-              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
-              suffix="核"
-              formatter={(value) => value.toLocaleString()}
-            />
+      <Row justify="center" style={{ marginBottom: 32 }}>
+        <Col xs={24} sm={16} md={12} lg={8} xl={6}>
+          <Card
+            className="summary-card"
+            style={{
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+              color: 'white'
+            }}
+            bodyStyle={{ padding: '32px 24px' }}
+          >
+            <div style={{ marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.9)',
+                letterSpacing: '0.5px'
+              }}>
+                总需求量
+              </span>
+            </div>
+            <div style={{
+              fontSize: '36px',
+              fontWeight: 'bold',
+              color: 'white',
+              marginBottom: '4px',
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              {summaryData.totalDemand.toLocaleString()}
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontWeight: '500'
+            }}>
+              核
+            </div>
           </Card>
         </Col>
       </Row>
 
       {/* 需求状态分布 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={8} lg={4}>
-          <Card className="status-card pending-evaluation">
-            <div className="status-header">
-              <span className="status-title">待评估</span>
-              <Tooltip title="不保障SLA的需求，需要进一步评估资源可行性">
-                <InfoCircleOutlined style={{ color: '#999' }} />
-              </Tooltip>
-            </div>
-            <div className="status-value">{summaryData.pendingEvaluation.toLocaleString()}</div>
-            <div className="status-percentage">
-              {((summaryData.pendingEvaluation / summaryData.totalDemand) * 100).toFixed(1)}%
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={4}>
-          <Card className="status-card confirmed-pending">
-            <div className="status-header">
-              <span className="status-title">确认待交付</span>
-              <Tooltip title="保障SLA的需求，已确认资源并等待交付">
-                <InfoCircleOutlined style={{ color: '#999' }} />
-              </Tooltip>
-            </div>
-            <div className="status-value">{summaryData.confirmedPending.toLocaleString()}</div>
-            <div className="status-percentage">
-              {((summaryData.confirmedPending / summaryData.totalDemand) * 100).toFixed(1)}%
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={4}>
-          <Card className="status-card delivered">
-            <div className="status-header">
-              <span className="status-title">已交付</span>
-            </div>
-            <div className="status-value">{summaryData.delivered.toLocaleString()}</div>
-            <div className="status-percentage">
-              {((summaryData.delivered / summaryData.totalDemand) * 100).toFixed(1)}%
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={4}>
-          <Card className="status-card recycled">
-            <div className="status-header">
-              <span className="status-title">已回收</span>
-            </div>
-            <div className="status-value">{summaryData.recycled.toLocaleString()}</div>
-            <div className="status-percentage">
-              {((summaryData.recycled / summaryData.totalDemand) * 100).toFixed(1)}%
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={4}>
-          <Card className="status-card rejected">
-            <div className="status-header">
-              <span className="status-title">无效</span>
-            </div>
-            <div className="status-value">{summaryData.rejected.toLocaleString()}</div>
-            <div className="status-percentage">
-              {((summaryData.rejected / summaryData.totalDemand) * 100).toFixed(1)}%
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={4}>
-          <Card className="status-card urgent">
-            <div className="status-header">
-              <span className="status-title">预期外需求</span>
-              <Tooltip title="超出预期的需求，需要特别关注">
-                <InfoCircleOutlined style={{ color: '#999' }} />
-              </Tooltip>
-            </div>
-            <div className="status-value">58,000</div>
-            <div className="status-percentage">1.8%</div>
-          </Card>
-        </Col>
-      </Row>
+      <Card
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px', fontWeight: '600' }}>📊 需求状态分布</span>
+          </div>
+        }
+        style={{ marginBottom: 24 }}
+        bodyStyle={{ padding: '20px' }}
+      >
+        <Row gutter={[20, 20]} justify="center">
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card
+              className="status-card pending-evaluation"
+              style={{
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid #faad14',
+                backgroundColor: '#fffbe6'
+              }}
+              bodyStyle={{ padding: '20px 16px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#faad14' }}>待评估</span>
+                <Tooltip title="不保障SLA的需求，需要进一步评估资源可行性">
+                  <InfoCircleOutlined style={{ color: '#999', marginLeft: '4px' }} />
+                </Tooltip>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14', marginBottom: '4px' }}>
+                {summaryData.pendingEvaluation.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {((summaryData.pendingEvaluation / summaryData.totalDemand) * 100).toFixed(1)}%
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card
+              className="status-card confirmed-pending"
+              style={{
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid #1890ff',
+                backgroundColor: '#e6f7ff'
+              }}
+              bodyStyle={{ padding: '20px 16px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#1890ff' }}>确认待交付</span>
+                <Tooltip title="保障SLA的需求，已确认资源并等待交付">
+                  <InfoCircleOutlined style={{ color: '#999', marginLeft: '4px' }} />
+                </Tooltip>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff', marginBottom: '4px' }}>
+                {summaryData.confirmedPending.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {((summaryData.confirmedPending / summaryData.totalDemand) * 100).toFixed(1)}%
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card
+              className="status-card delivered"
+              style={{
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid #52c41a',
+                backgroundColor: '#f6ffed'
+              }}
+              bodyStyle={{ padding: '20px 16px' }}
+            >
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#52c41a' }}>已交付</span>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a', marginBottom: '4px' }}>
+                {summaryData.delivered.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {((summaryData.delivered / summaryData.totalDemand) * 100).toFixed(1)}%
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card
+              className="status-card recycled"
+              style={{
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid #13c2c2',
+                backgroundColor: '#e6fffb'
+              }}
+              bodyStyle={{ padding: '20px 16px' }}
+            >
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#13c2c2' }}>已回收</span>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#13c2c2', marginBottom: '4px' }}>
+                {summaryData.recycled.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {((summaryData.recycled / summaryData.totalDemand) * 100).toFixed(1)}%
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card
+              className="status-card rejected"
+              style={{
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid #ff4d4f',
+                backgroundColor: '#fff2f0'
+              }}
+              bodyStyle={{ padding: '20px 16px' }}
+            >
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#ff4d4f' }}>无效</span>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f', marginBottom: '4px' }}>
+                {summaryData.rejected.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                {((summaryData.rejected / summaryData.totalDemand) * 100).toFixed(1)}%
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Card
+              className="status-card urgent"
+              style={{
+                textAlign: 'center',
+                borderRadius: '8px',
+                border: '1px solid #722ed1',
+                backgroundColor: '#f9f0ff'
+              }}
+              bodyStyle={{ padding: '20px 16px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#722ed1' }}>预期外需求</span>
+                <Tooltip title="超出预期的需求，需要特别关注">
+                  <InfoCircleOutlined style={{ color: '#999', marginLeft: '4px' }} />
+                </Tooltip>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#722ed1', marginBottom: '4px' }}>
+                58,000
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                1.8%
+              </div>
+            </Card>
+          </Col>
+        </Row>
+      </Card>
 
       {/* 快速洞察 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
