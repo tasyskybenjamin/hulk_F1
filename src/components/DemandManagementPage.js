@@ -408,46 +408,49 @@ const DemandManagementPage = () => {
   const renderOverviewContent = () => (
     <div>
       {/* 核心指标卡片 */}
-      <Row justify="center" style={{ marginBottom: 32 }}>
-        <Col xs={24} sm={16} md={12} lg={8} xl={6}>
-          <Card
-            className="summary-card"
-            style={{
-              textAlign: 'center',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
-              color: 'white'
-            }}
-            bodyStyle={{ padding: '32px 24px' }}
-          >
-            <div style={{ marginBottom: '8px' }}>
-              <span style={{
-                fontSize: '16px',
-                fontWeight: '500',
-                color: 'rgba(255, 255, 255, 0.9)',
-                letterSpacing: '0.5px'
-              }}>
-                总需求量
-              </span>
-            </div>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              color: 'white',
-              marginBottom: '4px',
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              {summaryData.totalDemand.toLocaleString()}
-            </div>
-            <div style={{
-              fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontWeight: '500'
-            }}>
-              核
-            </div>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title="总需求"
+              value={summaryData.totalDemand}
+              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
+              suffix="核"
+              formatter={(value) => value.toLocaleString()}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title="待评估需求"
+              value={summaryData.pendingEvaluation}
+              valueStyle={{ color: '#faad14', fontSize: '28px' }}
+              suffix="核"
+              formatter={(value) => value.toLocaleString()}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title="确认待交付"
+              value={summaryData.confirmedPending}
+              valueStyle={{ color: '#1890ff', fontSize: '28px' }}
+              suffix="核"
+              formatter={(value) => value.toLocaleString()}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title="已交付"
+              value={summaryData.delivered}
+              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
+              suffix="核"
+              formatter={(value) => value.toLocaleString()}
+            />
           </Card>
         </Col>
       </Row>
