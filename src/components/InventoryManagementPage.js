@@ -29,6 +29,7 @@ import {
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 import InventoryFilterPanel from './InventoryFilterPanel';
+import InventoryUsageTrendChart from './InventoryUsageTrendChart';
 import './InventoryManagementPage.css';
 
 
@@ -56,6 +57,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
   const [distributionData, setDistributionData] = useState([]);
   const [trendData, setTrendData] = useState({ labels: [], datasets: {} });
+  const [usageTrendData, setUsageTrendData] = useState({ labels: [], usageData: [] });
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('chart');
   const [distributionBy, setDistributionBy] = useState('region');
@@ -247,6 +249,78 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     { key: 'operation', label: '运维资源余量', color: '#13c2c2' },
     { key: 'operation_outbound', label: '运维资源已出库', color: '#36cfc9' }
   ];
+
+  // 生成库存使用趋势数据
+  const generateUsageTrendData = (filterParams) => {
+    const dates = [];
+    const usageData = [];
+
+    // 根据筛选条件生成集群/专区/调用方的使用数据
+    const clusters = [
+      { name: 'hulk-general/default/avatar', baseUsed: 2800, baseUnused: 1200 },
+      { name: 'hulk-general/jinrong_hulk/avatarjinrong', baseUsed: 1800, baseUnused: 800 },
+      { name: 'hulk-arm/default/hulk_arm', baseUsed: 1200, baseUnused: 600 },
+      { name: 'txserverless/default/policy_txserverless', baseUsed: 900, baseUnused: 400 },
+      { name: 'hulk-general/hulk_holiday/holiday', baseUsed: 700, baseUnused: 300 }
+    ];
+
+    // 生成日期数组（过去30天到未来60天）
+    for (let i = 30; i >= -60; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+
+    // 为每个集群生成使用趋势数据
+    clusters.forEach((cluster, clusterIndex) => {
+      const usedData = [];
+      const unusedData = [];
+
+      dates.forEach((dateStr, dateIndex) => {
+        const date = new Date(dateStr);
+        const today = new Date();
+        const isPast = date <= today;
+
+        // 添加季节性波动和趋势
+        const seasonalFactor = 1 + 0.1 * Math.sin((dateIndex + 30) * Math.PI / 30);
+        const trendFactor = isPast ? 1 : 1 + Math.abs(dateIndex - 30) * 0.005;
+        const randomFactor = 0.9 + Math.random() * 0.2;
+
+        // 已使用数据：呈上升趋势
+        const usedValue = Math.round(
+          cluster.baseUsed * seasonalFactor * trendFactor * randomFactor *
+          (isPast ? 1 : 1 + (dateIndex - 30) * 0.01)
+        );
+
+        // 未使用数据：相对稳定，略有下降
+        const unusedValue = Math.round(
+          cluster.baseUnused * seasonalFactor * randomFactor *
+          (isPast ? 1 : 1 - (dateIndex - 30) * 0.005)
+        );
+
+        usedData.push({
+          value: Math.max(0, usedValue),
+          isPast
+        });
+
+        unusedData.push({
+          value: Math.max(0, unusedValue),
+          isPast
+        });
+      });
+
+      usageData.push({
+        name: cluster.name,
+        used: usedData,
+        unused: unusedData
+      });
+    });
+
+    return {
+      labels: dates,
+      usageData: usageData
+    };
+  };
 
   // 模拟数据获取
   const fetchInventoryData = async (filterParams) => {
@@ -549,6 +623,10 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
       };
 
       setInsightData(calculateInsightData());
+
+      // 生成库存使用趋势数据
+      const usageTrend = generateUsageTrendData(filterParams);
+      setUsageTrendData(usageTrend);
 
     } catch (error) {
       console.error('获取库存数据失败:', error);
@@ -1823,6 +1901,44 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                     showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
                   }}
                 />
+                </div>
+              )
+            },
+            {
+              key: 'usage-trend',
+              label: '库存使用趋势',
+              children: (
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 16
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#666'
+                    }}>
+                      展示所有集群/专区/调用方的库存使用情况趋势
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      fontSize: '12px'
+                    }}>
+                      <Tag color="blue">实线：已使用</Tag>
+                      <Tag color="cyan">菱形：未使用</Tag>
+                      <Tag color="green">实线：历史数据</Tag>
+                      <Tag color="purple">虚线：预测数据</Tag>
+                    </div>
+                  </div>
+                  <div style={{ height: '500px' }}>
+                    <InventoryUsageTrendChart
+                      data={usageTrendData}
+                      filters={filters}
+                    />
+                  </div>
                 </div>
               )
             }
