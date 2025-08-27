@@ -406,7 +406,7 @@ const InventoryUsageTrendChart = ({ data, filters }) => {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       {/* 图表 */}
-      <div style={{ height: 'calc(100% - 120px)' }}>
+      <div style={{ height: 'calc(100% - 180px)' }}>
         <ReactECharts
           option={getChartOption()}
           style={{
@@ -420,13 +420,13 @@ const InventoryUsageTrendChart = ({ data, filters }) => {
 
       {/* 图例控制区域 */}
       <div style={{
-        height: '120px',
+        height: '180px',
         padding: '16px 0',
         borderTop: '1px solid #f0f0f0',
         backgroundColor: '#fafafa'
       }}>
         {/* 控制按钮 */}
-        <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+        <div style={{ marginBottom: '16px', textAlign: 'center' }}>
           <Space>
             <Button size="small" onClick={handleSelectAll}>
               全选
@@ -445,9 +445,10 @@ const InventoryUsageTrendChart = ({ data, filters }) => {
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'center',
-          gap: '8px 16px',
-          maxHeight: '60px',
-          overflowY: 'auto'
+          gap: '8px 12px',
+          maxHeight: '120px',
+          overflowY: 'auto',
+          padding: '0 16px'
         }}>
           {getLegendData().map((legend) => (
             <div
