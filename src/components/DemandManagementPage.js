@@ -126,6 +126,12 @@ const DemandManagementPage = () => {
           { name: '已回收', value: 120, percentage: 9.6 },
           { name: '待评估', value: 85, percentage: 6.8 },
           { name: '驳回', value: 45, percentage: 3.6 }
+        ],
+        productType: [
+          { name: '通用型', value: 520, percentage: 41.6 },
+          { name: '经济型', value: 380, percentage: 30.4 },
+          { name: '高性能型', value: 280, percentage: 22.4 },
+          { name: '存储优化型', value: 70, percentage: 5.6 }
         ]
       };
 
@@ -294,6 +300,12 @@ const DemandManagementPage = () => {
         { name: '已回收', value: 120, percentage: 9.6 },
         { name: '待评估', value: 85, percentage: 6.8 },
         { name: '驳回', value: 45, percentage: 3.6 }
+      ],
+      productType: [
+        { name: '通用型', value: 520, percentage: 41.6 },
+        { name: '经济型', value: 380, percentage: 30.4 },
+        { name: '高性能型', value: 280, percentage: 22.4 },
+        { name: '存储优化型', value: 70, percentage: 5.6 }
       ]
     };
     // 根据是否显示机房详情来处理地域数据
@@ -321,7 +333,9 @@ const DemandManagementPage = () => {
   // 需求分布表格列定义
   const distributionColumns = [
     {
-      title: distributionBy === 'region' ? (showRoomDetail ? '机房' : '地域') : '渠道',
+      title: distributionBy === 'region' ? (showRoomDetail ? '机房' : '地域') :
+             distributionBy === 'channel' ? '渠道' :
+             distributionBy === 'productType' ? '产品类型' : '名称',
       dataIndex: 'name',
       key: 'name',
       width: 150,
@@ -693,7 +707,7 @@ const DemandManagementPage = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '16px', fontWeight: '600' }}>📈 需求分布</span>
                    <Tag color="blue" style={{ margin: 0 }}>
-                     按{distributionBy === 'region' ? '地域' : '渠道'}
+                     按{distributionBy === 'region' ? '地域' : distributionBy === 'channel' ? '渠道' : '产品类型'}
                    </Tag>
                   {distributionBy === 'region' && showRoomDetail && (
                     <Tag color="green" style={{ margin: 0 }}>机房详情</Tag>
@@ -708,16 +722,23 @@ const DemandManagementPage = () => {
                        <Button
                          type={distributionBy === 'region' ? 'primary' : 'default'}
                          onClick={() => setDistributionBy('region')}
-                         style={{ borderRadius: '4px 0 0 4px' }}
+                         style={{ borderRadius: '4px 0 0 0' }}
                        >
                          地域
                        </Button>
                        <Button
                          type={distributionBy === 'channel' ? 'primary' : 'default'}
                          onClick={() => setDistributionBy('channel')}
-                         style={{ borderRadius: '0 4px 4px 0' }}
+                         style={{ borderRadius: '0' }}
                        >
                          渠道
+                       </Button>
+                       <Button
+                         type={distributionBy === 'productType' ? 'primary' : 'default'}
+                         onClick={() => setDistributionBy('productType')}
+                         style={{ borderRadius: '0 4px 4px 0' }}
+                       >
+                         产品类型
                        </Button>
                      </Button.Group>
                   </div>
