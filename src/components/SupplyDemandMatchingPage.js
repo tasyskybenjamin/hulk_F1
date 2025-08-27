@@ -283,6 +283,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
     let pendingBase = Math.round(200 * demandMultiplier); // 增加基础需求
     let confirmedBase = Math.round(450 * demandMultiplier); // 增加基础需求
     let deliveredDemandBase = Math.round(1200 * demandMultiplier);
+    let totalDemandBase = Math.round(1800 * demandMultiplier); // 总需求基础值
 
     // 根据用户选择的时间范围生成数据
     const startDate = filterParams.dateRange ? filterParams.dateRange[0] : dayjs().subtract(1, 'month');
