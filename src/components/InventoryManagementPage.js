@@ -676,12 +676,12 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
       setInsightData(calculateInsightData());
 
-    } catch (error) {
-      console.error('获取库存数据失败:', error);
       // 生成库存使用趋势数据
       const usageTrend = generateUsageTrendData(filterParams);
       setUsageTrendData(usageTrend);
 
+    } catch (error) {
+      console.error('获取库存数据失败:', error);
     } finally {
       setLoading(false);
     }
@@ -1955,8 +1955,6 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                 />
                 </div>
               )
-            }
-          ]}
             },
             {
               key: 'usage-trend',
@@ -1997,9 +1995,11 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                       data={usageTrendData}
                       filters={filters}
                     />
-                  </div>
-                </div>
-              )
+                   </div>
+                 </div>
+               )
+            }
+          ]}
         />
       </Card>
     </div>
