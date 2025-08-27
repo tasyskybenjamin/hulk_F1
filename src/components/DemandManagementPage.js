@@ -407,7 +407,7 @@ const DemandManagementPage = () => {
   // 需求总览内容
   const renderOverviewContent = () => (
     <div>
-      {/* 核心指标卡片 */}
+      {/* 核心指标和需求洞察 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card className="summary-card">
@@ -420,56 +420,50 @@ const DemandManagementPage = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title={
-                <span>
-                  明确需求占比
-                  <Tooltip title="明确需求占比 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
-                </span>
-              }
-              value={(((summaryData.confirmedPending + summaryData.delivered + summaryData.recycled) / summaryData.totalDemand) * 100).toFixed(1)}
-              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
-              suffix="%"
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title={
-                <span>
-                  本月新增需求
-                  <Tooltip title="本月新增的需求量">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
-                </span>
-              }
-              value={285000}
-              valueStyle={{ color: '#722ed1', fontSize: '28px' }}
-              suffix="核"
-              formatter={(value) => value.toLocaleString()}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card className="summary-card">
-            <Statistic
-              title={
-                <span>
-                  平均交付时长
-                  <Tooltip title="从需求提交到完成交付的平均用时">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
-                </span>
-              }
-              value="2.3"
-              valueStyle={{ color: '#fa8c16', fontSize: '28px' }}
-              suffix="天"
-            />
+        <Col xs={24} sm={12} lg={18}>
+          <Card
+            title="📊 需求洞察"
+            className="insight-card"
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">热点地域</div>
+                  <div className="insight-value">北京 (36%)</div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">热点渠道</div>
+                  <div className="insight-value">日常 (32%)</div>
+                  <div className="insight-value">活动 (28%)</div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">Top 5 机房</div>
+                  <div className="insight-list">
+                    <div className="insight-list-item">1. 北京-机房1 (18%)</div>
+                    <div className="insight-list-item">2. 上海-机房1 (15%)</div>
+                    <div className="insight-list-item">3. 北京-机房2 (12%)</div>
+                    <div className="insight-list-item">4. 怀来-机房1 (10%)</div>
+                    <div className="insight-list-item">5. 上海-机房2 (8%)</div>
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">Top 5 客户</div>
+                  <div className="insight-list">
+                    <div className="insight-list-item">1. 美团外卖 (22%)</div>
+                    <div className="insight-list-item">2. 点评事业部 (18%)</div>
+                    <div className="insight-list-item">3. 美团优选 (15%)</div>
+                    <div className="insight-list-item">4. 美团买菜 (12%)</div>
+                    <div className="insight-list-item">5. 美团打车 (10%)</div>
+                  </div>
+                </div>
+              </Col>
+            </Row>
           </Card>
         </Col>
       </Row>
@@ -619,59 +613,9 @@ const DemandManagementPage = () => {
                 1.8%
               </div>
             </Card>
-          </Col>
+                    </Col>
         </Row>
       </Card>
-
-      {/* 快速洞察 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col span={24}>
-          <Card
-            title="📊 需求洞察"
-            className="insight-card"
-          >
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">热点地域</div>
-                  <div className="insight-value">北京 (36%)</div>
-                </div>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">热点渠道</div>
-                  <div className="insight-value">日常 (32%)</div>
-                  <div className="insight-value">活动 (28%)</div>
-                </div>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">Top 5 机房</div>
-                  <div className="insight-list">
-                    <div className="insight-list-item">1. 北京-机房1 (18%)</div>
-                    <div className="insight-list-item">2. 上海-机房1 (15%)</div>
-                    <div className="insight-list-item">3. 北京-机房2 (12%)</div>
-                    <div className="insight-list-item">4. 怀来-机房1 (10%)</div>
-                    <div className="insight-list-item">5. 上海-机房2 (8%)</div>
-                  </div>
-                </div>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">Top 5 客户</div>
-                  <div className="insight-list">
-                    <div className="insight-list-item">1. 美团外卖 (22%)</div>
-                    <div className="insight-list-item">2. 点评事业部 (18%)</div>
-                    <div className="insight-list-item">3. 美团优选 (15%)</div>
-                    <div className="insight-list-item">4. 美团买菜 (12%)</div>
-                    <div className="insight-list-item">5. 美团打车 (10%)</div>
-                  </div>
-                </div>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-      </Row>
     </Col>
   </Row>
 
