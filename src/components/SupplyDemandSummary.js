@@ -155,7 +155,7 @@ const SupplyDemandSummary = ({ data, filters, onNavigateToResourceProcurement })
     <Card
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>📊 选择时间范围内资源汇总说明</span>
+          <span>📊 资源汇总说明</span>
         </div>
       }
       className="supply-demand-summary"
