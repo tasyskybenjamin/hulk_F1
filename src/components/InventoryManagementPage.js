@@ -1320,9 +1320,6 @@ i import './InventoryManagementPage.css';
                               <div className="insight-value">
                                 {insightData.topRegion.name} ({insightData.topRegion.percentage}%)
                               </div>
-                              <div className={`insight-trend ${insightData.topRegion.trend >= 0 ? 'positive' : 'negative'}`}>
-                                {insightData.topRegion.trend >= 0 ? '↗' : '↘'} {Math.abs(insightData.topRegion.trend)}%
-                              </div>
                             </div>
                           </Col>
                           <Col xs={24} sm={12} md={6}>
