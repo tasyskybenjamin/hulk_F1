@@ -403,7 +403,14 @@ const DemandManagementPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="summary-card">
             <Statistic
-              title="总需求"
+              title={
+                <span>
+                  总需求
+                  <Tooltip title="总需求 = 待评估 + 确认待交付 + 已交付 + 已回收">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
               value={summaryData.totalDemand}
               valueStyle={{ color: '#1890ff', fontSize: '28px' }}
               suffix="核"
@@ -634,8 +641,11 @@ const DemandManagementPage = () => {
               }}
               bodyStyle={{ padding: '20px 16px' }}
             >
-              <div style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: '500', color: '#ff4d4f' }}>无效</span>
+                <Tooltip title="已撤销、已驳回需求">
+                  <InfoCircleOutlined style={{ color: '#999', marginLeft: '4px' }} />
+                </Tooltip>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f', marginBottom: '4px' }}>
                 {summaryData.rejected.toLocaleString()}
