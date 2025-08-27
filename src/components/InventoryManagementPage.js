@@ -32,7 +32,6 @@ import InventoryFilterPanel from './InventoryFilterPanel';
 import InventoryUsageTrendChart from './InventoryUsageTrendChart';
 import './InventoryManagementPage.css';
 
-
 const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
   const [filters, setFilters] = useState({
     dateRange: [
@@ -57,10 +56,10 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
   const [distributionData, setDistributionData] = useState([]);
   const [trendData, setTrendData] = useState({ labels: [], datasets: {} });
-  const [usageTrendData, setUsageTrendData] = useState({ labels: [], usageData: [] });
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('chart');
   const [distributionBy, setDistributionBy] = useState('region');
+  const [usageTrendData, setUsageTrendData] = useState({ labels: [], usageData: [] });
   const [activeTab, setActiveTab] = useState('available');
   const [showDatacenterDetails, setShowDatacenterDetails] = useState(false);
   const [inventoryType, setInventoryType] = useState('all'); // 库存类型：all, outbound, available
@@ -250,25 +249,80 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     { key: 'operation_outbound', label: '运维资源已出库', color: '#36cfc9' }
   ];
 
+  // 模拟数据获取
+  const fetchInventoryData = async (filterParams) => {
+    setLoading(true);
   // 生成库存使用趋势数据
   const generateUsageTrendData = (filterParams) => {
     const dates = [];
     const usageData = [];
 
     // 根据筛选条件生成集群/专区/调用方的使用数据
-    const clusters = [
-      { name: 'hulk-general/default/avatar', baseUsed: 2800, baseUnused: 1200 },
-      { name: 'hulk-general/jinrong_hulk/avatarjinrong', baseUsed: 1800, baseUnused: 800 },
-      { name: 'hulk-arm/default/hulk_arm', baseUsed: 1200, baseUnused: 600 },
-      { name: 'txserverless/default/policy_txserverless', baseUsed: 900, baseUnused: 400 },
-      { name: 'hulk-general/hulk_holiday/holiday', baseUsed: 700, baseUnused: 300 }
+    let clusters = [
+      { name: 'hulk-general/default/avatar', baseUsed: 2800, baseUnused: 1200, clusterGroup: 'hulk-general', specialZone: 'default', caller: 'avatar', region: 'beijing', productType: 'general', inventoryUsage: 'business' },
+      { name: 'hulk-general/jinrong_hulk/avatarjinrong', baseUsed: 1800, baseUnused: 800, clusterGroup: 'hulk-general', specialZone: 'jinrong_hulk', caller: 'avatarjinrong', region: 'beijing', productType: 'high-performance', inventoryUsage: 'business' },
+      { name: 'hulk-arm/default/hulk_arm', baseUsed: 1200, baseUnused: 600, clusterGroup: 'hulk-arm', specialZone: 'default', caller: 'hulk_arm', region: 'huailai', productType: 'economic', inventoryUsage: 'self-use' },
+      { name: 'txserverless/default/policy_txserverless', baseUsed: 900, baseUnused: 400, clusterGroup: 'txserverless', specialZone: 'default', caller: 'policy_txserverless', region: 'shanghai', productType: 'general', inventoryUsage: 'platform' },
+      { name: 'hulk-general/hulk_holiday/holiday', baseUsed: 700, baseUnused: 300, clusterGroup: 'hulk-general', specialZone: 'hulk_holiday', caller: 'holiday', region: 'beijing', productType: 'general', inventoryUsage: 'business' },
+      { name: 'hulk-general/default/policy', baseUsed: 650, baseUnused: 350, clusterGroup: 'hulk-general', specialZone: 'default', caller: 'policy', region: 'shanghai', productType: 'general', inventoryUsage: 'platform' },
+      { name: 'hulk-general/hulk_pool_buffer/buffer', baseUsed: 580, baseUnused: 220, clusterGroup: 'hulk-general', specialZone: 'hulk_pool_buffer', caller: 'buffer', region: 'beijing', productType: 'general', inventoryUsage: 'self-use' },
+      { name: 'hulk-arm/default/hulk_arm_admin', baseUsed: 450, baseUnused: 250, clusterGroup: 'hulk-arm', specialZone: 'default', caller: 'hulk_arm_admin', region: 'huailai', productType: 'economic', inventoryUsage: 'self-use' }
     ];
 
-    // 生成日期数组（过去30天到未来60天）
-    for (let i = 30; i >= -60; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
+    // 根据筛选条件过滤集群数据
+    if (filterParams.clusterCascader && filterParams.clusterCascader.length > 0) {
+      clusters = clusters.filter(cluster => {
+        return filterParams.clusterCascader.some(cascader => {
+          const [clusterGroup, specialZone, caller] = cascader;
+          return (!clusterGroup || cluster.clusterGroup === clusterGroup) &&
+                 (!specialZone || cluster.specialZone === specialZone) &&
+                 (!caller || cluster.caller === caller);
+        });
+      });
+    }
+
+    // 根据地域/机房筛选
+    if (filterParams.regionCascader && filterParams.regionCascader.length > 0) {
+      clusters = clusters.filter(cluster => {
+        return filterParams.regionCascader.some(cascader => {
+          const [region] = cascader;
+          return cluster.region === region;
+        });
+      });
+    }
+
+    // 根据产品类型筛选
+    if (filterParams.productType && filterParams.productType.length > 0) {
+      clusters = clusters.filter(cluster => {
+        return filterParams.productType.includes(cluster.productType);
+      });
+    }
+
+    // 根据库存用途筛选
+    if (filterParams.inventoryUsage && filterParams.inventoryUsage.length > 0) {
+      clusters = clusters.filter(cluster => {
+        return filterParams.inventoryUsage.includes(cluster.inventoryUsage);
+      });
+    }
+
+    // 如果筛选后没有数据，显示默认的几个集群
+    if (clusters.length === 0) {
+      clusters = [
+        { name: 'hulk-general/default/avatar', baseUsed: 2800, baseUnused: 1200 },
+        { name: 'hulk-general/jinrong_hulk/avatarjinrong', baseUsed: 1800, baseUnused: 800 },
+        { name: 'hulk-arm/default/hulk_arm', baseUsed: 1200, baseUnused: 600 }
+      ];
+    }
+
+    // 根据时间范围生成日期数组
+    const dateRange = filterParams.dateRange || filters.dateRange;
+    const startDate = dateRange[0];
+    const endDate = dateRange[1];
+
+    let currentDate = startDate.clone();
+    while (currentDate.valueOf() <= endDate.valueOf()) {
+      dates.push(currentDate.format('YYYY-MM-DD'));
+      currentDate = currentDate.add(1, 'day');
     }
 
     // 为每个集群生成使用趋势数据
@@ -277,25 +331,25 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
       const unusedData = [];
 
       dates.forEach((dateStr, dateIndex) => {
-        const date = new Date(dateStr);
-        const today = new Date();
-        const isPast = date <= today;
+        const date = dayjs(dateStr);
+        const today = dayjs();
+        const isPast = date.valueOf() <= today.valueOf();
 
         // 添加季节性波动和趋势
         const seasonalFactor = 1 + 0.1 * Math.sin((dateIndex + 30) * Math.PI / 30);
-        const trendFactor = isPast ? 1 : 1 + Math.abs(dateIndex - 30) * 0.005;
+        const trendFactor = isPast ? 1 : 1 + Math.abs(dateIndex - dates.length/2) * 0.005;
         const randomFactor = 0.9 + Math.random() * 0.2;
 
         // 已使用数据：呈上升趋势
         const usedValue = Math.round(
           cluster.baseUsed * seasonalFactor * trendFactor * randomFactor *
-          (isPast ? 1 : 1 + (dateIndex - 30) * 0.01)
+          (isPast ? 1 : 1 + (dateIndex - dates.length/2) * 0.01)
         );
 
         // 未使用数据：相对稳定，略有下降
         const unusedValue = Math.round(
           cluster.baseUnused * seasonalFactor * randomFactor *
-          (isPast ? 1 : 1 - (dateIndex - 30) * 0.005)
+          (isPast ? 1 : 1 - (dateIndex - dates.length/2) * 0.005)
         );
 
         usedData.push({
@@ -322,9 +376,7 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
     };
   };
 
-  // 模拟数据获取
-  const fetchInventoryData = async (filterParams) => {
-    setLoading(true);
+
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -624,12 +676,12 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
 
       setInsightData(calculateInsightData());
 
+    } catch (error) {
+      console.error('获取库存数据失败:', error);
       // 生成库存使用趋势数据
       const usageTrend = generateUsageTrendData(filterParams);
       setUsageTrendData(usageTrend);
 
-    } catch (error) {
-      console.error('获取库存数据失败:', error);
     } finally {
       setLoading(false);
     }
@@ -1015,14 +1067,14 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
       case 'outbound':
         return ['outbound'];
       case 'safety':
+        return ['safety', 'safety_outbound']; // 安全预留：余量 + 已出库
+        return ['safety', 'safety_outbound']; // 安全预留：余量 + 已出库
+        return ['emergency', 'emergency_outbound']; // 紧急资源：余量 + 已出库
         return ['safety']; // 安全预留：仅显示余量
-      case 'emergency':
+        return ['operation', 'operation_outbound']; // 运维资源：余量 + 已出库
         return ['emergency']; // 紧急资源：仅显示余量
-      case 'operation':
-        return ['operation']; // 运维资源：仅显示余量
-      default:
         return ['total'];
-    }
+        return ['operation']; // 运维资源：仅显示余量
   };
 
   // 库存变化趋势图表配置
@@ -1903,6 +1955,8 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                 />
                 </div>
               )
+            }
+          ]}
             },
             {
               key: 'usage-trend',
@@ -1915,12 +1969,17 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                     alignItems: 'center',
                     marginBottom: 16
                   }}>
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#666'
-                    }}>
-                      展示所有集群/专区/调用方的库存使用情况趋势
-                    </div>
+                     <div style={{
+                       fontSize: '14px',
+                       color: '#666'
+                     }}>
+                       展示所有集群/专区/调用方的库存使用情况趋势
+                       {usageTrendData.usageData && usageTrendData.usageData.length > 0 && (
+                         <span style={{ marginLeft: '8px', color: '#1890ff', fontWeight: 'bold' }}>
+                           （当前显示 {usageTrendData.usageData.length} 个集群）
+                         </span>
+                       )}
+                     </div>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1941,8 +2000,6 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
                   </div>
                 </div>
               )
-            }
-          ]}
         />
       </Card>
     </div>
