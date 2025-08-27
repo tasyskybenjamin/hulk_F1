@@ -434,12 +434,12 @@ const DemandManagementPage = () => {
               value={(((summaryData.confirmedPending + summaryData.delivered + summaryData.recycled) / summaryData.totalDemand) * 100).toFixed(1)}
               valueStyle={{ color: '#52c41a', fontSize: '28px' }}
               suffix="%"
-                  </Tooltip>
-                </span>
-              }
+            />
+          </Card>
+        </Col>
         <Col xs={24} sm={12} lg={6}>
-              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
-              suffix="%"
+          <Card className="summary-card">
+            <Statistic
               title={
                 <span>
                   本月新增需求
@@ -450,14 +450,14 @@ const DemandManagementPage = () => {
               }
               value={285000}
               valueStyle={{ color: '#722ed1', fontSize: '28px' }}
+              suffix="核"
+              formatter={(value) => value.toLocaleString()}
+            />
+          </Card>
+        </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card className="summary-card">
             <Statistic
-              title={
-                <span>
-        <Col xs={24} sm={12} lg={6}>
-                  <Tooltip title="本月新增的需求量">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
               title={
                 <span>
                   平均交付时长
@@ -467,11 +467,19 @@ const DemandManagementPage = () => {
                 </span>
               }
               value="2.3"
-              title={
+              valueStyle={{ color: '#fa8c16', fontSize: '28px' }}
               suffix="天"
-                  <Tooltip title="从需求提交到完成交付的平均用时">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 需求状态分布 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card title="📈 需求状态分布" className="status-distribution-card">
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8} lg={4}>
             <Card
               className="status-card pending-evaluation"
               style={{
@@ -664,6 +672,8 @@ const DemandManagementPage = () => {
           </Card>
         </Col>
       </Row>
+    </Col>
+  </Row>
 
       {/* 需求分布 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
