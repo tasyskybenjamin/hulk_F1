@@ -429,25 +429,65 @@ const DemandManagementPage = () => {
               <Col xs={24} sm={12} md={6}>
                 <div className="insight-item">
                   <div className="insight-label">热点地域</div>
-                  <div className="insight-value">北京 (36%)</div>
+                  <div className="insight-value">
+                    北京 (36%)
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                      1,152,000 核
+                    </div>
+                  </div>
                 </div>
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <div className="insight-item">
                   <div className="insight-label">热点渠道</div>
-                  <div className="insight-value">日常 (32%)</div>
-                  <div className="insight-value">活动 (28%)</div>
+                  <div className="insight-value">
+                    日常 (32%)
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                      1,024,000 核
+                    </div>
+                  </div>
+                  <div className="insight-value" style={{ marginTop: '8px' }}>
+                    活动 (28%)
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                      896,000 核
+                    </div>
+                  </div>
                 </div>
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <div className="insight-item">
                   <div className="insight-label">Top 5 机房</div>
                   <div className="insight-list">
-                    <div className="insight-list-item">1. 北京-机房1 (18%)</div>
-                    <div className="insight-list-item">2. 上海-机房1 (15%)</div>
-                    <div className="insight-list-item">3. 北京-机房2 (12%)</div>
-                    <div className="insight-list-item">4. 怀来-机房1 (10%)</div>
-                    <div className="insight-list-item">5. 上海-机房2 (8%)</div>
+                    <div className="insight-list-item">
+                      1. 北京-机房1 (18%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        576,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      2. 上海-机房1 (15%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        480,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      3. 北京-机房2 (12%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        384,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      4. 怀来-机房1 (10%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        320,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      5. 上海-机房2 (8%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        256,000 核
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Col>
@@ -455,11 +495,36 @@ const DemandManagementPage = () => {
                 <div className="insight-item">
                   <div className="insight-label">Top 5 客户</div>
                   <div className="insight-list">
-                    <div className="insight-list-item">1. 美团外卖 (22%)</div>
-                    <div className="insight-list-item">2. 点评事业部 (18%)</div>
-                    <div className="insight-list-item">3. 美团优选 (15%)</div>
-                    <div className="insight-list-item">4. 美团买菜 (12%)</div>
-                    <div className="insight-list-item">5. 美团打车 (10%)</div>
+                    <div className="insight-list-item">
+                      1. 美团外卖 (22%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        704,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      2. 点评事业部 (18%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        576,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      3. 美团优选 (15%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        480,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      4. 美团买菜 (12%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        384,000 核
+                      </div>
+                    </div>
+                    <div className="insight-list-item">
+                      5. 美团打车 (10%)
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                        320,000 核
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Col>
