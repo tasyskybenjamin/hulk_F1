@@ -376,29 +376,6 @@ const DemandManagementPage = () => {
       )
     },
     {
-      title: '趋势',
-      key: 'trend',
-      width: 80,
-      render: (_, record) => {
-        // 模拟趋势数据
-        const trendValue = Math.random() > 0.5 ? 1 : -1;
-        const trendPercent = (Math.random() * 20).toFixed(1);
-        return (
-          <div style={{ textAlign: 'center' }}>
-            {trendValue > 0 ? (
-              <span style={{ color: '#52c41a', fontSize: '12px' }}>
-                ↗ +{trendPercent}%
-              </span>
-            ) : (
-              <span style={{ color: '#ff4d4f', fontSize: '12px' }}>
-                ↘ -{trendPercent}%
-              </span>
-            )}
-          </div>
-        );
-      }
-    },
-    {
       title: '操作',
       key: 'action',
       width: 120,
