@@ -652,12 +652,6 @@ const SupplyDemandSummary = ({ data, filters, onNavigateToResourceProcurement })
                       label: '需求覆盖度',
                       value: `${((summary.availableInventory.total / summary.peakDemand) * 100).toFixed(1)}%`,
                       color: summary.availableInventory.total >= summary.peakDemand ? '#52c41a' : '#fa8c16'
-                    },
-                    {
-                      key: 'buffer',
-                      label: '缓冲余量',
-                      value: `${Math.max(0, summary.availableInventory.total - summary.peakDemand).toLocaleString()} 核`,
-                      color: summary.availableInventory.total >= summary.peakDemand ? '#52c41a' : '#f5222d'
                     }
                   ].map(item => (
                     <div key={item.key} style={{
