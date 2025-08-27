@@ -30,7 +30,8 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
     specialZone: [], // 专区多选
     caller: [], // 调用方多选
     region: [], // 地域/机房多选
-    productType: [] // 产品类型多选
+    productType: [], // 产品类型多选
+    demand: [] // 需求多选
   });
 
   const [loading, setLoading] = useState(false);
@@ -194,6 +195,18 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
     { value: 'high-performance', label: '高性能' }
   ];
 
+  // 需求选项
+  const demandOptions = [
+    { value: 'daily', label: '日常需求' },
+    { value: 'activity', label: '活动需求' },
+    { value: 'emergency', label: '应急需求' },
+    { value: 'special', label: '专项需求' },
+    { value: 'resource-pool', label: '资源池需求' },
+    { value: 'maintenance', label: '维护需求' },
+    { value: 'expansion', label: '扩容需求' },
+    { value: 'migration', label: '迁移需求' }
+  ];
+
   // 处理筛选条件变化
   const handleFilterChange = (key, value) => {
     setFilters(prev => {
@@ -225,7 +238,8 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
       specialZone: [],
       caller: [],
       region: [],
-      productType: []
+      productType: [],
+      demand: []
     };
     setFilters(resetFilters);
   };
@@ -560,7 +574,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
         </Row>
 
         <Row gutter={[16, 16]} align="middle" style={{ marginTop: 16 }}>
-          {/* 第二行：地域/机房、产品类型、操作按钮 */}
+          {/* 第二行：地域/机房、产品类型、需求、操作按钮 */}
           <Col xs={24} sm={12} md={6}>
             <div className="filter-item">
               <label className="filter-label">地域/机房：</label>
@@ -599,6 +613,27 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
             </div>
           </Col>
 
+          <Col xs={24} sm={12} md={6}>
+            <div className="filter-item">
+              <label className="filter-label">需求：</label>
+              <Select
+                mode="multiple"
+                value={filters.demand}
+                onChange={(value) => handleFilterChange('demand', value)}
+                placeholder="请选择需求类型"
+                style={{ width: '100%' }}
+                allowClear
+                maxTagCount="responsive"
+              >
+                {demandOptions.map(option => (
+                  <Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          </Col>
+
           {/* 操作按钮 */}
           <Col xs={24} sm={12} md={6}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -623,7 +658,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
 
         {/* 已选择的筛选条件展示 */}
         {(filters.clusterGroup.length > 0 || filters.specialZone.length > 0 || filters.caller.length > 0 ||
-          filters.region.length > 0 || filters.productType.length > 0) && (
+          filters.region.length > 0 || filters.productType.length > 0 || filters.demand.length > 0) && (
           <div style={{ marginTop: 16, padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '6px' }}>
             <div style={{ marginBottom: 8, fontSize: '14px', fontWeight: 500, color: '#666' }}>已选择的筛选条件：</div>
             <Space wrap>
@@ -673,6 +708,16 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
                   {filters.productType.map(type => (
                     <Tag key={type} closable onClose={() => handleFilterChange('productType', filters.productType.filter(t => t !== type))}>
                       {productTypeOptions.find(opt => opt.value === type)?.label || type}
+                    </Tag>
+                  ))}
+                </div>
+              )}
+              {filters.demand.length > 0 && (
+                <div>
+                  <span style={{ fontSize: '12px', color: '#666', marginRight: 4 }}>需求：</span>
+                  {filters.demand.map(demand => (
+                    <Tag key={demand} closable onClose={() => handleFilterChange('demand', filters.demand.filter(d => d !== demand))}>
+                      {demandOptions.find(opt => opt.value === demand)?.label || demand}
                     </Tag>
                   ))}
                 </div>
