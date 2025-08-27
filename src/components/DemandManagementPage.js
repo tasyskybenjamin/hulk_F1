@@ -126,12 +126,6 @@ const DemandManagementPage = () => {
           { name: '已回收', value: 120, percentage: 9.6 },
           { name: '待评估', value: 85, percentage: 6.8 },
           { name: '驳回', value: 45, percentage: 3.6 }
-        ],
-        productType: [
-          { name: '通用型', value: 520, percentage: 41.6 },
-          { name: '经济型', value: 380, percentage: 30.4 },
-          { name: '高性能型', value: 280, percentage: 22.4 },
-          { name: '存储优化型', value: 70, percentage: 5.6 }
         ]
       };
 
@@ -300,12 +294,6 @@ const DemandManagementPage = () => {
         { name: '已回收', value: 120, percentage: 9.6 },
         { name: '待评估', value: 85, percentage: 6.8 },
         { name: '驳回', value: 45, percentage: 3.6 }
-      ],
-      productType: [
-        { name: '通用型', value: 520, percentage: 41.6 },
-        { name: '经济型', value: 380, percentage: 30.4 },
-        { name: '高性能型', value: 280, percentage: 22.4 },
-        { name: '存储优化型', value: 70, percentage: 5.6 }
       ]
     };
     // 根据是否显示机房详情来处理地域数据
@@ -333,9 +321,7 @@ const DemandManagementPage = () => {
   // 需求分布表格列定义
   const distributionColumns = [
     {
-      title: distributionBy === 'region' ? (showRoomDetail ? '机房' : '地域') :
-             distributionBy === 'channel' ? '渠道' :
-             distributionBy === 'productType' ? '产品类型' : '名称',
+      title: distributionBy === 'region' ? (showRoomDetail ? '机房' : '地域') : '渠道',
       dataIndex: 'name',
       key: 'name',
       width: 150,
@@ -376,6 +362,29 @@ const DemandManagementPage = () => {
       )
     },
     {
+      title: '趋势',
+      key: 'trend',
+      width: 80,
+      render: (_, record) => {
+        // 模拟趋势数据
+        const trendValue = Math.random() > 0.5 ? 1 : -1;
+        const trendPercent = (Math.random() * 20).toFixed(1);
+        return (
+          <div style={{ textAlign: 'center' }}>
+            {trendValue > 0 ? (
+              <span style={{ color: '#52c41a', fontSize: '12px' }}>
+                ↗ +{trendPercent}%
+              </span>
+            ) : (
+              <span style={{ color: '#ff4d4f', fontSize: '12px' }}>
+                ↘ -{trendPercent}%
+              </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       title: '操作',
       key: 'action',
       width: 120,
@@ -398,19 +407,12 @@ const DemandManagementPage = () => {
   // 需求总览内容
   const renderOverviewContent = () => (
     <div>
-      {/* 核心指标和需求洞察 */}
+      {/* 核心指标卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card className="summary-card">
             <Statistic
-              title={
-                <span>
-                  总需求
-                  <Tooltip title="总需求 = 待评估 + 确认待交付 + 已交付 + 已回收">
-                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
-                  </Tooltip>
-                </span>
-              }
+              title="总需求"
               value={summaryData.totalDemand}
               valueStyle={{ color: '#1890ff', fontSize: '28px' }}
               suffix="核"
@@ -418,125 +420,58 @@ const DemandManagementPage = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={18}>
-          <Card
-            title="📊 需求洞察"
-            className="insight-card"
-          >
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">热点地域</div>
-                  <div className="insight-value">
-                    北京 (36%)
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                      1,152,000 核
-                    </div>
-                  </div>
-                </div>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">热点渠道</div>
-                  <div className="insight-value">
-                    日常 (32%)
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                      1,024,000 核
-                    </div>
-                  </div>
-                  <div className="insight-value" style={{ marginTop: '8px' }}>
-                    活动 (28%)
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                      896,000 核
-                    </div>
-                  </div>
-                </div>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">Top 5 机房</div>
-                  <div className="insight-list">
-                    <div className="insight-list-item">
-                      1. 北京-机房1 (18%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        576,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      2. 上海-机房1 (15%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        480,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      3. 北京-机房2 (12%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        384,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      4. 怀来-机房1 (10%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        320,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      5. 上海-机房2 (8%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        256,000 核
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <div className="insight-item">
-                  <div className="insight-label">Top 5 客户</div>
-                  <div className="insight-list">
-                    <div className="insight-list-item">
-                      1. 美团外卖 (22%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        704,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      2. 点评事业部 (18%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        576,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      3. 美团优选 (15%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        480,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      4. 美团买菜 (12%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        384,000 核
-                      </div>
-                    </div>
-                    <div className="insight-list-item">
-                      5. 美团打车 (10%)
-                      <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
-                        320,000 核
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 需求状态分布 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col span={24}>
-          <Card title="📈 需求状态分布" className="status-distribution-card">
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={8} lg={4}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title={
+                <span>
+                  明确需求占比
+                  <Tooltip title="明确需求占比 = (确认待交付 + 已交付 + 已回收) / 总需求 × 100%">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
+              value={(((summaryData.confirmedPending + summaryData.delivered + summaryData.recycled) / summaryData.totalDemand) * 100).toFixed(1)}
+              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
+              suffix="%"
+                  </Tooltip>
+                </span>
+              }
+        <Col xs={24} sm={12} lg={6}>
+              valueStyle={{ color: '#52c41a', fontSize: '28px' }}
+              suffix="%"
+              title={
+                <span>
+                  本月新增需求
+                  <Tooltip title="本月新增的需求量">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
+              value={285000}
+              valueStyle={{ color: '#722ed1', fontSize: '28px' }}
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="summary-card">
+            <Statistic
+              title={
+                <span>
+        <Col xs={24} sm={12} lg={6}>
+                  <Tooltip title="本月新增的需求量">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+              title={
+                <span>
+                  平均交付时长
+                  <Tooltip title="从需求提交到完成交付的平均用时">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
+                </span>
+              }
+              value="2.3"
+              title={
+              suffix="天"
+                  <Tooltip title="从需求提交到完成交付的平均用时">
+                    <InfoCircleOutlined style={{ marginLeft: 4, color: '#999' }} />
+                  </Tooltip>
             <Card
               className="status-card pending-evaluation"
               style={{
@@ -641,11 +576,8 @@ const DemandManagementPage = () => {
               }}
               bodyStyle={{ padding: '20px 16px' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+              <div style={{ marginBottom: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: '500', color: '#ff4d4f' }}>无效</span>
-                <Tooltip title="已撤销、已驳回需求">
-                  <InfoCircleOutlined style={{ color: '#999', marginLeft: '4px' }} />
-                </Tooltip>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f', marginBottom: '4px' }}>
                 {summaryData.rejected.toLocaleString()}
@@ -679,11 +611,59 @@ const DemandManagementPage = () => {
                 1.8%
               </div>
             </Card>
-                    </Col>
+          </Col>
         </Row>
       </Card>
-    </Col>
-  </Row>
+
+      {/* 快速洞察 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card
+            title="📊 需求洞察"
+            className="insight-card"
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">热点地域</div>
+                  <div className="insight-value">北京 (36%)</div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">热点渠道</div>
+                  <div className="insight-value">日常 (32%)</div>
+                  <div className="insight-value">活动 (28%)</div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">Top 5 机房</div>
+                  <div className="insight-list">
+                    <div className="insight-list-item">1. 北京-机房1 (18%)</div>
+                    <div className="insight-list-item">2. 上海-机房1 (15%)</div>
+                    <div className="insight-list-item">3. 北京-机房2 (12%)</div>
+                    <div className="insight-list-item">4. 怀来-机房1 (10%)</div>
+                    <div className="insight-list-item">5. 上海-机房2 (8%)</div>
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="insight-item">
+                  <div className="insight-label">Top 5 客户</div>
+                  <div className="insight-list">
+                    <div className="insight-list-item">1. 美团外卖 (22%)</div>
+                    <div className="insight-list-item">2. 点评事业部 (18%)</div>
+                    <div className="insight-list-item">3. 美团优选 (15%)</div>
+                    <div className="insight-list-item">4. 美团买菜 (12%)</div>
+                    <div className="insight-list-item">5. 美团打车 (10%)</div>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+      </Row>
 
       {/* 需求分布 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -694,7 +674,7 @@ const DemandManagementPage = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '16px', fontWeight: '600' }}>📈 需求分布</span>
                    <Tag color="blue" style={{ margin: 0 }}>
-                     按{distributionBy === 'region' ? '地域' : distributionBy === 'channel' ? '渠道' : '产品类型'}
+                     按{distributionBy === 'region' ? '地域' : '渠道'}
                    </Tag>
                   {distributionBy === 'region' && showRoomDetail && (
                     <Tag color="green" style={{ margin: 0 }}>机房详情</Tag>
@@ -709,23 +689,16 @@ const DemandManagementPage = () => {
                        <Button
                          type={distributionBy === 'region' ? 'primary' : 'default'}
                          onClick={() => setDistributionBy('region')}
-                         style={{ borderRadius: '4px 0 0 0' }}
+                         style={{ borderRadius: '4px 0 0 4px' }}
                        >
                          地域
                        </Button>
                        <Button
                          type={distributionBy === 'channel' ? 'primary' : 'default'}
                          onClick={() => setDistributionBy('channel')}
-                         style={{ borderRadius: '0' }}
-                       >
-                         渠道
-                       </Button>
-                       <Button
-                         type={distributionBy === 'productType' ? 'primary' : 'default'}
-                         onClick={() => setDistributionBy('productType')}
                          style={{ borderRadius: '0 4px 4px 0' }}
                        >
-                         产品类型
+                         渠道
                        </Button>
                      </Button.Group>
                   </div>

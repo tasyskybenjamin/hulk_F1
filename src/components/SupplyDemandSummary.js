@@ -155,7 +155,7 @@ const SupplyDemandSummary = ({ data, filters, onNavigateToResourceProcurement })
     <Card
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>📊 资源汇总说明</span>
+          <span>📊 选择时间范围内资源汇总说明</span>
         </div>
       }
       className="supply-demand-summary"
@@ -173,255 +173,47 @@ const SupplyDemandSummary = ({ data, filters, onNavigateToResourceProcurement })
           <div style={{
             backgroundColor: '#fff7e6',
             border: '1px solid #ffd591',
-            borderRadius: '8px',
-            padding: '20px',
-            position: 'relative',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column'
+            borderRadius: '6px',
+            padding: '16px',
+            position: 'relative'
           }}>
             <div style={{
               position: 'absolute',
-              top: '16px',
-              left: '16px',
+              top: '12px',
+              left: '12px',
               color: '#fa8c16',
-              fontSize: '18px'
+              fontSize: '16px'
             }}>
-              📊
+              ⚠️
             </div>
+            <div style={{ marginLeft: '24px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: '#d46b08' }}>
+                需求：共 {summary.totalDemandSum.toLocaleString()} 核，峰值时刻为：{formatPeakTime(summary.peakDemandDate)}，需求为 {summary.peakDemand.toLocaleString()} 核
+              </div>
 
-            {/* 总需求数值突出显示 */}
-            <div style={{ marginLeft: '32px', marginBottom: '20px' }}>
-              <div style={{
-                fontSize: '14px',
-                color: '#8c8c8c',
-                marginBottom: '4px',
-                fontWeight: '500'
-              }}>
-                总需求
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: '#595959' }}>
+                  状态分布：
+                </div>
+                <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                  待评估 <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.statusDistribution.pending.toLocaleString()} 核</span>、
+                  确认待交付 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.statusDistribution.confirmed.toLocaleString()} 核</span>、
+                  已交付 <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.statusDistribution.delivered.toLocaleString()} 核</span>、
+                  已回收 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.statusDistribution.recycled.toLocaleString()} 核</span>、
+                  驳回 <span style={{ color: '#8c8c8c', fontWeight: 'bold' }}>{summary.statusDistribution.rejected.toLocaleString()} 核</span>（不算入需求总量）
+                </div>
               </div>
-              <div style={{
-                fontSize: '36px',
-                fontWeight: 'bold',
-                color: '#d46b08',
-                lineHeight: '1.2',
-                marginBottom: '8px'
-              }}>
-                {summary.totalDemandSum.toLocaleString()}
-                <span style={{ fontSize: '18px', marginLeft: '4px' }}>核</span>
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: '#8c8c8c',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span>峰值时刻：{formatPeakTime(summary.peakDemandDate)}</span>
-                <span style={{
-                  backgroundColor: '#fff2e8',
-                  color: '#d46b08',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: '500'
-                }}>
-                  {summary.peakDemand.toLocaleString()} 核
-                </span>
-              </div>
-            </div>
 
-            {/* 需求洞察区域 */}
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              {/* 状态分布 */}
               <div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  marginBottom: '12px',
-                  color: '#595959',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <span style={{ color: '#fa8c16' }}>●</span>
-                  状态分布
+                <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: '#595959' }}>
+                  渠道分布：
                 </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '8px',
-                  fontSize: '13px'
-                }}>
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #ffe7ba',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#ffefd6';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>待评估</div>
-                    <div style={{ color: '#fa8c16', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.statusDistribution.pending.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.statusDistribution.pending / summary.totalDemandSum) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #ffe7ba',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#ffefd6';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>确认待交付</div>
-                    <div style={{ color: '#f5222d', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.statusDistribution.confirmed.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.statusDistribution.confirmed / summary.totalDemandSum) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #ffe7ba',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#ffefd6';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>已交付</div>
-                    <div style={{ color: '#52c41a', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.statusDistribution.delivered.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.statusDistribution.delivered / (summary.totalDemandSum + summary.statusDistribution.delivered + summary.statusDistribution.recycled)) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #ffe7ba',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#ffefd6';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>已回收</div>
-                    <div style={{ color: '#1890ff', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.statusDistribution.recycled.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.statusDistribution.recycled / (summary.totalDemandSum + summary.statusDistribution.delivered + summary.statusDistribution.recycled)) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 渠道分布 */}
-              <div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  marginBottom: '12px',
-                  color: '#595959',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <span style={{ color: '#1890ff' }}>●</span>
-                  渠道分布
-                </div>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '6px',
-                  fontSize: '12px'
-                }}>
-                  {[
-                    { key: 'daily', label: '日常', value: summary.channelDistribution.daily, color: '#1890ff' },
-                    { key: 'activity', label: '活动', value: summary.channelDistribution.activity, color: '#fa541c' },
-                    { key: 'emergency', label: '应急', value: summary.channelDistribution.emergency, color: '#f5222d' },
-                    { key: 'special', label: '专项', value: summary.channelDistribution.special, color: '#722ed1' },
-                    { key: 'pool', label: '资源池', value: summary.channelDistribution.pool, color: '#13c2c2' }
-                  ].map(item => (
-                    <div key={item.key} style={{
-                      padding: '6px 10px',
-                      backgroundColor: '#fff',
-                      borderRadius: '16px',
-                      border: '1px solid #ffe7ba',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      minWidth: 'fit-content'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#ffefd6';
-                      e.target.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#fff';
-                      e.target.style.transform = 'scale(1)';
-                    }}>
-                      <span style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        backgroundColor: item.color
-                      }}></span>
-                      <span style={{ color: '#595959', fontSize: '11px' }}>{item.label}</span>
-                      <span style={{ color: item.color, fontWeight: 'bold', fontSize: '11px' }}>
-                        {item.value.toLocaleString()}
-                      </span>
-                      <span style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                        ({((item.value / summary.totalDemandSum) * 100).toFixed(1)}%)
-                      </span>
-                    </div>
-                  ))}
+                <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                  日常 <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.channelDistribution.daily.toLocaleString()} 核</span>、
+                  活动 <span style={{ color: '#fa541c', fontWeight: 'bold' }}>{summary.channelDistribution.activity.toLocaleString()} 核</span>、
+                  应急 <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{summary.channelDistribution.emergency.toLocaleString()} 核</span>、
+                  专项 <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.channelDistribution.special.toLocaleString()} 核</span>、
+                  资源池 <span style={{ color: '#13c2c2', fontWeight: 'bold' }}>{summary.channelDistribution.pool.toLocaleString()} 核</span>
                 </div>
               </div>
             </div>
@@ -433,259 +225,57 @@ const SupplyDemandSummary = ({ data, filters, onNavigateToResourceProcurement })
           <div style={{
             backgroundColor: '#f6ffed',
             border: '1px solid #b7eb8f',
-            borderRadius: '8px',
-            padding: '20px',
-            position: 'relative',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column'
+            borderRadius: '6px',
+            padding: '16px',
+            position: 'relative'
           }}>
             <div style={{
               position: 'absolute',
-              top: '16px',
-              left: '16px',
+              top: '12px',
+              left: '12px',
               color: '#52c41a',
-              fontSize: '18px'
+              fontSize: '16px'
             }}>
-              📦
+              ✅
             </div>
-
-            {/* 库存数值突出显示 */}
-            <div style={{ marginLeft: '32px', marginBottom: '20px' }}>
-              <div style={{
-                fontSize: '14px',
-                color: '#8c8c8c',
-                marginBottom: '4px',
-                fontWeight: '500'
-              }}>
-                可用库存
-              </div>
-              <div style={{
-                fontSize: '36px',
-                fontWeight: 'bold',
-                color: '#389e0d',
-                lineHeight: '1.2',
-                marginBottom: '8px'
-              }}>
-                {summary.availableInventory.total.toLocaleString()}
-                <span style={{ fontSize: '18px', marginLeft: '4px' }}>核</span>
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: '#8c8c8c',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span>峰值时库存：{summary.peakInventory.toLocaleString()} 核</span>
+            <div style={{ marginLeft: '24px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: '#389e0d' }}>
+                库存：当前可用库存 {summary.availableInventory.total.toLocaleString()} 核 需求峰值时库存 {summary.peakInventory.toLocaleString()} 核
                 <span style={{
-                  backgroundColor: summary.inventoryStatus === 'insufficient' ? '#fff2e8' : '#f6ffed',
-                  color: summary.inventoryStatus === 'insufficient' ? '#fa8c16' : '#52c41a',
+                  fontSize: '12px',
+                  color: '#fa8c16',
+                  marginLeft: '8px',
+                  backgroundColor: '#fff7e6',
                   padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: '500'
+                  borderRadius: '3px',
+                  border: '1px solid #ffd591'
                 }}>
-                  {getInventoryStatusText(summary.inventoryStatus)}
+                  小于需求峰值
                 </span>
               </div>
-            </div>
 
-            {/* 库存洞察区域 */}
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              {/* 库存构成 */}
-              <div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  marginBottom: '12px',
-                  color: '#595959',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <span style={{ color: '#52c41a' }}>●</span>
-                  库存构成
-                </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '8px',
-                  fontSize: '13px'
-                }}>
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #d9f7be',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f6ffed';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>配额余量</div>
-                    <div style={{ color: '#52c41a', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.availableInventory.quota.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.availableInventory.quota / summary.availableInventory.total) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #d9f7be',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f6ffed';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>私有云到货</div>
-                    <div style={{ color: '#fa8c16', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.availableInventory.normalArrival.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.availableInventory.normalArrival / summary.availableInventory.total) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #d9f7be',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f6ffed';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>私有云提拉</div>
-                    <div style={{ color: '#1890ff', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.availableInventory.privateCloudPull.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.availableInventory.privateCloudPull / summary.availableInventory.total) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-
-                  <div style={{
-                    padding: '8px 10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    border: '1px solid #d9f7be',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f6ffed';
-                    e.target.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#fff';
-                    e.target.style.transform = 'translateY(0)';
-                  }}>
-                    <div style={{ color: '#8c8c8c', fontSize: '11px' }}>私有云借调</div>
-                    <div style={{ color: '#722ed1', fontWeight: 'bold', fontSize: '14px' }}>
-                      {summary.availableInventory.resourceBorrow.toLocaleString()}
-                    </div>
-                    <div style={{ color: '#8c8c8c', fontSize: '10px' }}>
-                      {((summary.availableInventory.resourceBorrow / summary.availableInventory.total) * 100).toFixed(1)}%
-                    </div>
-                  </div>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '14px', marginBottom: '8px', color: '#52c41a', fontWeight: 'bold' }}>
+                  可使用库存约为：{summary.availableInventory.total.toLocaleString()} 核
                 </div>
               </div>
 
-              {/* 库存状态指标 */}
-              <div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  marginBottom: '12px',
-                  color: '#595959',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  <span style={{ color: '#1890ff' }}>●</span>
-                  库存状态
+              <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【可用库存】</span>
+                  配额余量：<span style={{ color: '#52c41a', fontWeight: 'bold' }}>{summary.availableInventory.quota.toLocaleString()} 核</span>
                 </div>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '6px',
-                  fontSize: '12px'
-                }}>
-                  {[
-                    {
-                      key: 'utilization',
-                      label: '库存利用率',
-                      value: `${((summary.peakInventory / summary.availableInventory.total) * 100).toFixed(1)}%`,
-                      color: summary.peakInventory / summary.availableInventory.total > 0.8 ? '#f5222d' : '#52c41a'
-                    },
-                    {
-                      key: 'coverage',
-                      label: '需求覆盖度',
-                      value: `${((summary.availableInventory.total / summary.peakDemand) * 100).toFixed(1)}%`,
-                      color: summary.availableInventory.total >= summary.peakDemand ? '#52c41a' : '#fa8c16'
-                    }
-                  ].map(item => (
-                    <div key={item.key} style={{
-                      padding: '6px 10px',
-                      backgroundColor: '#fff',
-                      borderRadius: '16px',
-                      border: '1px solid #d9f7be',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      minWidth: 'fit-content'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#f6ffed';
-                      e.target.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#fff';
-                      e.target.style.transform = 'scale(1)';
-                    }}>
-                      <span style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        backgroundColor: item.color
-                      }}></span>
-                      <span style={{ color: '#595959', fontSize: '11px' }}>{item.label}</span>
-                      <span style={{ color: item.color, fontWeight: 'bold', fontSize: '11px' }}>
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【正常供给】</span>
+                  私有云到货：<span style={{ color: '#fa8c16', fontWeight: 'bold' }}>{summary.availableInventory.normalArrival.toLocaleString()} 核</span>
+                </div>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【资源筹备】</span>
+                  私有云提拉：<span style={{ color: '#1890ff', fontWeight: 'bold' }}>{summary.availableInventory.privateCloudPull.toLocaleString()} 核</span>
+                </div>
+                <div>
+                  <span style={{ color: '#595959', fontWeight: 'bold' }}>【资源筹措】</span>
+                  私有云借调：<span style={{ color: '#722ed1', fontWeight: 'bold' }}>{summary.availableInventory.resourceBorrow.toLocaleString()} 核</span>
                 </div>
               </div>
             </div>

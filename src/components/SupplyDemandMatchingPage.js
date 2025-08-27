@@ -283,7 +283,6 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
     let pendingBase = Math.round(200 * demandMultiplier); // 增加基础需求
     let confirmedBase = Math.round(450 * demandMultiplier); // 增加基础需求
     let deliveredDemandBase = Math.round(1200 * demandMultiplier);
-    let totalDemandBase = Math.round(1800 * demandMultiplier); // 总需求基础值
 
     // 根据用户选择的时间范围生成数据
     const startDate = filterParams.dateRange ? filterParams.dateRange[0] : dayjs().subtract(1, 'month');
@@ -348,17 +347,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
       }
 
       if (isPast) {
-        // 过去时间的处理
-
-        // 总需求：过去时间 = 全部需求（历史实际需求）
-        const totalDemandValue = Math.round(totalDemandBase * seasonalFactor * randomFactor);
-        totalDemandData.push({
-          value: totalDemandValue,
-          isPast
-        });
-        totalDemandBase = totalDemandBase * 0.95 + totalDemandValue * 0.05;
-
-        // 总需求对应的库存：过去时间 = 全部库存（已交付需求 + 可用库存）
+        // 过去时间：库存 = 已交付需求 + 可用库存
         const availableValue = Math.round(availableInventoryBase * seasonalFactor * randomFactor);
         const deliveredValue = Math.round(deliveredInventoryBase * seasonalFactor * randomFactor);
         inventoryData.push({
@@ -368,21 +357,35 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
         availableInventoryBase = availableInventoryBase * 0.95 + availableValue * 0.05;
         deliveredInventoryBase = deliveredInventoryBase * 0.95 + deliveredValue * 0.05;
 
-        // 待评估需求：过去时间 = 0
+        // 过去时间：总需求 = 确认已经交付需求
+        const deliveredDemandValue = Math.round(deliveredDemandBase * seasonalFactor * randomFactor);
+        totalDemandData.push({
+          value: deliveredDemandValue,
+          isPast
+        });
+        deliveredDemandBase = deliveredDemandBase * 0.95 + deliveredDemandValue * 0.05;
+
+        // 过去时间：待评估需求为空
         pendingDemandData.push({
           value: 0,
           isPast
         });
 
-        // 确认待交付需求：过去时间 = 0
+        // 过去时间：确认待交付需求为空
         confirmedDemandData.push({
           value: 0,
           isPast
         });
       } else {
-        // 未来时间的处理
+        // 未来时间：库存 = 可用库存（应用库存波动因子）
+        const availableValue = Math.round(availableInventoryBase * seasonalFactor * trendFactor * randomFactor * inventoryReductionFactor);
+        inventoryData.push({
+          value: availableValue,
+          isPast
+        });
+        availableInventoryBase = availableInventoryBase * 0.95 + availableValue * 0.05;
 
-        // 待评估需求：未来时间 = 待评估需求
+        // 未来时间：待评估需求（应用需求高峰期因子）
         const pendingValue = Math.round(pendingBase * (0.7 + Math.random() * 0.6) * trendFactor * demandSpikeFactor * (1 + Math.abs(daysDiff) * 0.02));
         pendingDemandData.push({
           value: pendingValue,
@@ -390,7 +393,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
         });
         pendingBase = pendingBase * 0.9 + pendingValue * 0.1;
 
-        // 确认待交付需求：未来时间 = 确认待交付需求
+        // 未来时间：确认待交付需求（应用需求高峰期因子）
         const confirmedValue = Math.round(confirmedBase * seasonalFactor * (0.8 + Math.random() * 0.4) * trendFactor * demandSpikeFactor * (1 + Math.abs(daysDiff) * 0.015));
         confirmedDemandData.push({
           value: confirmedValue,
@@ -398,59 +401,9 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
         });
         confirmedBase = confirmedBase * 0.9 + confirmedValue * 0.1;
 
-        // 总需求：未来时间 = 全部需求（待评估 + 确认待交付）
+        // 未来时间：总需求 = 待评估需求 + 确认待交付需求
         totalDemandData.push({
           value: pendingValue + confirmedValue,
-          isPast
-        });
-
-        // 库存的处理根据不同的需求类型有所不同
-        // 这里先计算基础的可用库存
-        const availableValue = Math.round(availableInventoryBase * seasonalFactor * trendFactor * randomFactor * inventoryReductionFactor);
-
-        // 总需求对应的库存：未来时间 = 全部库存
-        inventoryData.push({
-          value: availableValue,
-          isPast
-        });
-        availableInventoryBase = availableInventoryBase * 0.95 + availableValue * 0.05;
-      }
-    });
-
-    // 为不同需求类型生成对应的库存数据
-    const pendingInventoryData = [];
-    const confirmedInventoryData = [];
-
-    dates.forEach((dateStr, index) => {
-      const date = dayjs(dateStr);
-      const isPast = date.valueOf() <= today.valueOf();
-
-      if (isPast) {
-        // 待评估需求对应的库存：过去时间 = 历史时刻可用库存
-        const historicalAvailable = Math.round(availableInventoryBase * 0.8 * (0.9 + Math.random() * 0.2));
-        pendingInventoryData.push({
-          value: historicalAvailable,
-          isPast
-        });
-
-        // 确认待交付需求对应的库存：过去时间 = 0
-        confirmedInventoryData.push({
-          value: 0,
-          isPast
-        });
-      } else {
-        // 待评估需求对应的库存：未来时间 = 可用库存
-        const availableForPending = inventoryData[index].value;
-        pendingInventoryData.push({
-          value: availableForPending,
-          isPast
-        });
-
-        // 确认待交付需求对应的库存：未来时间 = 可用库存 + 对应需求已出库部分库存
-        const confirmedDemandValue = confirmedDemandData[index].value;
-        const outboundForConfirmed = Math.round(confirmedDemandValue * 0.3); // 假设30%已出库
-        confirmedInventoryData.push({
-          value: availableForPending + outboundForConfirmed,
           isPast
         });
       }
@@ -463,18 +416,6 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
           key: 'inventory',
           label: '库存',
           data: inventoryData,
-          color: '#52c41a'
-        },
-        {
-          key: 'pendingInventory',
-          label: '库存（待评估）',
-          data: pendingInventoryData,
-          color: '#52c41a'
-        },
-        {
-          key: 'confirmedInventory',
-          label: '库存（确认待交付）',
-          data: confirmedInventoryData,
           color: '#52c41a'
         },
         {
@@ -797,7 +738,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
       <Card
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span>库存 VS 需求匹配</span>
+            <span>可用库存 VS 需求匹配趋势</span>
             <Tag color="green">实线：历史数据</Tag>
             <Tag color="purple">虚线：预测数据</Tag>
           </div>
@@ -809,7 +750,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
           items={[
             {
               key: 'all',
-              label: '总需求（全部需求）',
+              label: '总需求（待评估+确认待交付）',
               children: (
                 <div style={{ height: '500px' }}>
                   {trendData ? (
