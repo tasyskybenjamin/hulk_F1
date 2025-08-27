@@ -25,21 +25,21 @@ const SupplyDemandTrendChart = ({ data, activeTab = 'all', filters }) => {
     // 根据activeTab决定显示哪些数据系列
     let seriesToShow = [];
 
-    // 库存始终显示
-    const inventory = data.datasets.find(d => d.key === 'inventory');
-
     if (activeTab === 'all') {
-      // 显示总需求
+      // 总需求：显示全部库存 VS 全部需求
+      const inventory = data.datasets.find(d => d.key === 'inventory');
       const totalDemand = data.datasets.find(d => d.key === 'totalDemand');
       seriesToShow = [inventory, totalDemand];
     } else if (activeTab === 'pending') {
-      // 只显示待评估需求
+      // 待评估需求：显示对应库存 VS 待评估需求
+      const pendingInventory = data.datasets.find(d => d.key === 'pendingInventory');
       const pendingDemand = data.datasets.find(d => d.key === 'pendingDemand');
-      seriesToShow = [inventory, pendingDemand];
+      seriesToShow = [pendingInventory, pendingDemand];
     } else if (activeTab === 'confirmed') {
-      // 只显示确认待交付需求
+      // 确认待交付需求：显示对应库存 VS 确认待交付需求
+      const confirmedInventory = data.datasets.find(d => d.key === 'confirmedInventory');
       const confirmedDemand = data.datasets.find(d => d.key === 'confirmedDemand');
-      seriesToShow = [inventory, confirmedDemand];
+      seriesToShow = [confirmedInventory, confirmedDemand];
     }
 
     const series = [];
@@ -176,7 +176,7 @@ const SupplyDemandTrendChart = ({ data, activeTab = 'all', filters }) => {
 
     return {
       title: {
-        text: '可用库存 VS 需求匹配趋势',
+        text: '库存 VS 需求匹配',
         left: 'center',
         textStyle: {
           fontSize: 16,
