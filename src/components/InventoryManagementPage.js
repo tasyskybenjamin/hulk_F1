@@ -1068,13 +1068,13 @@ const InventoryManagementPage = ({ onNavigateToResourceProcurement }) => {
         return ['outbound'];
       case 'safety':
         return ['safety', 'safety_outbound']; // 安全预留：余量 + 已出库
-        return ['safety', 'safety_outbound']; // 安全预留：余量 + 已出库
+      case 'emergency':
         return ['emergency', 'emergency_outbound']; // 紧急资源：余量 + 已出库
-        return ['safety']; // 安全预留：仅显示余量
+      case 'operation':
         return ['operation', 'operation_outbound']; // 运维资源：余量 + 已出库
-        return ['emergency']; // 紧急资源：仅显示余量
+      default:
         return ['total'];
-        return ['operation']; // 运维资源：仅显示余量
+    }
   };
 
   // 库存变化趋势图表配置
