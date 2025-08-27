@@ -809,7 +809,7 @@ const SupplyDemandMatchingPage = ({ onNavigateToResourceProcurement }) => {
           items={[
             {
               key: 'all',
-              label: '总需求（待评估+确认待交付）',
+              label: '总需求（全部需求）',
               children: (
                 <div style={{ height: '500px' }}>
                   {trendData ? (
